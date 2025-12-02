@@ -4,9 +4,8 @@
   --mpesa-green: #00D13A;
   --mpesa-dark-green: #00B032;
   --mpesa-light-green: #4AE668;
-  --dark-bg: #0a0a0a;
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --text-primary: #ffffff;
+  --card-bg: rgba(0, 0, 0, 0.05);
+  --text-primary: #1a1a1a;
   --text-secondary: #a0a0a0;
   --gradient-primary: linear-gradient(135deg, var(--mpesa-green) 0%, var(--mpesa-light-green) 100%);
   --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
@@ -140,10 +139,10 @@
   justify-content: center;
   flex-direction: column;
 }
-
 .btn {
   padding: 0.875rem 1.5rem;
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50px;
   border-radius: 50px;
   font-weight: 600;
   text-decoration: none;
@@ -259,6 +258,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   white-space: nowrap;
+  color: #f8f8f8;
 }
 
 .codeLine {
@@ -610,11 +610,11 @@
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
 }
-
 .featureCard {
   background: var(--card-bg);
   border-radius: 20px;
   padding: 2.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
   position: relative;
@@ -738,15 +738,13 @@
   font-size: 1.2rem;
   flex-shrink: 0;
 }
-
-.securityVisual {
-  /* Styles handled inline in component */
-}
+/* Security visual styles are handled inline in the component */
 
 /* API Status Section */
 .apiStatus {
   padding: 6rem 5%;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 209, 58, 0.02);
+  color: var(--text-primary);
 }
 
 .statusGrid {

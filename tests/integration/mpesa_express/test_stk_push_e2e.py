@@ -7,7 +7,7 @@ and queries the transaction status to ensure everything works end-to-end.
 import os
 import time
 import pytest
-import requests
+import httpx
 from threading import Thread
 from dotenv import load_dotenv
 
@@ -82,7 +82,8 @@ def test_stk_push_full_e2e_with_query(stk_service, fastapi_server, ngrok_tunnel)
     print("🔗 Starting E2E Test: STK Push, Callback, and Query")
     # 1. Clear previous callbacks
     callback_base_url = f"{ngrok_tunnel}/mpesa/callback"
-    requests.post(f"{callback_base_url}/clear")
+    with httpx.Client() as client:
+        client.post(f"{callback_base_url}/clear")
 
     callback_url = f"{ngrok_tunnel}/mpesa/callback"
     print(f"📨 Using callback URL: {callback_url}")
@@ -111,18 +112,19 @@ def test_stk_push_full_e2e_with_query(stk_service, fastapi_server, ngrok_tunnel)
     print("⏳ Waiting up to 30 seconds for callback...")
     callback_received = False
     callback = None
-    for _ in range(30):
-        time.sleep(1)
-        r = requests.get(f"{callback_base_url}/latest", timeout=45)
-        if r.status_code == 200:
-            callback_received = True
-            callback_json = r.json()["parsed"]
-            callback = StkPushSimulateCallback.model_validate(callback_json)
-            body = callback.Body.stkCallback
-            print(
-                f"🎉 Callback received: ResultCode={body.ResultCode}, Desc={body.ResultDesc}"
-            )
-            break
+    with httpx.Client() as client:
+        for _ in range(30):
+            time.sleep(1)
+            r = client.get(f"{callback_base_url}/latest", timeout=45)
+            if r.status_code == 200:
+                callback_received = True
+                callback_json = r.json()["parsed"]
+                callback = StkPushSimulateCallback.model_validate(callback_json)
+                body = callback.Body.stkCallback
+                print(
+                    f"🎉 Callback received: ResultCode={body.ResultCode}, Desc={body.ResultDesc}"
+                )
+                break
 
     if not callback_received:
         print(
