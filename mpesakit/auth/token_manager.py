@@ -92,7 +92,7 @@ class AsyncTokenManager(BaseModel):
 
     consumer_key: str
     consumer_secret: str
-    http_client: AsyncHttpClient  
+    http_client: AsyncHttpClient
 
     _access_token: Optional[AccessToken] = PrivateAttr(default=None)
 
@@ -107,8 +107,7 @@ class AsyncTokenManager(BaseModel):
         return f"Basic {encoded_credentials}"
 
     async def get_token(self, force_refresh: bool = False) -> str:
-        """
-        Retrieves the access token asynchronously, refreshing it if necessary.
+        """Retrieves the access token asynchronously, refreshing it if necessary.
 
         Args:
             force_refresh (bool): If True, forces a refresh of the token even if it is not expired.
@@ -129,7 +128,7 @@ class AsyncTokenManager(BaseModel):
         headers = {"Authorization": self._get_basic_auth_header()}
 
         try:
-            
+
             response = await self.http_client.get(url, headers=headers, params=params)
         except MpesaApiException as e:
             if e.error.status_code == 400 and (

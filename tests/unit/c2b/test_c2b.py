@@ -366,7 +366,7 @@ def test_warn_long_resultdesc_none(monkeypatch):
     result = C2BValidationResponse._warn_long_resultdesc(values)
     assert len(warn_calls) == 0
     assert result == values
-    
+
 def test_is_successful_with_mixed_string_response_code_no_type_error():
     """Ensure is_successful handles mixed/numeric-like string ResponseCode without TypeError and returns False for non-success codes."""
     resp = C2BRegisterUrlResponse(
