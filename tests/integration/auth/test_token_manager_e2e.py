@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import os
 import pytest
 from mpesakit.auth import TokenManager,AsyncTokenManager
-from mpesakit.http_client import MpesaHttpClient
+from mpesakit.http_client import MpesaHttpClient,MpesaAsyncHttpClient
 from mpesakit.errors import MpesaApiException
 
 load_dotenv()
@@ -38,6 +38,11 @@ def http_client():
     # Use sandbox environment for testing
     return MpesaHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
 
+@pytest.fixture(scope="module")
+def async_http_client():
+    """Provide an instance of AsyncMpesaHttpClient for testing."""
+    # Use sandbox environment for testing
+    return MpesaAsyncHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
 
 def test_get_token_success(valid_credentials, http_client):
     """Test that a valid token can be retrieved."""
