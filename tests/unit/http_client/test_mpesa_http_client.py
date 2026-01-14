@@ -4,7 +4,7 @@ This module tests the MpesaHttpClient class for correct base URL selection,
 HTTP POST and GET request handling, and error handling for various scenarios.
 """
 
-import requests
+import httpx
 import pytest
 from unittest.mock import Mock, patch
 from mpesakit.http_client.mpesa_http_client import MpesaHttpClient
@@ -32,9 +32,9 @@ def test_base_url_production():
 
 def test_post_success(client):
     """Test successful POST request returns expected JSON."""
-    with patch("mpesakit.http_client.mpesa_http_client.requests.post") as mock_post:
+    with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.post") as mock_post:
         mock_response = Mock()
-        mock_response.ok = True
+        mock_response.status_code = 200
         mock_response.json.return_value = {"foo": "bar"}
         mock_post.return_value = mock_response
 
@@ -45,9 +45,8 @@ def test_post_success(client):
 
 def test_post_http_error(client):
     """Test POST request returns MpesaApiException on HTTP error."""
-    with patch("mpesakit.http_client.mpesa_http_client.requests.post") as mock_post:
+    with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.post") as mock_post:
         mock_response = Mock()
-        mock_response.ok = False
         mock_response.status_code = 400
         mock_response.json.return_value = {"errorMessage": "Bad Request"}
         mock_post.return_value = mock_response
@@ -60,9 +59,8 @@ def test_post_http_error(client):
 
 def test_post_json_decode_error(client):
     """Test POST request handles JSON decode error gracefully."""
-    with patch("mpesakit.http_client.mpesa_http_client.requests.post") as mock_post:
+    with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.post") as mock_post:
         mock_response = Mock()
-        mock_response.ok = False
         mock_response.status_code = 500
         mock_response.json.side_effect = ValueError()
         mock_response.text = "Internal Server Error"
@@ -77,8 +75,8 @@ def test_post_json_decode_error(client):
 def test_post_request_exception(client):
     """Test POST request raises MpesaApiException on generic exception."""
     with patch(
-        "mpesakit.http_client.mpesa_http_client.requests.post",
-        side_effect=requests.RequestException("boom"),
+        "mpesakit.http_client.mpesa_http_client.httpx.Client.post",
+        side_effect=httpx.RequestError("boom"),
     ):
         with pytest.raises(MpesaApiException) as exc:
             client.post("/fail", json={}, headers={})
@@ -88,8 +86,8 @@ def test_post_request_exception(client):
 def test_post_timeout(client):
     """Test POST request raises MpesaApiException on timeout."""
     with patch(
-        "mpesakit.http_client.mpesa_http_client.requests.post",
-        side_effect=requests.Timeout,
+        "mpesakit.http_client.mpesa_http_client.httpx.Client.post",
+        side_effect=httpx.TimeoutException,
     ):
         with pytest.raises(MpesaApiException) as exc:
             client.post("/timeout", json={}, headers={})
@@ -99,8 +97,8 @@ def test_post_timeout(client):
 def test_post_connection_error(client):
     """Test POST request raises MpesaApiException on connection error."""
     with patch(
-        "mpesakit.http_client.mpesa_http_client.requests.post",
-        side_effect=requests.ConnectionError,
+        "mpesakit.http_client.mpesa_http_client.httpx.Client.post",
+        side_effect=httpx.ConnectError,
     ):
         with pytest.raises(MpesaApiException) as exc:
             client.post("/conn", json={}, headers={})
@@ -109,7 +107,7 @@ def test_post_connection_error(client):
 
 def test_get_success(client):
     """Test successful GET request returns expected JSON."""
-    with patch("mpesakit.http_client.mpesa_http_client.requests.get") as mock_get:
+    with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.get") as mock_get:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"foo": "bar"}
@@ -122,9 +120,8 @@ def test_get_success(client):
 
 def test_get_http_error(client):
     """Test GET request returns MpesaApiException on HTTP error."""
-    with patch("mpesakit.http_client.mpesa_http_client.requests.get") as mock_get:
+    with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.get") as mock_get:
         mock_response = Mock()
-        mock_response.ok = False
         mock_response.status_code = 404
         mock_response.json.return_value = {"errorMessage": "Not Found"}
         mock_get.return_value = mock_response
@@ -137,9 +134,8 @@ def test_get_http_error(client):
 
 def test_get_json_decode_error(client):
     """Test GET request handles JSON decode error gracefully."""
-    with patch("mpesakit.http_client.mpesa_http_client.requests.get") as mock_get:
+    with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.get") as mock_get:
         mock_response = Mock()
-        mock_response.ok = False
         mock_response.status_code = 500
         mock_response.json.side_effect = ValueError()
         mock_response.text = "Internal Server Error"
@@ -154,8 +150,8 @@ def test_get_json_decode_error(client):
 def test_get_request_exception(client):
     """Test GET request raises MpesaApiException on generic exception."""
     with patch(
-        "mpesakit.http_client.mpesa_http_client.requests.get",
-        side_effect=requests.RequestException("boom"),
+        "mpesakit.http_client.mpesa_http_client.httpx.Client.get",
+        side_effect=httpx.RequestError("boom"),
     ):
         with pytest.raises(MpesaApiException) as exc:
             client.get("/fail")
@@ -165,8 +161,8 @@ def test_get_request_exception(client):
 def test_get_timeout(client):
     """Test GET request raises MpesaApiException on timeout."""
     with patch(
-        "mpesakit.http_client.mpesa_http_client.requests.get",
-        side_effect=requests.Timeout,
+        "mpesakit.http_client.mpesa_http_client.httpx.Client.get",
+        side_effect=httpx.TimeoutException,
     ):
         with pytest.raises(MpesaApiException) as exc:
             client.get("/timeout")
@@ -176,8 +172,8 @@ def test_get_timeout(client):
 def test_get_connection_error(client):
     """Test GET request raises MpesaApiException on connection error."""
     with patch(
-        "mpesakit.http_client.mpesa_http_client.requests.get",
-        side_effect=requests.ConnectionError,
+        "mpesakit.http_client.mpesa_http_client.httpx.Client.get",
+        side_effect=httpx.ConnectError,
     ):
         with pytest.raises(MpesaApiException) as exc:
             client.get("/conn")

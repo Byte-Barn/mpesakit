@@ -4,7 +4,7 @@ Handles GET and POST requests with error handling for common HTTP issues.
 """
 
 from typing import Dict, Any, Optional
-import requests
+import httpx
 
 from mpesakit.errors import MpesaError, MpesaApiException
 from .http_client import HttpClient
@@ -54,14 +54,15 @@ class MpesaHttpClient(HttpClient):
         """
         try:
             full_url = f"{self.base_url}{url}"
-            response = requests.post(full_url, json=json, headers=headers, timeout=10)
+            with httpx.Client(timeout=10) as client:
+                response = client.post(full_url, json=json, headers=headers)
 
             try:
                 response_data = response.json()
             except ValueError:
                 response_data = {"errorMessage": response.text.strip() or ""}
 
-            if not response.ok:
+            if response.status_code >= 400:
                 error_message = response_data.get("errorMessage", "")
                 raise MpesaApiException(
                     MpesaError(
@@ -74,7 +75,7 @@ class MpesaHttpClient(HttpClient):
 
             return response_data
 
-        except requests.Timeout:
+        except httpx.TimeoutException:
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_TIMEOUT",
@@ -82,15 +83,7 @@ class MpesaHttpClient(HttpClient):
                     status_code=None,
                 )
             )
-        except requests.ConnectionError:
-            raise MpesaApiException(
-                MpesaError(
-                    error_code="CONNECTION_ERROR",
-                    error_message="Failed to connect to Mpesa API. Check network or URL.",
-                    status_code=None,
-                )
-            )
-        except requests.RequestException as e:
+        except httpx.RequestError as e:
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
@@ -124,16 +117,15 @@ class MpesaHttpClient(HttpClient):
                 headers = {}
             full_url = f"{self.base_url}{url}"
 
-            response = requests.get(
-                full_url, params=params, headers=headers, timeout=10
-            )  # Add timeout
+            with httpx.Client(timeout=10) as client:
+                response = client.get(full_url, params=params, headers=headers)
 
             try:
                 response_data = response.json()
             except ValueError:
                 response_data = {"errorMessage": response.text.strip() or ""}
 
-            if not response.ok:
+            if not response.is_success:
                 error_message = response_data.get("errorMessage", "")
                 raise MpesaApiException(
                     MpesaError(
@@ -146,7 +138,7 @@ class MpesaHttpClient(HttpClient):
 
             return response_data
 
-        except requests.Timeout:
+        except httpx.TimeoutException:
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_TIMEOUT",
@@ -154,15 +146,7 @@ class MpesaHttpClient(HttpClient):
                     status_code=None,
                 )
             )
-        except requests.ConnectionError:
-            raise MpesaApiException(
-                MpesaError(
-                    error_code="CONNECTION_ERROR",
-                    error_message="Failed to connect to Mpesa API. Check network or URL.",
-                    status_code=None,
-                )
-            )
-        except requests.RequestException as e:
+        except httpx.RequestError as e:
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
