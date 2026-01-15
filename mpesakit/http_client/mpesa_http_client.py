@@ -5,6 +5,7 @@ Handles GET and POST requests with error handling for common HTTP issues.
 
 import logging
 from typing import Any, Dict, Optional
+from urllib.parse import urljoin
 
 import requests
 from tenacity import (
@@ -139,7 +140,7 @@ class MpesaHttpClient(HttpClient):
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        full_url = f"{self.base_url}{url}"
+        full_url = urljoin(self.base_url, url)
         if self._session:
             response = self._session.post(
                 full_url, json=json, headers=headers, timeout=10
@@ -176,7 +177,7 @@ class MpesaHttpClient(HttpClient):
         """
         if headers is None:
             headers = {}
-        full_url = f"{self.base_url}{url}"
+        full_url = urljoin(self.base_url, url)
         if self._session:
             response = self._session.get(
                 full_url, params=params, headers=headers, timeout=10
