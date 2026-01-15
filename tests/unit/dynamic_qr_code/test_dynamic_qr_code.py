@@ -153,3 +153,26 @@ def test_generate_dynamic_qr_send_money_cpi_normalization(monkeypatch):
     assert "CPI for SEND_MONEY must be a valid Kenyan phone number" in str(
         excinfo.value
     )
+
+def test_generate_dynamic_qr_string_response_code_no_type_error(dynamic_qr_service, mock_http_client):
+    """Ensure ResponseCode as a string does not cause type comparison errors in is_successful()."""
+    request = DynamicQRGenerateRequest(
+        MerchantName="Test Supermarket",
+        RefNo="xewr34fer4t",
+        Amount=200,
+        TrxCode=DynamicQRTransactionType.BUY_GOODS,
+        CPI="373132",
+        Size="300",
+    )
+    # ResponseCode provided as a string (common in some APIs)
+    response_data = {
+        "ResponseCode": "00",
+        "ResponseDescription": "Success",
+        "QRCode": "base64-encoded-string",
+    }
+    mock_http_client.post.return_value = response_data
+
+    # Should not raise a TypeError when evaluating is_successful()
+    response = dynamic_qr_service.generate(request)
+    assert response.is_successful() is True
+

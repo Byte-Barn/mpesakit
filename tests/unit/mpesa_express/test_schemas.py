@@ -343,3 +343,33 @@ def test_stkpush_simulate_request_paybill_requires_account_reference():
             Passkey="abc123",
         )
     assert "AccountReference must be provided when using PayBill" in str(excinfo.value)
+
+def test_stkpush_simulate_callback_string_result_code_handling():
+    """Ensure string ResultCode values are handled without type comparison errors."""
+    base = {
+        "Body": {
+            "stkCallback": {
+                "MerchantRequestID": "mrid",
+                "CheckoutRequestID": "crid",
+                "ResultDesc": "desc",
+                "CallbackMetadata": None,
+            }
+        }
+    }
+
+    # ResultCode as string "0" should be treated as success
+    data_zero = base.copy()
+    data_zero["Body"] = base["Body"].copy()
+    data_zero["Body"]["stkCallback"] = base["Body"]["stkCallback"].copy()
+    data_zero["Body"]["stkCallback"]["ResultCode"] = "0"
+    cb_zero = schemas.StkPushSimulateCallback.model_validate(data_zero)
+    assert cb_zero.is_successful is True
+
+    # ResultCode as string "1" should be treated as failure
+    data_one = base.copy()
+    data_one["Body"] = base["Body"].copy()
+    data_one["Body"]["stkCallback"] = base["Body"]["stkCallback"].copy()
+    data_one["Body"]["stkCallback"]["ResultCode"] = "1"
+    cb_one = schemas.StkPushSimulateCallback.model_validate(data_one)
+    assert cb_one.is_successful is False
+

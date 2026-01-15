@@ -136,7 +136,7 @@ class AccountBalanceResultMetadata(BaseModel):
     """Metadata for Account Balance result notification."""
 
     ResultType: int = Field(..., description="Type of result (0=Success, 1=Waiting).")
-    ResultCode: int = Field(..., description="Result code (0=Success).")
+    ResultCode: int | str = Field(..., description="Result code (0=Success).")
     ResultDesc: str = Field(..., description="Result description.")
     OriginatorConversationID: str = Field(
         ..., description="Originator conversation ID."
@@ -238,7 +238,7 @@ class AccountBalanceResultCallback(BaseModel):
 class AccountBalanceResultCallbackResponse(BaseModel):
     """Schema for response to Account Balance result callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0, description="Result code (0=Success, other=Failure)."
     )
     ResultDesc: str = Field(
@@ -279,7 +279,7 @@ class AccountBalanceTimeoutCallback(BaseModel):
 class AccountBalanceTimeoutCallbackResponse(BaseModel):
     """Schema for response to Account Balance timeout callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0,
         description="Result code (0=Success, other=Failure).",
     )

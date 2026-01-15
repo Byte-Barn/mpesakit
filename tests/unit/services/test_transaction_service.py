@@ -57,6 +57,63 @@ def test_query_status_calls_transaction_status(transaction_service, mock_http_cl
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
+def test_query_status_default_command_id(transaction_service, mock_http_client):
+    """Test that query_status calls TransactionStatus.query with correct request."""
+    response_data = {
+        "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+        "OriginatorConversationID": "12345-67890-1",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_http_client.post.return_value = response_data
+
+    resp = transaction_service.query_status(
+        initiator="testapi",
+        security_credential="encrypted_credential",
+        # command_id="TransactionStatusQuery", # Use the Default CommandID inside the Schemas instead
+        transaction_id="LKXXXX1234",
+        party_a=600999,
+        identifier_type=4,
+        result_url="https://example.com/result",
+        queue_timeout_url="https://example.com/timeout",
+        remarks="Status check for transaction",
+        occasion="JuneSalary",
+    )
+
+    # Assumption is that the default CommandID is used inside the TransactionStatusRequest
+    assert isinstance(resp, TransactionStatusResponse)
+    assert resp.is_successful() is True
+    assert resp.ResponseDescription == "Accept the service request successfully."
+
+def test_query_status_default_remarks(transaction_service, mock_http_client):
+    """Test that query_status calls TransactionStatus.query with correct request."""
+    response_data = {
+        "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+        "OriginatorConversationID": "12345-67890-1",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_http_client.post.return_value = response_data
+
+
+    resp = transaction_service.query_status(
+        initiator="testapi",
+        security_credential="encrypted_credential",
+        command_id="TransactionStatusQuery",
+        transaction_id="LKXXXX1234",
+        party_a=600999,
+        identifier_type=4,
+        result_url="https://example.com/result",
+        queue_timeout_url="https://example.com/timeout",
+        # remarks="Status check for transaction", # Use the Default remarks given
+        occasion="JuneSalary",
+    )
+
+    # Assumption is that the default Remarks is used inside the TransactionStatusRequest
+    assert isinstance(resp, TransactionStatusResponse)
+    assert resp.is_successful() is True
+    assert resp.ResponseDescription == "Accept the service request successfully."
+
 
 def test_query_status_filters_kwargs(transaction_service, mock_http_client):
     """Test that query_status filters out unexpected kwargs."""

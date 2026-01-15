@@ -120,7 +120,7 @@ class B2CAccountTopUpCallbackResult(BaseModel):
     ResultType: int = Field(
         ..., description="Status code for transaction sent to listener."
     )
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         ..., description="Transaction result status code. 0 means success."
     )
     ResultDesc: str = Field(
@@ -231,13 +231,13 @@ class B2CAccountTopUpCallback(BaseModel):
 
     def is_successful(self) -> bool:
         """Check if the callback indicates a successful transaction."""
-        return self.Result.ResultCode == 0
+        return str(self.Result.ResultCode) == "0"
 
 
 class B2CAccountTopUpCallbackResponse(BaseModel):
     """Response schema for B2C Account TopUp callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0, description="Result code of the callback. 0 indicates success."
     )
     ResultDesc: str = Field(
@@ -297,7 +297,7 @@ class B2CAccountTopUpTimeoutCallback(BaseModel):
 class B2CAccountTopUpTimeoutCallbackResponse(BaseModel):
     """Schema for response to B2C Account TopUp timeout callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0,
         description="Result code (0=Success, other=Failure).",
     )

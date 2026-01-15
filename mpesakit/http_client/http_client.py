@@ -36,14 +36,14 @@ class AsyncHttpClient(ABC):
     """
 
     @abstractmethod
-    async def post( 
+    async def post(
         self, url: str, json: Dict[str, Any], headers: Dict[str, str]
     ) -> Dict[str, Any]:
         """Sends an asynchronous POST request."""
         pass
 
     @abstractmethod
-    async def get( 
+    async def get(
         self,
         url: str,
         params: Optional[Dict[str, Any]] = None,

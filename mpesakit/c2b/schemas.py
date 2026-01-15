@@ -152,7 +152,7 @@ class C2BValidationRequest(BaseModel):
     ThirdPartyTransID: Optional[str] = Field(
         None, description="Partner transaction ID (optional)."
     )
-    MSISDN: int = Field(..., description="Customer mobile number.")
+    MSISDN: int | str = Field(..., description="Customer mobile number.")
     FirstName: Optional[str] = Field(None, description="Customer's first name.")
     MiddleName: Optional[str] = Field(None, description="Customer's middle name.")
     LastName: Optional[str] = Field(None, description="Customer's last name.")
@@ -226,7 +226,7 @@ class C2BValidationResponse(BaseModel):
 class C2BConfirmationResponse(BaseModel):
     """Schema for confirmation acknowledgment from your ConfirmationURL."""
 
-    ResultCode: int = Field(0, description="Always 0 (success).")
+    ResultCode: int | str = Field(0, description="Always 0 (success).")
     ResultDesc: str = Field("Success", description="Usually 'Success'.")
 
     model_config = ConfigDict(

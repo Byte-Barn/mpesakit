@@ -1,11 +1,10 @@
 """MpesaAsyncHttpClient: An asynchronous client for making HTTP requests to the M-Pesa API."""
 
 from typing import Dict, Any, Optional
-import httpx 
-import asyncio 
+import httpx
 
 from mpesakit.errors import MpesaError, MpesaApiException
-from .http_client import AsyncHttpClient 
+from .http_client import AsyncHttpClient
 
 
 class MpesaAsyncHttpClient(AsyncHttpClient):
@@ -19,7 +18,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
     """
 
     base_url: str
-    _client: httpx.AsyncClient 
+    _client: httpx.AsyncClient
 
     def __init__(self, env: str = "sandbox"):
         """Initializes the MpesaAsyncHttpClient with the specified environment."""
@@ -30,11 +29,11 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         if env.lower() == "production":
             return "https://api.safaricom.co.ke"
         return "https://sandbox.safaricom.co.ke"
-    
-    
+
+
     async def __aenter__(self):
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self._client.aclose()
 
@@ -44,18 +43,18 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
     ) -> Dict[str, Any]:
         """Sends an asynchronous POST request to the M-Pesa API."""
         try:
-            
+
             response = await self._client.post(
                 url, json=json, headers=headers, timeout=10
             )
 
-          
+
             try:
                 response_data = response.json()
             except ValueError:
                 response_data = {"errorMessage": response.text.strip() or ""}
 
-            if not response.is_success: 
+            if not response.is_success:
                 error_message = response_data.get("errorMessage", "")
                 raise MpesaApiException(
                     MpesaError(
@@ -85,7 +84,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
                 )
             )
         except httpx.HTTPError as e:
-            
+
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
@@ -105,7 +104,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         try:
             if headers is None:
                 headers = {}
-            
+
             response = await self._client.get(
                 url, params=params, headers=headers, timeout=10
             )
@@ -127,8 +126,8 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
                 )
 
             return response_data
-        
-       
+
+
         except httpx.TimeoutException:
             raise MpesaApiException(
                 MpesaError(

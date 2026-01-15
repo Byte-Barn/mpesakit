@@ -3,6 +3,12 @@ build-backend = "hatchling.build"
 requires = ["hatchling", "hatch-vcs"]
 
 [project]
+name = "mpesakit"
+dynamic = ["version"]
+description = "A Python SDK for integrating with M-Pesa APIs"
+readme = "README.md"
+license = { text = "APACHE-2.0" }
+requires-python = ">=3.10"
 authors = [
   {name = "John Kagunda", email = "johnmkagunda@gmail.com"},
 ]
@@ -10,6 +16,8 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries :: Python Modules",
@@ -93,8 +101,8 @@ packages = ["mpesakit"]
 
 # Ruff configuration-sdk/is
 [tool.ruff]
-fix = true
-target-version = "py312"
+target-version = "py310"
+fix = true  
 
 [tool.ruff.lint]
 ignore = [

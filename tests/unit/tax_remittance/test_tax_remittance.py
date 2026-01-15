@@ -144,3 +144,25 @@ def test_tax_remittance_timeout_callback_response():
     resp = TaxRemittanceTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
+
+def test_tax_remittance_result_callback_with_string_resultcode():
+    """Ensure is_successful handles ResultCode provided as a string without type errors."""
+    payload = {
+        "Result": {
+            "ResultType": 0,
+            "ResultCode": "0",  # ResultCode as a string
+            "ResultDesc": "The service request is processed successfully",
+            "OriginatorConversationID": "626f6ddf-ab37-4650-b882-b1de92ec9aa4",
+            "ConversationID": "AG_20181005_00004d7ee675c0c7ee0b",
+            "TransactionID": "QKA81LK5CY",
+            "ResultParameters": {
+                "ResultParameter": [
+                    {"Key": "Amount", "Value": "190.00"},
+                    {"Key": "Currency", "Value": "KES"},
+                ]
+            },
+        }
+    }
+    callback = TaxRemittanceResultCallback(**payload)
+    # Should not raise a TypeError comparing str and int; should treat "0" as success
+    assert callback.is_successful() is True

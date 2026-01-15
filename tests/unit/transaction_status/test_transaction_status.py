@@ -354,3 +354,28 @@ def test_result_callback_schema():
     assert callback.Result.transaction_amount == 1000
     assert callback.Result.transaction_receipt == "LKXXXX1234"
     assert callback.Result.transaction_status == "Completed"
+
+def test_query_response_code_type_variations(transaction_status, mock_http_client):
+    """Ensure TransactionStatusResponse.is_successful handles ResponseCode as str or int without TypeError."""
+    request = valid_transaction_status_request()
+    cases = [
+        (0, True),
+        ("0", True),
+        ("00000000", True),
+        (1, False),
+        ("1", False),
+        ("00001", False),
+    ]
+    for code, expected_success in cases:
+        response_data = {
+            "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+            "OriginatorConversationID": "12345-67890-1",
+            "ResponseCode": code,
+            "ResponseDescription": "Response with varied code type.",
+        }
+        mock_http_client.post.return_value = response_data
+
+        # Should not raise due to type differences and should return expected boolean
+        resp = transaction_status.query(request)
+        assert isinstance(resp, TransactionStatusResponse)
+        assert resp.is_successful() is expected_success

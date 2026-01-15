@@ -240,7 +240,7 @@ class BusinessBuyGoodsResultCallback(BaseModel):
 class BusinessBuyGoodsResultCallbackResponse(BaseModel):
     """Response schema for Business Buy Goods result callback."""
 
-    ResultCode: int = 0
+    ResultCode: int | str = 0
     ResultDesc: str = "Callback received successfully."
 
     model_config = ConfigDict(
@@ -289,7 +289,7 @@ class BusinessBuyGoodsTimeoutCallback(BaseModel):
 class BusinessBuyGoodsTimeoutCallbackResponse(BaseModel):
     """Response schema for Business Buy Goods timeout callback."""
 
-    ResultCode: int = 0
+    ResultCode: int | str = 0
     ResultDesc: str = "Timeout notification received successfully."
 
     model_config = ConfigDict(

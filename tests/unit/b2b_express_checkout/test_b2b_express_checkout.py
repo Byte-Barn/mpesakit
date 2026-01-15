@@ -119,3 +119,17 @@ def test_b2b_express_callback_response():
     resp = B2BExpressCallbackResponse()
     assert resp.ResultCode == 0
     assert "Callback received successfully" in resp.ResultDesc
+
+def test_b2b_express_callback_resultcode_as_string():
+    """Ensure resultCode as a string doesn't cause comparison/type errors in is_successful()."""
+    payload = {
+        "resultCode": "0",
+        "resultDesc": "Processed successfully",
+        "amount": 25.0,
+        "requestId": "string-resultcode-test",
+    }
+    callback = B2BExpressCheckoutCallback(**payload)
+
+    # Should treat "0" (string) as success and not raise a TypeError when comparing types.
+    assert callback.resultCode == "0"
+    assert callback.is_successful() is True

@@ -235,7 +235,7 @@ class ReversalResultCallback(BaseModel):
 class ReversalResultCallbackResponse(BaseModel):
     """Schema for response to Reversal result callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0, description="Result code (0=Success, other=Failure)."
     )
     ResultDesc: str = Field(
@@ -276,7 +276,7 @@ class ReversalTimeoutCallback(BaseModel):
 class ReversalTimeoutCallbackResponse(BaseModel):
     """Schema for response to Reversal timeout callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0,
         description="Result code (0=Success, other=Failure).",
     )

@@ -43,7 +43,7 @@ class StkPush(BaseModel):
             "Content-Type": "application/json",
         }
 
-        response_data = self.http_client.post(url, json=dict(request), headers=headers)
+        response_data = self.http_client.post(url, json=request.model_dump(by_alias=True), headers=headers)
 
         return StkPushSimulateResponse(**response_data)
 

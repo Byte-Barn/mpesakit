@@ -323,7 +323,7 @@ class StkCallback(BaseModel):
         ...,
         description="Global unique identifier of the processed checkout transaction request",
     )
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         ...,
         description="Numeric status code indicating the status of the transaction processing. 0 means success",
     )
@@ -449,13 +449,13 @@ class StkPushSimulateCallback(BaseModel):
         Returns:
             bool: True if ResultCode is 0, False otherwise.
         """
-        return self.Body.stkCallback.ResultCode == 0
+        return str(self.Body.stkCallback.ResultCode) == "0"
 
 
 class StkPushSimulateCallbackResponse(BaseModel):
     """Schema for confirmation acknowledgment from your ConfirmationURL."""
 
-    ResultCode: int = Field(0, description="Always 0 (success).")
+    ResultCode: int | str = Field(0, description="Always 0 (success).")
     ResultDesc: str = Field("Success", description="Usually 'Success'.")
 
     model_config = ConfigDict(
@@ -580,7 +580,7 @@ class StkPushQueryResponse(BaseModel):
         ...,
         description="Acknowledgment message from the API about the request submission status.",
     )
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         ...,
         description="Numeric status code indicating the status of the transaction processing. 0 means success.",
     )

@@ -366,3 +366,19 @@ def test_warn_long_resultdesc_none(monkeypatch):
     result = C2BValidationResponse._warn_long_resultdesc(values)
     assert len(warn_calls) == 0
     assert result == values
+    
+def test_is_successful_with_mixed_string_response_code_no_type_error():
+    """Ensure is_successful handles mixed/numeric-like string ResponseCode without TypeError and returns False for non-success codes."""
+    resp = C2BRegisterUrlResponse(
+        ResponseDescription="Failed",
+        OriginatorConversationID="abc123",
+        ConversationID="conv456",
+        CustomerMessage="Error",
+        ResponseCode="00001",
+    )
+    try:
+        result = resp.is_successful()
+    except TypeError as e:
+        pytest.fail(f"is_successful raised TypeError when ResponseCode is a mixed string: {e}")
+    assert isinstance(result, bool)
+    assert result is False

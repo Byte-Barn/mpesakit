@@ -200,3 +200,20 @@ def test_reversal_request_occasion_too_long_raises():
     with pytest.raises(ValueError) as excinfo:
         ReversalRequest(**kwargs)
     assert "Occasion must not exceed 100 characters." in str(excinfo.value)
+
+def test_reverse_responsecode_string_no_type_error(reversal, mock_http_client):
+    """Ensure is_successful handles ResponseCode as a string without TypeError."""
+    request = valid_reversal_request()
+    response_data = {
+        "OriginatorConversationID": "71840-27539181-07",
+        "ConversationID": "AG_20210709_12346c8e6f8858d7b70a",
+        "ResponseCode": "0",  # string type
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_http_client.post.return_value = response_data
+
+    response = reversal.reverse(request)
+
+    assert isinstance(response, ReversalResponse)
+    # Calling is_successful should not raise a TypeError when comparing str to int
+    assert response.is_successful() is True

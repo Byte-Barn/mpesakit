@@ -91,7 +91,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://discord.gg/vzGBh5Qu',
+          href: 'https://discord.gg/hNxTew523E',
           label: 'Discord',
           position: 'right',
         },
@@ -122,7 +122,7 @@ const config: Config = {
             },
             // {
             //   label: 'Discord',
-            //   href: 'https://discord.gg/docusaurus', // Optional: create your own
+            //   href: 'https://discord.gg/hNxTew523E', // Optional: create your own
             // },
             // {
             //   label: 'Stack Overflow',

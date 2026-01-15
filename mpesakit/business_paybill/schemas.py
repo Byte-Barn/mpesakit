@@ -229,13 +229,13 @@ class BusinessPayBillResultCallback(BaseModel):
 
     def is_successful(self) -> bool:
         """Check if the result indicates success."""
-        return self.Result.ResultCode == 0
+        return str(self.Result.ResultCode) == "0"
 
 
 class BusinessPayBillResultCallbackResponse(BaseModel):
     """Response schema for Business PayBill result callback."""
 
-    ResultCode: int = 0
+    ResultCode: int | str = 0
     ResultDesc: str = "Callback received successfully."
 
     model_config = ConfigDict(
@@ -271,7 +271,7 @@ class BusinessPayBillTimeoutCallback(BaseModel):
 class BusinessPayBillTimeoutCallbackResponse(BaseModel):
     """Response schema for Business PayBill timeout callback."""
 
-    ResultCode: int = 0
+    ResultCode: int | str = 0
     ResultDesc: str = "Timeout notification received successfully."
 
     model_config = ConfigDict(

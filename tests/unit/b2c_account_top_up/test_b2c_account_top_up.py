@@ -163,3 +163,20 @@ def test_b2c_account_topup_timeout_callback_response():
     resp = B2CAccountTopUpTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
+
+@pytest.mark.parametrize("result_code_str, expected", [("0", True), ("1", False)])
+def test_b2c_account_topup_string_result_code_is_successful(result_code_str, expected):
+    """Ensure is_successful() handles ResultCode as a string without TypeError."""
+    payload = {
+        "Result": {
+            "ResultType": 0,
+            "ResultCode": result_code_str,
+            "ResultDesc": "The service request is processed successfully",
+            "OriginatorConversationID": "abc-123",
+            "ConversationID": "conv-456",
+            "TransactionID": "TX123456",
+        }
+    }
+    callback = B2CAccountTopUpCallback(**payload)
+    # Should not raise a TypeError when comparing string vs int inside is_successful
+    assert callback.is_successful() is expected

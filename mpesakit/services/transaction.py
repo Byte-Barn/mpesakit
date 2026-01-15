@@ -1,7 +1,5 @@
 """Facade for M-Pesa Transaction Status API interactions."""
 
-from typing import Optional
-
 from mpesakit.auth import TokenManager
 from mpesakit.http_client import HttpClient
 from mpesakit.transaction_status import (
@@ -27,15 +25,15 @@ class TransactionService:
         self,
         initiator: str,
         security_credential: str,
-        command_id: str,
         transaction_id: str,
         party_a: int,
         identifier_type: int,
         result_url: str,
         queue_timeout_url: str,
-        remarks: str = "",
         occasion: str = "",
-        originator_conversation_id: Optional[str] = None,
+        command_id: str | None = None,
+        remarks: str | None = None,
+        original_conversation_id: str | None = None,
         **kwargs,
     ) -> TransactionStatusResponse:
         """Query the status of a transaction.
@@ -51,7 +49,7 @@ class TransactionService:
             queue_timeout_url: URL for timeout notification.
             remarks: Additional remarks.
             occasion: Occasion for the transaction.
-            originator_conversation_id: Can be used to query if you don't have the transaction ID.
+            original_conversation_id: Can be used to query if you don't have the transaction ID.
             **kwargs: Additional fields for TransactionStatusRequest.
 
         Returns:
@@ -60,19 +58,27 @@ class TransactionService:
         request = TransactionStatusRequest(
             Initiator=initiator,
             SecurityCredential=security_credential,
-            CommandID=command_id,
             TransactionID=transaction_id,
             PartyA=party_a,
             IdentifierType=identifier_type,
             ResultURL=result_url,
             QueueTimeOutURL=queue_timeout_url,
-            Remarks=remarks,
             Occasion=occasion,
-            OriginatorConversationID=originator_conversation_id,
             **{
                 k: v
                 for k, v in kwargs.items()
                 if k in TransactionStatusRequest.model_fields
             },
         )
+
+        optionals = {
+            "CommandID": command_id,
+            "Remarks": remarks,
+            "OriginalConversationID": original_conversation_id
+        }
+
+        for field_name, value in optionals.items():
+            if value is not None:
+                setattr(request, field_name, value)
+
         return self.transaction_status.query(request)

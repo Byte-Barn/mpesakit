@@ -342,3 +342,23 @@ def test_billed_period_invalid_raises():
     with pytest.raises(ValueError) as excinfo:
         BillManagerSingleInvoiceRequest(**req)
     assert "billedPeriod" in str(excinfo.value)
+
+def test_result_code_as_string_does_not_raise(bill_manager, mock_http_client):
+    """Ensure response.resultCode as a string does not cause type errors in is_successful."""
+    request = valid_single_invoice_request()
+    # resultCode intentionally a string to simulate APIs that return numeric codes as strings
+    response_data = {
+        "resultCode": "0",
+        "Status_Message": "Invoice sent successfully",
+        "resmsg": "Success",
+        "rescode": "200",
+    }
+    mock_http_client.post.return_value = response_data
+
+    response = bill_manager.send_single_invoice(request)
+
+    # Calling is_successful() should not raise a TypeError from comparing str and int;
+    # it should return a boolean result.
+    is_success = response.is_successful()
+    assert isinstance(is_success, bool)
+

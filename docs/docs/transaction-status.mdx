@@ -139,7 +139,7 @@ from mpesakit.transaction_status import TransactionStatusIdentifierType
 
 client = MpesaClient(consumer_key="...", consumer_secret="...", environment="sandbox")
 
-resp = client.transaction.query_status(
+resp = client.transactions.query_status(
         initiator="api_user",
         security_credential="ENCRYPTED_CREDENTIAL",
         transaction_id="LK12345",

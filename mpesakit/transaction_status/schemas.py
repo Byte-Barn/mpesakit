@@ -46,7 +46,7 @@ class TransactionStatusRequest(BaseModel):
     IdentifierType: int = Field(..., description="Type of identifier for PartyA.")
     ResultURL: str = Field(..., description="URL for result notifications.")
     QueueTimeOutURL: str = Field(..., description="URL for timeout notifications.")
-    Remarks: str = Field(..., description="Comments for the transaction.")
+    Remarks: str = Field(default="Status Query", description="Comments for the transaction.")
     Occasion: Optional[str] = Field(
         None, description="Optional occasion for the query."
     )
@@ -177,7 +177,7 @@ class TransactionStatusResultMetadata(BaseModel):
     """Metadata for Transaction Status result notification."""
 
     ResultType: int = Field(..., description="Type of result (0=Success, 1=Failure).")
-    ResultCode: int = Field(..., description="Result code (0=Success).")
+    ResultCode: int | str = Field(..., description="Result code (0=Success).")
     ResultDesc: str = Field(..., description="Result description.")
     OriginatorConversationID: str = Field(
         ..., description="Originator conversation ID."
@@ -265,7 +265,7 @@ class TransactionStatusResultCallback(BaseModel):
 class TransactionStatusResultCallbackResponse(BaseModel):
     """Schema for response to Transaction Status result callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0, description="Result code (0=Success, other=Failure)."
     )
     ResultDesc: str = Field(
@@ -306,7 +306,7 @@ class TransactionStatusTimeoutCallback(BaseModel):
 class TransactionStatusTimeoutCallbackResponse(BaseModel):
     """Schema for response to Transaction Status timeout callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0,
         description="Result code (0=Success, other=Failure).",
     )

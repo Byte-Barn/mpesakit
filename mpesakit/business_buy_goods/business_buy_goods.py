@@ -43,5 +43,5 @@ class BusinessBuyGoods(BaseModel):
             "Authorization": f"Bearer {self.token_manager.get_token()}",
             "Content-Type": "application/json",
         }
-        response_data = self.http_client.post(url, json=dict(request), headers=headers)
+        response_data = self.http_client.post(url, json=request.model_dump(by_alias=True), headers=headers)
         return BusinessBuyGoodsResponse(**response_data)

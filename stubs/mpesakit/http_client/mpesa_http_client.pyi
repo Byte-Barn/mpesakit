@@ -1,0 +1,9 @@
+from .http_client import HttpClient as HttpClient
+from mpesakit.errors import MpesaApiException as MpesaApiException, MpesaError as MpesaError
+from typing import Any
+
+class MpesaHttpClient(HttpClient):
+    base_url: str
+    def __init__(self, env: str = 'sandbox') -> None: ...
+    def post(self, url: str, json: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]: ...
+    def get(self, url: str, params: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]: ...

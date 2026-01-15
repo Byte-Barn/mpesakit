@@ -167,7 +167,7 @@ class B2CResultMetadata(BaseModel):
     """Metadata for B2C result notification."""
 
     ResultType: int = Field(..., description="Type of result (0=Success, 1=Failure).")
-    ResultCode: int = Field(..., description="Result code (0=Success).")
+    ResultCode: int | str = Field(..., description="Result code (0=Success).")
     ResultDesc: str = Field(..., description="Result description.")
     OriginatorConversationID: str = Field(
         ..., description="Originator conversation ID."
@@ -279,7 +279,7 @@ class B2CResultCallback(BaseModel):
 class B2CResultCallbackResponse(BaseModel):
     """Schema for response to B2C result callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0, description="Result code (0=Success, other=Failure)."
     )
     ResultDesc: str = Field(
@@ -320,7 +320,7 @@ class B2CTimeoutCallback(BaseModel):
 class B2CTimeoutCallbackResponse(BaseModel):
     """Schema for response to B2C timeout callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0,
         description="Result code (0=Success, other=Failure).",
     )

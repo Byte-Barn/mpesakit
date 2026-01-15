@@ -108,7 +108,7 @@ class B2BExpressCheckoutCallback(BaseModel):
 class B2BExpressCallbackResponse(BaseModel):
     """Response schema for B2B Express Checkout callback."""
 
-    ResultCode: int = Field(
+    ResultCode: int | str = Field(
         default=0,
         description="Result code (0=Success, other=Failure).",
     )
