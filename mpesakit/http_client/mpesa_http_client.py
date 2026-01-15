@@ -150,7 +150,17 @@ class MpesaHttpClient(HttpClient):
 
         handle_request_error(response)
 
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as e:
+            raise MpesaApiException(
+                MpesaError(
+                    error_code="JSON_DECODE_ERROR",
+                    error_message=str(e),
+                    status_code=getattr(response, "status_code", None),
+                    raw_response=getattr(response, "text", None),
+                )
+            ) from e
 
     @retry(
         retry=retry_enabled(enabled=True),
@@ -189,7 +199,17 @@ class MpesaHttpClient(HttpClient):
 
         handle_request_error(response)
 
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as e:
+            raise MpesaApiException(
+                MpesaError(
+                    error_code="JSON_DECODE_ERROR",
+                    error_message=str(e),
+                    status_code=getattr(response, "status_code", None),
+                    raw_response=getattr(response, "text", None),
+                )
+            ) from e
 
     def close(self) -> None:
         """Closes the persistent session if it exists."""
