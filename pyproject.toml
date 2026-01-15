@@ -1,19 +1,10 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
-name = "mpesakit"
-dynamic = ["version"]
-description = "A Python SDK for integrating with M-Pesa APIs"
-readme = "README.md"
-license = { text = "APACHE-2.0" }
-requires-python = ">=3.12"
 authors = [
-  { name = "John Kagunda", email = "johnmkagunda@gmail.com" }
-]
-maintainers = [
-  { name = "John Kagunda", email = "johnmkagunda@gmail.com" }
+  {name = "John Kagunda", email = "johnmkagunda@gmail.com"},
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -23,8 +14,10 @@ classifiers = [
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-  "Typing :: Typed"
+  "Typing :: Typed",
 ]
+description = "A Python SDK for integrating with M-Pesa APIs"
+dynamic = ["version"]
 keywords = [
   "mpesa",
   "sdk",
@@ -38,22 +31,28 @@ keywords = [
   "mobile money",
   "payments",
 ]
+license = {text = "APACHE-2.0"}
+maintainers = [
+  {name = "John Kagunda", email = "johnmkagunda@gmail.com"},
+]
+name = "mpesakit"
+readme = "README.md"
+requires-python = ">=3.12"
 
-dependencies = [ 
+dependencies = [
   "pydantic >=2.10.6,<3.0.0",
   "pydantic[email] >=2.10.6,<3.0.0",
-  "requests >=2.32.3,<3.0.0",
+  "requests >=2.32.5,<3.0.0",
   "typing_extensions >= 4.12.2,<5.0.0",
   "cryptography >=41.0.7",
   "tenacity>=8.2.3,<9.0.0",
-  "httpx >=0.27.0,<1.0.0"
+  "httpx >=0.27.0,<1.0.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/rafaeljohn9/mpesakit"
-Repository = "https://github.com/rafaeljohn9/mpesakit"
-Issues = "https://github.com/rafaeljohn9/mpesakit/issues"
-
+Homepage = "https://github.com/Byte-Barn/mpesakit"
+Issues = "https://github.com/Byte-Barn/mpesakit/issues"
+Repository = "https://github.com/Byte-Barn/mpesakit"
 
 [project.optional-dependencies]
 dev = [
@@ -94,20 +93,20 @@ packages = ["mpesakit"]
 
 # Ruff configuration-sdk/is
 [tool.ruff]
+fix = true
 target-version = "py312"
-fix = true  
 
 [tool.ruff.lint]
+ignore = [
+  "D104", # Missing docstring in public package
+  "D105", # Missing docstring in magic method
+  "E501", # Line too long
+]
 select = [
   "D", # pydocstyle
   "E", # pycodestyle errors
   "W", # pycodestyle warnings
-  "F"  # pyflakes
-  ]
-ignore = [
-  "D104",  # Missing docstring in public package
-  "D105",  # Missing docstring in magic method
-  "E501",  # Line too long
+  "F", # pyflakes
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -121,12 +120,12 @@ known-first-party = ["mpesakit"]
 
 # Testing configuration
 [tool.pytest.ini_options]
-testpaths = ["tests"]
 addopts = "-v -s --cov=mpesakit --cov-report=html --cov-report=term"
 markers = [
   "live: mark a test as requiring live credentials and environment",
   "asyncio",
 ]
+testpaths = ["tests"]
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
