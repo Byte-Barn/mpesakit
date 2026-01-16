@@ -104,17 +104,20 @@ class MpesaHttpClient(HttpClient):
     base_url: str
     _session: Optional[requests.Session] = None
 
-    def __init__(self, env: str = "sandbox", use_session: bool = False):
+    def __init__(
+        self, env: str = "sandbox", use_session: bool = False, trust_env: bool = True
+    ):
         """Initializes the MpesaHttpClient instance.
 
         Args:
             env (str): The environment to connect to ('sandbox' or 'production').
             use_session (bool): Whether to use a persistent session.
+            trust_env (bool): Whether to trust environment proxy/CA settings (only applies in session mode).
         """
         self.base_url = self._resolve_base_url(env)
         if use_session:
             self._session = requests.Session()
-            self._session.trust_env = False
+            self._session.trust_env = trust_env
 
     def _resolve_base_url(self, env: str) -> str:
         if env.lower() == "production":
