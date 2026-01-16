@@ -30,21 +30,22 @@ def handle_request_error(response: requests.Response):
     This function is now responsible for converting HTTP status codes
     and JSON parsing errors into MpesaApiException.
     """
+    if response.ok:
+        return
     try:
         response_data = response.json()
     except ValueError:
         response_data = {"errorMessage": response.text.strip() or ""}
 
-    if not response.ok:
-        error_message = response_data.get("errorMessage", "")
-        raise MpesaApiException(
-            MpesaError(
-                error_code=f"HTTP_{response.status_code}",
-                error_message=error_message,
-                status_code=response.status_code,
-                raw_response=response_data,
-            )
+    error_message = response_data.get("errorMessage", "")
+    raise MpesaApiException(
+        MpesaError(
+            error_code=f"HTTP_{response.status_code}",
+            error_message=error_message,
+            status_code=response.status_code,
+            raw_response=response_data,
         )
+    )
 
 
 def handle_retry_exception(retry_state: RetryCallState):
