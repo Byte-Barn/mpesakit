@@ -21,10 +21,10 @@ class MpesaClient:
     """Unified client for all M-PESA services."""
 
     def __init__(
-        self, consumer_key: str, consumer_secret: str, environment: str = "sandbox"
+        self, consumer_key: str, consumer_secret: str, environment: str = "sandbox",use_session: bool = False
     ) -> None:
         """Initialize the MpesaClient with all service facades."""
-        self.http_client = MpesaHttpClient(env=environment)
+        self.http_client = MpesaHttpClient(env=environment,use_session=use_session)
         self.token_manager = TokenManager(
             http_client=self.http_client,
             consumer_key=consumer_key,
