@@ -4,8 +4,7 @@ This module defines the MpesaError and MpesaApiException classes for handling M-
 It uses Pydantic for validation and serialization of error data.
 """
 
-from typing import Any, Optional
-
+from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -16,7 +15,7 @@ class MpesaError(BaseModel):
     error_code: Optional[str] = Field(default=None)
     error_message: Optional[str] = Field(default=None)
     status_code: Optional[int] = Field(default=None)
-    raw_response: Optional[Any] = Field(default=None)
+    raw_response: Optional[Dict[str, Any]] = Field(default=None)
 
     def __str__(self) -> str:
         parts = []
