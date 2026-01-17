@@ -56,8 +56,8 @@ def test_post_http_error(client):
         mock_response = Response(status_code=400, json={"errorMessage": "Bad Request"})
         mock_raw_post.return_value = mock_response
 
-    with pytest.raises(MpesaApiException) as exc:
-        client.post("/fail", json={}, headers={})
+        with pytest.raises(MpesaApiException) as exc:
+            client.post("/fail", json={}, headers={})
 
         assert exc.value.error.error_code == "HTTP_400"
         assert "Bad Request" in exc.value.error.error_message
@@ -66,17 +66,15 @@ def test_post_http_error(client):
 def test_post_json_decode_error(client):
     """Test POST request handles JSON decode error gracefully."""
     with patch.object(client, "_raw_post") as mock_raw_post:
-        mock_response = Mock()
-        mock_response.status_code = 500
-        mock_response.json.side_effect = ValueError()
-        mock_response.text = "Internal Server Error"
+        mock_response = Response(status_code=500, text="Internal Server Error")
+        mock_response.json = Mock(side_effect=ValueError())
         mock_raw_post.return_value = mock_response
 
         with pytest.raises(MpesaApiException) as exc:
             client.post("/fail", json={}, headers={})
 
-            assert exc.value.error.error_code == "HTTP_500"
-            assert "Internal Server Error" in exc.value.error.error_message
+        assert exc.value.error.error_code == "HTTP_500"
+        assert "Internal Server Error" in exc.value.error.error_message
 
 
 def test_post_request_exception_is_not_retried_and_raises_api_exception(client):
@@ -111,14 +109,14 @@ def test_post_fails_after_max_retries(client):
 
     This test ensures the retry mechanism eventually gives up.
     """
-    with patch.object(client, "_raw_post") as mock_raw_post:
-        mock_raw_post.side_effect = httpx.ConnectError("Connection failed.")
+    with patch("httpx.Client.post") as mock_httpx_post:
+        mock_httpx_post.side_effect = httpx.ConnectError("Connection failed.")
 
         with pytest.raises(MpesaApiException) as exc:
             client.post("/test", json={"a": 1}, headers={"h": "v"})
 
-            assert mock_raw_post.call_count == 3
-            assert exc.value.error.error_code == "CONNECTION_ERROR"
+        assert mock_httpx_post.call_count == 3
+        assert exc.value.error.error_code == "CONNECTION_ERROR"
 
 
 def test_get_success(client):
@@ -155,8 +153,8 @@ def test_get_json_decode_error(client):
         with pytest.raises(MpesaApiException) as exc:
             client.get("/fail")
 
-            assert exc.value.error.error_code == "HTTP_500"
-            assert "Internal Server Error" in exc.value.error.error_message
+        assert exc.value.error.error_code == "HTTP_500"
+        assert "Internal Server Error" in exc.value.error.error_message
 
 
 def test_get_request_exception_is_not_retried_and_raises_api_exception(client):
@@ -185,11 +183,11 @@ def test_get_retries_and_succeeds(client):
 
 def test_get_fails_after_max_retries(client):
     """Test that a GET request raises an exception after all retries fail."""
-    with patch.object(client, "_raw_get") as mock_raw_get:
-        mock_raw_get.side_effect = httpx.TimeoutException("Read timed out.")
+    with patch("httpx.Client.get") as mock_httpx_get:
+        mock_httpx_get.side_effect = httpx.TimeoutException("Read timed out.")
 
         with pytest.raises(MpesaApiException) as exc:
             client.get("/test")
 
-            assert mock_raw_get.call_count == 3
-            assert exc.value.error.error_code == "REQUEST_TIMEOUT"
+        assert mock_httpx_get.call_count == 3
+        assert exc.value.error.error_code == "REQUEST_TIMEOUT"
