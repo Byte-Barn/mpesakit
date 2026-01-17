@@ -7,7 +7,7 @@ import logging
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
-import httpx
+import requests
 from tenacity import (
     RetryCallState,
     before_sleep_log,
@@ -24,13 +24,13 @@ from .http_client import HttpClient
 logger = logging.getLogger(__name__)
 
 
-def handle_request_error(response: httpx.Response):
+def handle_request_error(response: requests.Response):
     """Handles non-successful HTTP responses.
 
     This function is now responsible for converting HTTP status codes
     and JSON parsing errors into MpesaApiException.
     """
-    if response.is_success:
+    if response.ok:
         return
     try:
         response_data = response.json()
@@ -56,11 +56,11 @@ def handle_retry_exception(retry_state: RetryCallState):
     if retry_state.outcome:
         exception = retry_state.outcome.exception()
 
-        if isinstance(exception, httpx.TimeoutException):
+        if isinstance(exception, requests.exceptions.Timeout):
             raise MpesaApiException(
                 MpesaError(error_code="REQUEST_TIMEOUT", error_message=str(exception))
             ) from exception
-        elif isinstance(exception, httpx.ConnectError):
+        elif isinstance(exception, requests.exceptions.ConnectionError):
             raise MpesaApiException(
                 MpesaError(error_code="CONNECTION_ERROR", error_message=str(exception))
             ) from exception
@@ -87,8 +87,8 @@ def retry_enabled(enabled: bool):
         A retry condition function.
     """
     base_retry = retry_if_exception_type(
-        httpx.TimeoutException
-    ) | retry_if_exception_type(httpx.ConnectError)
+        requests.exceptions.Timeout
+    ) | retry_if_exception_type(requests.exceptions.ConnectionError)
 
     def _retry(retry_state):
         if not enabled:
@@ -102,7 +102,7 @@ class MpesaHttpClient(HttpClient):
     """A client for making HTTP requests to the M-Pesa API."""
 
     base_url: str
-    _client: Optional[httpx.Client] = None
+    _session: Optional[requests.Session] = None
 
     def __init__(
         self, env: str = "sandbox", use_session: bool = False, trust_env: bool = True
@@ -111,12 +111,13 @@ class MpesaHttpClient(HttpClient):
 
         Args:
             env (str): The environment to connect to ('sandbox' or 'production').
-            use_session (bool): Whether to use a persistent client.
-            trust_env (bool): Whether to trust environment proxy/CA settings.
+            use_session (bool): Whether to use a persistent session.
+            trust_env (bool): Whether to trust environment proxy/CA settings (only applies in session mode).
         """
         self.base_url = self._resolve_base_url(env)
         if use_session:
-            self._client = httpx.Client(trust_env=trust_env)
+            self._session = requests.Session()
+            self._session.trust_env = trust_env
 
     def _resolve_base_url(self, env: str) -> str:
         if env.lower() == "production":
@@ -132,18 +133,15 @@ class MpesaHttpClient(HttpClient):
     )
     def _raw_post(
         self, url: str, json: Dict[str, Any], headers: Dict[str, str], timeout: int = 10
-    ) -> httpx.Response:
-        """Low-level POST request - may raise httpx exceptions."""
+    ) -> requests.Response:
+        """Low-level POST request - may raise requests exceptions."""
         full_url = urljoin(self.base_url, url)
-        if self._client:
-            return self._client.post(
+        if self._session:
+            return self._session.post(
                 full_url, json=json, headers=headers, timeout=timeout
             )
         else:
-            with httpx.Client() as client:
-                return client.post(
-                    full_url, json=json, headers=headers, timeout=timeout
-                )
+            return requests.post(full_url, json=json, headers=headers, timeout=timeout)
 
     def post(
         self, url: str, json: Dict[str, Any], headers: Dict[str, str], timeout: int = 10
@@ -159,12 +157,12 @@ class MpesaHttpClient(HttpClient):
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        response: httpx.Response | None = None
+        response: requests.Response | None = None
         try:
             response = self._raw_post(url, json, headers, timeout)
             handle_request_error(response)
             return response.json()
-        except (httpx.RequestError, ValueError) as e:
+        except (requests.RequestException, ValueError) as e:
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
@@ -186,28 +184,23 @@ class MpesaHttpClient(HttpClient):
         url: str,
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
-        timeout: int = 10,
-    ) -> httpx.Response:
-        """Low-level GET request - may raise httpx exceptions."""
+    ) -> requests.Response:
+        """Low-level GET request - may raise requests exceptions."""
         if headers is None:
             headers = {}
         full_url = urljoin(self.base_url, url)
-        if self._client:
-            return self._client.get(
-                full_url, params=params, headers=headers, timeout=timeout
+        if self._session:
+            return self._session.get(
+                full_url, params=params, headers=headers, timeout=10
             )
         else:
-            with httpx.Client() as client:
-                return client.get(
-                    full_url, params=params, headers=headers, timeout=timeout
-                )
+            return requests.get(full_url, params=params, headers=headers, timeout=10)
 
     def get(
         self,
         url: str,
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
-        timeout: int = 10,
     ) -> Dict[str, Any]:
         """Sends a GET request to the M-Pesa API.
 
@@ -215,17 +208,16 @@ class MpesaHttpClient(HttpClient):
             url (str): The URL path for the request.
             params (Optional[Dict[str, Any]]): The URL parameters.
             headers (Optional[Dict[str, str]]): The HTTP headers.
-            timeout (int): The timeout for the request in seconds.
 
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        response: httpx.Response | None = None
+        response: requests.Response | None = None
         try:
-            response = self._raw_get(url, params, headers, timeout)
+            response = self._raw_get(url, params, headers)
             handle_request_error(response)
             return response.json()
-        except (httpx.RequestError, ValueError) as e:
+        except (requests.RequestException, ValueError) as e:
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
@@ -236,15 +228,15 @@ class MpesaHttpClient(HttpClient):
             ) from e
 
     def close(self) -> None:
-        """Closes the persistent client if it exists."""
-        if self._client:
-            self._client.close()
-            self._client = None
+        """Closes the persistent session if it exists."""
+        if self._session:
+            self._session.close()
+            self._session = None
 
     def __enter__(self) -> "MpesaHttpClient":
         """Context manager entry point."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Context manager exit point. Closes the client."""
+        """Context manager exit point. Closes the session."""
         self.close()
