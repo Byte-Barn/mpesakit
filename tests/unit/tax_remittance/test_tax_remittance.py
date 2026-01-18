@@ -4,12 +4,12 @@ This module tests the Tax Remittance API client, ensuring it can handle remittan
 process responses correctly, and manage error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-from mpesakit.tax_remittance.tax_remittance import TaxRemittance
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.tax_remittance import (
     TaxRemittanceRequest,
     TaxRemittanceResponse,
@@ -18,6 +18,7 @@ from mpesakit.tax_remittance import (
     TaxRemittanceTimeoutCallback,
     TaxRemittanceTimeoutCallbackResponse,
 )
+from mpesakit.tax_remittance.tax_remittance import AsyncTaxRemittance, TaxRemittance
 
 
 @pytest.fixture
@@ -145,6 +146,7 @@ def test_tax_remittance_timeout_callback_response():
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
 
+
 def test_tax_remittance_result_callback_with_string_resultcode():
     """Ensure is_successful handles ResultCode provided as a string without type errors."""
     payload = {
@@ -166,3 +168,77 @@ def test_tax_remittance_result_callback_with_string_resultcode():
     callback = TaxRemittanceResultCallback(**payload)
     # Should not raise a TypeError comparing str and int; should treat "0" as success
     assert callback.is_successful() is True
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_tax_remittance(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncTaxRemittance instance with mocked dependencies."""
+    return AsyncTaxRemittance(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_remittance_request_acknowledged(
+    async_tax_remittance, mock_async_http_client
+):
+    """Test that async remittance request is acknowledged."""
+    request = valid_tax_remittance_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_tax_remittance.remittance(request)
+
+    assert isinstance(response, TaxRemittanceResponse)
+    assert response.is_successful() is True
+    assert response.ConversationID == response_data["ConversationID"]
+
+
+@pytest.mark.asyncio
+async def test_async_remittance_http_error(
+    async_tax_remittance, mock_async_http_client
+):
+    """Test handling of HTTP errors during async remittance request."""
+    request = valid_tax_remittance_request()
+    mock_async_http_client.post.side_effect = Exception("Async HTTP error")
+    with pytest.raises(Exception) as excinfo:
+        await async_tax_remittance.remittance(request)
+    assert "Async HTTP error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_remittance_token_retrieval(
+    async_tax_remittance, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async remittance correctly retrieves token asynchronously."""
+    request = valid_tax_remittance_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    await async_tax_remittance.remittance(request)
+
+    mock_async_token_manager.get_token.assert_called_once()
