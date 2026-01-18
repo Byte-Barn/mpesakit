@@ -4,20 +4,22 @@ This module tests the B2C Account TopUp API client, ensuring it can initiate top
 process responses correctly, and manage callback/error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.b2c_account_top_up import (
+    AsyncB2CAccountTopUp,
     B2CAccountTopUp,
-    B2CAccountTopUpRequest,
-    B2CAccountTopUpResponse,
     B2CAccountTopUpCallback,
     B2CAccountTopUpCallbackResponse,
+    B2CAccountTopUpRequest,
+    B2CAccountTopUpResponse,
     B2CAccountTopUpTimeoutCallback,
     B2CAccountTopUpTimeoutCallbackResponse,
 )
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -164,6 +166,7 @@ def test_b2c_account_topup_timeout_callback_response():
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
 
+
 @pytest.mark.parametrize("result_code_str, expected", [("0", True), ("1", False)])
 def test_b2c_account_topup_string_result_code_is_successful(result_code_str, expected):
     """Ensure is_successful() handles ResultCode as a string without TypeError."""
@@ -180,3 +183,82 @@ def test_b2c_account_topup_string_result_code_is_successful(result_code_str, exp
     callback = B2CAccountTopUpCallback(**payload)
     # Should not raise a TypeError when comparing string vs int inside is_successful
     assert callback.is_successful() is expected
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_async_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_b2c_account_topup(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncB2CAccountTopUp instance with mocked dependencies."""
+    return AsyncB2CAccountTopUp(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_topup_success(
+    async_b2c_account_topup, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async topup request is acknowledged and successful."""
+    request = valid_b2c_account_topup_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+    mock_async_token_manager.get_token.return_value = "test_async_token"
+
+    response = await async_b2c_account_topup.topup(request)
+
+    assert isinstance(response, B2CAccountTopUpResponse)
+    assert response.is_successful() is True
+    assert response.ResponseCode == response_data["ResponseCode"]
+
+
+@pytest.mark.asyncio
+async def test_async_topup_http_error(
+    async_b2c_account_topup, mock_async_http_client, mock_async_token_manager
+):
+    """Test handling of HTTP errors during async topup request."""
+    request = valid_b2c_account_topup_request()
+    mock_async_http_client.post.side_effect = Exception("Async HTTP error")
+    mock_async_token_manager.get_token.return_value = "test_async_token"
+
+    with pytest.raises(Exception) as excinfo:
+        await async_b2c_account_topup.topup(request)
+    assert "Async HTTP error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_topup_token_retrieval(
+    async_b2c_account_topup, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async topup correctly retrieves and uses the token."""
+    request = valid_b2c_account_topup_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+    mock_async_token_manager.get_token.return_value = "async_test_token_123"
+
+    response = await async_b2c_account_topup.topup(request)
+
+    assert response.is_successful() is True
+    mock_async_token_manager.get_token.assert_called_once()
