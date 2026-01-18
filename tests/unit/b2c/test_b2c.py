@@ -1,19 +1,20 @@
 """Unit tests for the B2C functionality of the Mpesa SDK."""
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 from mpesakit.b2c.b2c import B2C
 from mpesakit.b2c.schemas import (
-    B2CResultMetadata,
-    B2CResultParameter,
-    B2CResultCallback,
+    B2CCommandIDType,
     B2CRequest,
     B2CResponse,
-    B2CCommandIDType,
+    B2CResultCallback,
+    B2CResultMetadata,
+    B2CResultParameter,
 )
+from mpesakit.http_client import HttpClient
 
 
 @pytest.fixture
@@ -343,3 +344,80 @@ def test_result_callback_schema():
     assert isinstance(callback.Result, B2CResultMetadata)
     assert callback.Result.transaction_amount == 1000
     assert callback.Result.transaction_receipt == "LKXXXX1234"
+
+
+def test_result_callback_is_successful_zero_code():
+    """Test is_successful returns True for ResultCode 0."""
+    meta = B2CResultMetadata(
+        ResultType=0,
+        ResultCode=0,
+        ResultDesc="Success",
+        OriginatorConversationID="conv-id",
+        ConversationID="conv-id-2",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = B2CResultCallback(Result=meta)
+    assert callback.is_successful() is True
+
+
+def test_result_callback_is_successful_all_zeros():
+    """Test is_successful returns True for ResultCode as string of zeros."""
+    meta = B2CResultMetadata(
+        ResultType=0,
+        ResultCode=0,
+        ResultDesc="Success",
+        OriginatorConversationID="conv-id",
+        ConversationID="conv-id-2",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = B2CResultCallback(Result=meta)
+    # Simulate ResultCode "00000000"
+    callback.Result.ResultCode = 0
+    assert callback.is_successful() is True
+
+
+def test_result_callback_is_successful_non_zero_code():
+    """Test is_successful returns False for non-zero ResultCode."""
+    meta = B2CResultMetadata(
+        ResultType=0,
+        ResultCode=1,
+        ResultDesc="Failed",
+        OriginatorConversationID="conv-id",
+        ConversationID="conv-id-2",
+        TransactionID=None,
+        ResultParameters=[],
+    )
+    callback = B2CResultCallback(Result=meta)
+    assert callback.is_successful() is False
+
+
+def test_result_callback_is_successful_mixed_code():
+    """Test is_successful returns False for mixed code like 00001."""
+    meta = B2CResultMetadata(
+        ResultType=0,
+        ResultCode=1,
+        ResultDesc="Failed",
+        OriginatorConversationID="conv-id",
+        ConversationID="conv-id-2",
+        TransactionID=None,
+        ResultParameters=[],
+    )
+    callback = B2CResultCallback(Result=meta)
+    assert callback.is_successful() is False
+
+
+def test_result_callback_is_successful_negative_code():
+    """Test is_successful returns False for negative ResultCode."""
+    meta = B2CResultMetadata(
+        ResultType=0,
+        ResultCode=-1,
+        ResultDesc="Error",
+        OriginatorConversationID="conv-id",
+        ConversationID="conv-id-2",
+        TransactionID=None,
+        ResultParameters=[],
+    )
+    callback = B2CResultCallback(Result=meta)
+    assert callback.is_successful() is False

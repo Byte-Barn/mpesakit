@@ -1,7 +1,8 @@
 """Schemas for M-PESA B2C Account TopUp APIs."""
 
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict
-from typing import Optional, List, Any
+from typing import Any, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class B2CAccountTopUpRequest(BaseModel):
@@ -231,7 +232,8 @@ class B2CAccountTopUpCallback(BaseModel):
 
     def is_successful(self) -> bool:
         """Check if the callback indicates a successful transaction."""
-        return str(self.Result.ResultCode) == "0"
+        code = str(self.Result.ResultCode)
+        return code.strip("0") == "" and code != ""
 
 
 class B2CAccountTopUpCallbackResponse(BaseModel):

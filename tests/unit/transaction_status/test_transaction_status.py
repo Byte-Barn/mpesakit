@@ -3,19 +3,20 @@
 This module tests the TransactionStatus class and its methods for querying transaction status.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from mpesakit.auth import TokenManager
 from mpesakit.http_client import HttpClient
-
 from mpesakit.transaction_status import (
     TransactionStatus,
+    TransactionStatusIdentifierType,
     TransactionStatusRequest,
     TransactionStatusResponse,
-    TransactionStatusIdentifierType,
-    TransactionStatusResultParameter,
-    TransactionStatusResultMetadata,
     TransactionStatusResultCallback,
+    TransactionStatusResultMetadata,
+    TransactionStatusResultParameter,
 )
 
 
@@ -355,6 +356,7 @@ def test_result_callback_schema():
     assert callback.Result.transaction_receipt == "LKXXXX1234"
     assert callback.Result.transaction_status == "Completed"
 
+
 def test_query_response_code_type_variations(transaction_status, mock_http_client):
     """Ensure TransactionStatusResponse.is_successful handles ResponseCode as str or int without TypeError."""
     request = valid_transaction_status_request()
@@ -379,3 +381,78 @@ def test_query_response_code_type_variations(transaction_status, mock_http_clien
         resp = transaction_status.query(request)
         assert isinstance(resp, TransactionStatusResponse)
         assert resp.is_successful() is expected_success
+
+
+def test_transaction_status_result_callback_is_successful_zero_code():
+    """Test is_successful method with ResultCode as '0'."""
+    result = TransactionStatusResultMetadata(
+        ResultType=0,
+        ResultCode="0",
+        ResultDesc="Success",
+        OriginatorConversationID="12345-67890-1",
+        ConversationID="AG_20170717_00006c6f7f5b8b6b1a62",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = TransactionStatusResultCallback(Result=result)
+    assert callback.is_successful() is True
+
+
+def test_transaction_status_result_callback_is_successful_all_zeros():
+    """Test is_successful method with ResultCode as '00000000'."""
+    result = TransactionStatusResultMetadata(
+        ResultType=0,
+        ResultCode="00000000",
+        ResultDesc="Success",
+        OriginatorConversationID="12345-67890-1",
+        ConversationID="AG_20170717_00006c6f7f5b8b6b1a62",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = TransactionStatusResultCallback(Result=result)
+    assert callback.is_successful() is True
+
+
+def test_transaction_status_result_callback_is_successful_non_zero_code():
+    """Test is_successful method with ResultCode as '1'."""
+    result = TransactionStatusResultMetadata(
+        ResultType=1,
+        ResultCode="1",
+        ResultDesc="Failure",
+        OriginatorConversationID="12345-67890-1",
+        ConversationID="AG_20170717_00006c6f7f5b8b6b1a62",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = TransactionStatusResultCallback(Result=result)
+    assert callback.is_successful() is False
+
+
+def test_transaction_status_result_callback_is_successful_mixed_code():
+    """Test is_successful method with ResultCode as '00001'."""
+    result = TransactionStatusResultMetadata(
+        ResultType=1,
+        ResultCode="00001",
+        ResultDesc="Failure",
+        OriginatorConversationID="12345-67890-1",
+        ConversationID="AG_20170717_00006c6f7f5b8b6b1a62",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = TransactionStatusResultCallback(Result=result)
+    assert callback.is_successful() is False
+
+
+def test_transaction_status_result_callback_is_successful_empty_code():
+    """Test is_successful method with an empty ResultCode."""
+    result = TransactionStatusResultMetadata(
+        ResultType=0,
+        ResultCode="",
+        ResultDesc="Failure",
+        OriginatorConversationID="12345-67890-1",
+        ConversationID="AG_20170717_00006c6f7f5b8b6b1a62",
+        TransactionID="LKXXXX1234",
+        ResultParameters=[],
+    )
+    callback = TransactionStatusResultCallback(Result=result)
+    assert callback.is_successful() is False
