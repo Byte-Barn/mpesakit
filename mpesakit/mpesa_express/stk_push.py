@@ -6,13 +6,14 @@ It requires a valid access token for authentication and uses the HttpClient for 
 
 from pydantic import BaseModel, ConfigDict
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
+
 from .schemas import (
-    StkPushSimulateRequest,
-    StkPushSimulateResponse,
     StkPushQueryRequest,
     StkPushQueryResponse,
+    StkPushSimulateRequest,
+    StkPushSimulateResponse,
 )
 
 
@@ -43,7 +44,9 @@ class StkPush(BaseModel):
             "Content-Type": "application/json",
         }
 
-        response_data = self.http_client.post(url, json=request.model_dump(by_alias=True), headers=headers)
+        response_data = self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
 
         return StkPushSimulateResponse(**response_data)
 
@@ -60,5 +63,55 @@ class StkPush(BaseModel):
         }
 
         response_data = self.http_client.post(url, json=dict(request), headers=headers)
+
+        return StkPushQueryResponse(**response_data)
+
+
+class AsyncStkPush(BaseModel):
+    """Represents the async STK Push API client for M-Pesa operations.
+
+    Attributes:
+        http_client (AsyncHttpClient): Async HTTP client for making requests to the M-Pesa API.
+        token_manager (AsyncTokenManager): Async token manager for authentication.
+    """
+
+    http_client: AsyncHttpClient
+    token_manager: AsyncTokenManager
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def push(self, request: StkPushSimulateRequest) -> StkPushSimulateResponse:
+        """Initiates an M-Pesa STK Push transaction asynchronously.
+
+        Returns:
+            StkPushSimulateResponse: The response from the M-Pesa API after initiating the STK Push.
+        """
+        url = "/mpesa/stkpush/v1/processrequest"
+        headers = {
+            "Authorization": f"Bearer {await self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+
+        response_data = await self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
+
+        return StkPushSimulateResponse(**response_data)
+
+    async def query(self, request: StkPushQueryRequest) -> StkPushQueryResponse:
+        """Queries the status of an M-Pesa STK Push transaction asynchronously.
+
+        Returns:
+            StkPushQueryResponse: The response from the M-Pesa API after querying the transaction status.
+        """
+        url = "/mpesa/stkpushquery/v1/query"
+        headers = {
+            "Authorization": f"Bearer {await self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+
+        response_data = await self.http_client.post(
+            url, json=dict(request), headers=headers
+        )
 
         return StkPushQueryResponse(**response_data)
