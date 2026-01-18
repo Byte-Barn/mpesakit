@@ -4,8 +4,10 @@ It includes models for transaction status queries, responses, and result notific
 """
 
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 from mpesakit.utils.phone import normalize_phone_number
 
 
@@ -46,7 +48,9 @@ class TransactionStatusRequest(BaseModel):
     IdentifierType: int = Field(..., description="Type of identifier for PartyA.")
     ResultURL: str = Field(..., description="URL for result notifications.")
     QueueTimeOutURL: str = Field(..., description="URL for timeout notifications.")
-    Remarks: str = Field(default="Status Query", description="Comments for the transaction.")
+    Remarks: str = Field(
+        default="Status Query", description="Comments for the transaction."
+    )
     Occasion: Optional[str] = Field(
         None, description="Optional occasion for the query."
     )
@@ -260,6 +264,11 @@ class TransactionStatusResultCallback(BaseModel):
             }
         }
     )
+
+    def is_successful(self) -> bool:
+        """Return True if ResultCode indicates success (e.g., '0', '00000000')."""
+        code = str(self.Result.ResultCode)
+        return code.strip("0") == "" and code != ""
 
 
 class TransactionStatusResultCallbackResponse(BaseModel):

@@ -1,7 +1,8 @@
 """This module defines schemas for M-Pesa Business PayBill API requests and responses."""
 
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, List
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BusinessPayBillRequest(BaseModel):
@@ -228,8 +229,9 @@ class BusinessPayBillResultCallback(BaseModel):
     )
 
     def is_successful(self) -> bool:
-        """Check if the result indicates success."""
-        return str(self.Result.ResultCode) == "0"
+        """Return True if ResultCode indicates success (e.g., '0', '00000000')."""
+        code = str(self.Result.ResultCode)
+        return code.strip("0") == "" and code != ""
 
 
 class BusinessPayBillResultCallbackResponse(BaseModel):

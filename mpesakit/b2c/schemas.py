@@ -4,8 +4,10 @@ It includes models for payment requests, responses, and result notifications.
 """
 
 from enum import Enum
-from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 from mpesakit.utils.phone import normalize_phone_number
 
 
@@ -27,7 +29,7 @@ class B2CRequest(BaseModel):
     NOTE: To use this API in production, you must apply for a Bulk Disbursement Account and obtain a Shortcode.
     The Shortcode required here is NOT the same as a Buy Goods Till or Paybill Till Number.
     For more information and to apply for a Bulk Disbursement Account, refer to the official documentation:
-    https://developer.safaricom.co.ke/APIs/BusinessToCustomerPayment
+    https://developer.safaricom.co.ke/dashboard/apis?api=BusinessToCustomer
 
     Attributes:
         OriginatorConversationID (str): Unique identifier for the specific request.
@@ -274,6 +276,11 @@ class B2CResultCallback(BaseModel):
             }
         }
     )
+
+    def is_successful(self) -> bool:
+        """Return True if ResultCode indicates success (e.g., '0', '00000000')."""
+        code = str(self.Result.ResultCode)
+        return code.strip("0") == "" and code != ""
 
 
 class B2CResultCallbackResponse(BaseModel):
