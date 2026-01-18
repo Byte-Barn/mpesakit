@@ -4,12 +4,12 @@ This module tests the Reversal API client, ensuring it can handle reversal reque
 process responses correctly, and manage error cases.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from mpesakit.auth import TokenManager
 from mpesakit.http_client import HttpClient
-from mpesakit.reversal.reversal import Reversal
-
 from mpesakit.reversal import (
     ReversalRequest,
     ReversalResponse,
@@ -18,6 +18,7 @@ from mpesakit.reversal import (
     ReversalTimeoutCallback,
     ReversalTimeoutCallbackResponse,
 )
+from mpesakit.reversal.reversal import Reversal
 
 
 @pytest.fixture
@@ -201,6 +202,7 @@ def test_reversal_request_occasion_too_long_raises():
         ReversalRequest(**kwargs)
     assert "Occasion must not exceed 100 characters." in str(excinfo.value)
 
+
 def test_reverse_responsecode_string_no_type_error(reversal, mock_http_client):
     """Ensure is_successful handles ResponseCode as a string without TypeError."""
     request = valid_reversal_request()
@@ -217,3 +219,89 @@ def test_reverse_responsecode_string_no_type_error(reversal, mock_http_client):
     assert isinstance(response, ReversalResponse)
     # Calling is_successful should not raise a TypeError when comparing str to int
     assert response.is_successful() is True
+
+
+def test_reversal_result_callback_success_is_successful():
+    """Test is_successful method for a successful reversal result callback."""
+    payload = {
+        "Result": {
+            "ResultType": 0,
+            "ResultCode": "0",
+            "ResultDesc": "The service request is processed successfully",
+            "OriginatorConversationID": "8521-4298025-1",
+            "ConversationID": "AG_20181005_00004d7ee675c0c7ee0b",
+            "TransactionID": "MJ561H6X5O",
+            "ResultParameters": {
+                "ResultParameter": [
+                    {"Key": "Amount", "Value": "100"},
+                ]
+            },
+            "ReferenceData": {
+                "ReferenceItem": {
+                    "Key": "QueueTimeoutURL",
+                    "Value": "https://internalsandbox.safaricom.co.ke/mpesa/reversalresults/v1/submit",
+                }
+            },
+        }
+    }
+    callback = ReversalResultCallback(**payload)
+    assert callback.is_successful() is True
+
+
+def test_reversal_result_callback_failure_is_successful():
+    """Test is_successful method for a failure reversal result callback."""
+    payload = {
+        "Result": {
+            "ResultType": 1,
+            "ResultCode": "1",
+            "ResultDesc": "The service request failed.",
+            "OriginatorConversationID": "8521-4298025-1",
+            "ConversationID": "AG_20181005_00004d7ee675c0c7ee0b",
+            "TransactionID": "MJ561H6X5O",
+            "ResultParameters": {
+                "ResultParameter": [
+                    {"Key": "Amount", "Value": "100"},
+                ]
+            },
+            "ReferenceData": {
+                "ReferenceItem": {
+                    "Key": "QueueTimeoutURL",
+                    "Value": "https://internalsandbox.safaricom.co.ke/mpesa/reversalresults/v1/submit",
+                }
+            },
+        }
+    }
+    callback = ReversalResultCallback(**payload)
+    assert callback.is_successful() is False
+
+
+def test_reversal_result_callback_success_code_is_successful():
+    """Test is_successful method with a success code as a string."""
+    payload = {
+        "Result": {
+            "ResultType": 0,
+            "ResultCode": "00000000",
+            "ResultDesc": "The service request is processed successfully",
+            "OriginatorConversationID": "8521-4298025-1",
+            "ConversationID": "AG_20181005_00004d7ee675c0c7ee0b",
+            "TransactionID": "MJ561H6X5O",
+        }
+    }
+    callback = ReversalResultCallback(**payload)
+    assert callback.is_successful() is True
+
+
+def test_reversal_result_callback_failure_code_is_successful():
+    """Test is_successful method with a failure code."""
+    payload = {
+        "Result": {
+            "ResultType": 1,
+            "ResultCode": "12345",
+            "ResultDesc": "The service request failed.",
+            "OriginatorConversationID": "8521-4298025-1",
+            "ConversationID": "AG_20181005_00004d7ee675c0c7ee0b",
+            "TransactionID": "MJ561H6X5O",
+        }
+    }
+    callback = ReversalResultCallback(**payload)
+    assert callback.is_successful() is False

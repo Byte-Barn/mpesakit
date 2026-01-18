@@ -1,7 +1,8 @@
 """Schemas for M-PESA B2B Express Checkout APIs."""
 
-from pydantic import BaseModel, Field, ConfigDict, HttpUrl
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class B2BExpressCheckoutRequest(BaseModel):
@@ -56,8 +57,9 @@ class B2BExpressCheckoutResponse(BaseModel):
     )
 
     def is_successful(self) -> bool:
-        """Check if the response indicates a successful USSD initiation."""
-        return self.code == "0"
+        """Return True if code indicates success (e.g., '0', '00000000')."""
+        code = str(self.code)
+        return code.strip("0") == "" and code != ""
 
 
 class B2BExpressCheckoutCallback(BaseModel):
@@ -101,8 +103,9 @@ class B2BExpressCheckoutCallback(BaseModel):
     )
 
     def is_successful(self) -> bool:
-        """Check if the callback indicates a successful transaction."""
-        return self.resultCode == "0"
+        """Return True if resultCode indicates success (e.g., '0', '00000000')."""
+        code = str(self.resultCode)
+        return code.strip("0") == "" and code != ""
 
 
 class B2BExpressCallbackResponse(BaseModel):

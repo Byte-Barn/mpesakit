@@ -3,8 +3,9 @@
 It includes models for reversal requests, responses, and result notifications.
 """
 
-from pydantic import BaseModel, Field, ConfigDict, model_validator
-from typing import Optional, List
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ReversalRequest(BaseModel):
@@ -230,6 +231,11 @@ class ReversalResultCallback(BaseModel):
             }
         }
     )
+
+    def is_successful(self) -> bool:
+        """Return True if ResultCode indicates success (e.g., '0', '00000000')."""
+        code = str(self.Result.ResultCode)
+        return code.strip("0") == "" and code != ""
 
 
 class ReversalResultCallbackResponse(BaseModel):
