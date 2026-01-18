@@ -3,7 +3,7 @@
 This module tests the AccountBalance class and its methods for querying account balance.
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -226,7 +226,7 @@ def test_query_handles_string_response_code(account_balance, mock_http_client):
 @pytest.fixture
 def mock_async_token_manager():
     """Mock AsyncTokenManager for testing."""
-    mock = MagicMock(spec=AsyncTokenManager)
+    mock = AsyncMock(spec=AsyncTokenManager)
     mock.get_token.return_value = "test_async_token"
     return mock
 
@@ -234,7 +234,7 @@ def mock_async_token_manager():
 @pytest.fixture
 def mock_async_http_client():
     """Mock AsyncHttpClient for testing."""
-    return MagicMock(spec=AsyncHttpClient)
+    return AsyncMock(spec=AsyncHttpClient)
 
 
 @pytest.fixture
