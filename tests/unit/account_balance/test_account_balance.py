@@ -270,8 +270,8 @@ async def test_async_query_returns_acknowledgement(
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
-    mock_async_http_client.post.assert_called_once()
-    args, kwargs = mock_async_http_client.post.call_args
+    mock_async_http_client.post.assert_awaited_once()
+    args, kwargs = mock_async_http_client.post.await_args
     assert args[0] == "/mpesa/accountbalance/v1/query"
     assert kwargs["headers"]["Authorization"] == "Bearer test_async_token"
     assert kwargs["headers"]["Content-Type"] == "application/json"
