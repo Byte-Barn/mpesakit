@@ -376,7 +376,7 @@ async def test_async_reverse_token_manager_called(
 
     await async_reversal.reverse(request)
 
-    mock_async_token_manager.get_token.assert_called_once()
+    mock_async_token_manager.get_token.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -399,6 +399,7 @@ async def test_async_reverse_http_client_post_called(
     call_args = mock_async_http_client.post.call_args
     assert call_args[0][0] == "/mpesa/reversal/v1/request"
     assert "Authorization" in call_args[1]["headers"]
+    assert call_args[1]["headers"]["Authorization"] == "Bearer test_token_async"
     assert call_args[1]["headers"]["Content-Type"] == "application/json"
 
 
