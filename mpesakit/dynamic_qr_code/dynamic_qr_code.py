@@ -5,8 +5,9 @@ It requires a valid access token for authentication and uses the HttpClient for 
 """
 
 from pydantic import BaseModel, ConfigDict
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 from .schemas import (
     DynamicQRGenerateRequest,
@@ -44,6 +45,45 @@ class DynamicQRCode(BaseModel):
             "Content-Type": "application/json",
         }
 
-        response_data = self.http_client.post(url, json=request.model_dump(by_alias=True), headers=headers)
+        response_data = self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
+
+        return DynamicQRGenerateResponse(**response_data)
+
+
+class AsyncDynamicQRCode(BaseModel):
+    """Represents the async Dynamic M-Pesa QR Code API client.
+
+    Attributes:
+        http_client (AsyncHttpClient): Async HTTP client for making requests to the M-Pesa API.
+        token_manager (AsyncTokenManager): Async token manager for authentication.
+    """
+
+    http_client: AsyncHttpClient
+    token_manager: AsyncTokenManager
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def generate(
+        self, request: DynamicQRGenerateRequest
+    ) -> DynamicQRGenerateResponse:
+        """Generates a Dynamic M-Pesa QR Code asynchronously.
+
+        Args:
+            request (DynamicQRGenerateRequest): The request data for generating the QR code.
+
+        Returns:
+            DynamicQRGenerateResponse: The response from the M-Pesa API after generating the QR code.
+        """
+        url = "/mpesa/qrcode/v1/generate"
+        headers = {
+            "Authorization": f"Bearer {await self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+
+        response_data = await self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
 
         return DynamicQRGenerateResponse(**response_data)

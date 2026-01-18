@@ -5,9 +5,9 @@ using the M-Pesa API. Requires a valid access token for authentication and uses 
 """
 
 from pydantic import BaseModel, ConfigDict
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 from .schemas import (
     C2BRegisterUrlRequest,
@@ -41,7 +41,57 @@ class C2B(BaseModel):
             "Authorization": f"Bearer {self.token_manager.get_token()}",
             "Content-Type": "application/json",
         }
-        response_data = self.http_client.post(url, json=request.model_dump(by_alias=True), headers=headers)
+        response_data = self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
+
+        # Safaricom API Bug: There is a typo in the response field name
+        # "OriginatorCoversationID" should be "OriginatorConversationID"
+        if "OriginatorCoversationID" in response_data:
+            # Rename the field to match the expected schema
+            # This is a workaround for the API inconsistency
+            # and should be removed once the API is fixed.
+            response_data["OriginatorConversationID"] = response_data.pop(
+                "OriginatorCoversationID"
+            )
+
+        return C2BRegisterUrlResponse(**response_data)
+
+
+class AsyncC2B(BaseModel):
+    """Represents the async C2B API client for M-Pesa Customer to Business operations.
+
+    https://developer.safaricom.co.ke/APIs/CustomerToBusinessRegisterURL
+
+    Attributes:
+        http_client (AsyncHttpClient): Async HTTP client for making requests to the M-Pesa API.
+        token_manager (AsyncTokenManager): Async token manager for authentication.
+    """
+
+    http_client: AsyncHttpClient
+    token_manager: AsyncTokenManager
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def register_url(
+        self, request: C2BRegisterUrlRequest
+    ) -> C2BRegisterUrlResponse:
+        """Registers validation and confirmation URLs for C2B payments asynchronously.
+
+        Args:
+            request (C2BRegisterUrlRequest): The C2B URL registration request.
+
+        Returns:
+            C2BRegisterUrlResponse: Response from the M-Pesa API after URL registration.
+        """
+        url = "/mpesa/c2b/v1/registerurl"
+        headers = {
+            "Authorization": f"Bearer {await self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+        response_data = await self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
 
         # Safaricom API Bug: There is a typo in the response field name
         # "OriginatorCoversationID" should be "OriginatorConversationID"

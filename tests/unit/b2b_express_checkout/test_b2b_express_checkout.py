@@ -4,18 +4,20 @@ This module tests the B2B Express Checkout API client, ensuring it can handle US
 process responses correctly, and manage callback/error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.b2b_express_checkout import (
+    AsyncB2BExpressCheckout,
+    B2BExpressCallbackResponse,
     B2BExpressCheckout,
+    B2BExpressCheckoutCallback,
     B2BExpressCheckoutRequest,
     B2BExpressCheckoutResponse,
-    B2BExpressCheckoutCallback,
-    B2BExpressCallbackResponse,
 )
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -120,6 +122,7 @@ def test_b2b_express_callback_response():
     assert resp.ResultCode == 0
     assert "Callback received successfully" in resp.ResultDesc
 
+
 def test_b2b_express_callback_resultcode_as_string():
     """Ensure resultCode as a string doesn't cause comparison/type errors in is_successful()."""
     payload = {
@@ -133,3 +136,77 @@ def test_b2b_express_callback_resultcode_as_string():
     # Should treat "0" (string) as success and not raise a TypeError when comparing types.
     assert callback.resultCode == "0"
     assert callback.is_successful() is True
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "async_test_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_b2b_express_checkout(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncB2BExpressCheckout instance with mocked dependencies."""
+    return AsyncB2BExpressCheckout(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_ussd_push_acknowledged(
+    async_b2b_express_checkout, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async USSD push request is acknowledged, not finalized."""
+    request = valid_b2b_express_checkout_request()
+    response_data = {
+        "code": "0",
+        "status": "USSD Initiated Successfully",
+    }
+    mock_async_http_client.post.return_value = response_data
+    mock_async_token_manager.get_token.return_value = "async_test_token"
+
+    response = await async_b2b_express_checkout.ussd_push(request)
+
+    assert isinstance(response, B2BExpressCheckoutResponse)
+    assert response.is_successful() is True
+    assert response.code == response_data["code"]
+    assert response.status == response_data["status"]
+
+
+@pytest.mark.asyncio
+async def test_async_ussd_push_http_error(
+    async_b2b_express_checkout, mock_async_http_client
+):
+    """Test handling of HTTP errors during async USSD push request."""
+    request = valid_b2b_express_checkout_request()
+    mock_async_http_client.post.side_effect = Exception("Async HTTP error")
+
+    with pytest.raises(Exception) as excinfo:
+        await async_b2b_express_checkout.ussd_push(request)
+    assert "Async HTTP error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_ussd_push_token_manager_called(
+    async_b2b_express_checkout, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async token manager is properly awaited during USSD push."""
+    request = valid_b2b_express_checkout_request()
+    response_data = {
+        "code": "0",
+        "status": "USSD Initiated Successfully",
+    }
+    mock_async_http_client.post.return_value = response_data
+    mock_async_token_manager.get_token.return_value = "async_test_token"
+
+    await async_b2b_express_checkout.ussd_push(request)
+
+    mock_async_token_manager.get_token.assert_called_once()

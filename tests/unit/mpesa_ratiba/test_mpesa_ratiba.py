@@ -4,20 +4,22 @@ This module tests the Standing Order API client, ensuring it can initiate standi
 process responses correctly, and manage callback/error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.mpesa_ratiba import (
-    MpesaRatiba,
+    AsyncMpesaRatiba,
     FrequencyEnum,
-    TransactionTypeEnum,
+    MpesaRatiba,
     ReceiverPartyIdentifierTypeEnum,
-    StandingOrderRequest,
-    StandingOrderResponse,
     StandingOrderCallback,
     StandingOrderCallbackResponse,
+    StandingOrderRequest,
+    StandingOrderResponse,
+    TransactionTypeEnum,
 )
 
 
@@ -245,6 +247,7 @@ def test_invalid_phone_number():
         )
     assert "Invalid PartyA phone number" in str(excinfo.value)
 
+
 def test_callback_resultcode_as_string_handled_gracefully():
     """Ensure StandingOrderCallback.is_successful() handles responseCode as a string without TypeError."""
     payload = {
@@ -267,6 +270,75 @@ def test_callback_resultcode_as_string_handled_gracefully():
     try:
         result = callback.is_successful()
     except TypeError as exc:
-        pytest.fail(f"is_successful raised TypeError when responseCode is a string: {exc}")
+        pytest.fail(
+            f"is_successful raised TypeError when responseCode is a string: {exc}"
+        )
     assert result is True
 
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_mpesa_ratiba(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncMpesaRatiba instance with mocked dependencies."""
+    return AsyncMpesaRatiba(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_standing_order_success_async(
+    async_mpesa_ratiba, mock_async_http_client
+):
+    """Test that async standing order request is acknowledged and successful."""
+    request = valid_standing_order_request()
+    response_data = {
+        "ResponseHeader": {
+            "responseRefID": "4dd9b5d9-d738-42ba-9326-2cc99e966000",
+            "responseCode": "200",
+            "responseDescription": "Request accepted for processing",
+            "ResultDesc": "The service request is processed successfully.",
+        },
+        "ResponseBody": {
+            "responseDescription": "Request accepted for processing",
+            "responseCode": "200",
+        },
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_mpesa_ratiba.create_standing_order(request)
+
+    assert isinstance(response, StandingOrderResponse)
+    assert response.is_successful() is True
+    assert (
+        response.ResponseHeader.responseCode
+        == response_data["ResponseHeader"]["responseCode"]
+    )
+    assert (
+        response.ResponseHeader.responseDescription
+        == response_data["ResponseHeader"]["responseDescription"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_standing_order_http_error_async(
+    async_mpesa_ratiba, mock_async_http_client
+):
+    """Test handling of HTTP errors during async standing order request."""
+    request = valid_standing_order_request()
+    mock_async_http_client.post.side_effect = Exception("HTTP error")
+    with pytest.raises(Exception) as excinfo:
+        await async_mpesa_ratiba.create_standing_order(request)
+    assert "HTTP error" in str(excinfo.value)

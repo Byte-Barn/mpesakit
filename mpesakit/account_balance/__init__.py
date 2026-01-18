@@ -1,3 +1,4 @@
+from .account_balance import AccountBalance, AsyncAccountBalance
 from .schemas import (
     AccountBalanceIdentifierType,
     AccountBalanceRequest,
@@ -7,9 +8,9 @@ from .schemas import (
     AccountBalanceTimeoutCallback,
     AccountBalanceTimeoutCallbackResponse,
 )
-from .account_balance import AccountBalance
 
 __all__ = [
+    "AsyncAccountBalance",
     "AccountBalance",
     "AccountBalanceRequest",
     "AccountBalanceResponse",

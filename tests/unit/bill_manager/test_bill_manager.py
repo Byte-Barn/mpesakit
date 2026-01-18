@@ -4,27 +4,28 @@ This module tests the Bill Manager API client, ensuring it can handle onboarding
 invoicing, cancellation, and error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-from mpesakit.bill_manager.bill_manager import BillManager
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from pydantic import ValidationError
 
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.bill_manager.bill_manager import AsyncBillManager, BillManager
 from mpesakit.bill_manager.schemas import (
-    BillManagerOptInRequest,
-    BillManagerOptInResponse,
-    BillManagerUpdateOptInRequest,
-    BillManagerUpdateOptInResponse,
-    BillManagerSingleInvoiceRequest,
-    BillManagerSingleInvoiceResponse,
     BillManagerBulkInvoiceRequest,
     BillManagerBulkInvoiceResponse,
-    BillManagerCancelSingleInvoiceRequest,
     BillManagerCancelBulkInvoiceRequest,
     BillManagerCancelInvoiceResponse,
+    BillManagerCancelSingleInvoiceRequest,
+    BillManagerOptInRequest,
+    BillManagerOptInResponse,
+    BillManagerSingleInvoiceRequest,
+    BillManagerSingleInvoiceResponse,
+    BillManagerUpdateOptInRequest,
+    BillManagerUpdateOptInResponse,
 )
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -343,6 +344,7 @@ def test_billed_period_invalid_raises():
         BillManagerSingleInvoiceRequest(**req)
     assert "billedPeriod" in str(excinfo.value)
 
+
 def test_result_code_as_string_does_not_raise(bill_manager, mock_http_client):
     """Ensure response.resultCode as a string does not cause type errors in is_successful."""
     request = valid_single_invoice_request()
@@ -362,3 +364,154 @@ def test_result_code_as_string_does_not_raise(bill_manager, mock_http_client):
     is_success = response.is_successful()
     assert isinstance(is_success, bool)
 
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager for testing purposes."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_async_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient for testing purposes."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_bill_manager(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncBillManager instance with mocked AsyncHttpClient and AsyncTokenManager."""
+    return AsyncBillManager(
+        http_client=mock_async_http_client,
+        token_manager=mock_async_token_manager,
+        app_key="test_app_key",
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_opt_in_success(async_bill_manager, mock_async_http_client):
+    """Test successful async opt-in to Bill Manager."""
+    request = valid_opt_in_request()
+    response_data = {
+        "app_key": "AG_2376487236_126732989KJ",
+        "resmsg": "Success",
+        "rescode": "200",
+    }
+    mock_async_http_client.post.return_value = response_data
+    response = await async_bill_manager.opt_in(request)
+    assert isinstance(response, BillManagerOptInResponse)
+    assert response.app_key == response_data["app_key"]
+    assert response.rescode == "200"
+
+
+@pytest.mark.asyncio
+async def test_async_update_opt_in_success(async_bill_manager, mock_async_http_client):
+    """Test successful async update of opt-in settings for Bill Manager."""
+    request = valid_update_opt_in_request()
+    response_data = {
+        "resmsg": "Success",
+        "rescode": "200",
+    }
+    mock_async_http_client.post.return_value = response_data
+    response = await async_bill_manager.update_opt_in(request)
+    assert isinstance(response, BillManagerUpdateOptInResponse)
+    assert response.rescode == "200"
+
+
+@pytest.mark.asyncio
+async def test_async_send_single_invoice_success(
+    async_bill_manager, mock_async_http_client
+):
+    """Test sending a single invoice asynchronously via Bill Manager."""
+    request = valid_single_invoice_request()
+    response_data = {
+        "Status_Message": "Invoice sent successfully",
+        "resmsg": "Success",
+        "rescode": "200",
+    }
+    mock_async_http_client.post.return_value = response_data
+    response = await async_bill_manager.send_single_invoice(request)
+    assert isinstance(response, BillManagerSingleInvoiceResponse)
+    assert response.is_successful() is True
+    assert response.Status_Message == response_data["Status_Message"]
+
+
+@pytest.mark.asyncio
+async def test_async_send_bulk_invoice_success(
+    async_bill_manager, mock_async_http_client
+):
+    """Test sending multiple invoices asynchronously via Bill Manager."""
+    request = valid_bulk_invoice_request()
+    response_data = {
+        "Status_Message": "Invoice sent successfully",
+        "resmsg": "Success",
+        "rescode": "200",
+    }
+    mock_async_http_client.post.return_value = response_data
+    response = await async_bill_manager.send_bulk_invoice(request)
+    assert isinstance(response, BillManagerBulkInvoiceResponse)
+    assert response.Status_Message == response_data["Status_Message"]
+
+
+@pytest.mark.asyncio
+async def test_async_cancel_single_invoice_success(
+    async_bill_manager, mock_async_http_client
+):
+    """Test cancelling a single invoice asynchronously via Bill Manager."""
+    request = valid_cancel_single_invoice_request()
+    response_data = {
+        "Status_Message": "Invoice cancelled successfully.",
+        "resmsg": "Success",
+        "rescode": "200",
+        "errors": [],
+    }
+    mock_async_http_client.post.return_value = response_data
+    response = await async_bill_manager.cancel_single_invoice(request)
+    assert isinstance(response, BillManagerCancelInvoiceResponse)
+    assert response.is_successful() is True
+    assert response.Status_Message == response_data["Status_Message"]
+
+
+@pytest.mark.asyncio
+async def test_async_cancel_bulk_invoice_success(
+    async_bill_manager, mock_async_http_client
+):
+    """Test cancelling multiple invoices asynchronously via Bill Manager."""
+    request = valid_cancel_bulk_invoice_request()
+    response_data = {
+        "Status_Message": "Invoices cancelled successfully.",
+        "resmsg": "Success",
+        "rescode": "200",
+        "errors": [],
+    }
+    mock_async_http_client.post.return_value = response_data
+    response = await async_bill_manager.cancel_bulk_invoice(request)
+    assert isinstance(response, BillManagerCancelInvoiceResponse)
+    assert response.Status_Message == response_data["Status_Message"]
+
+
+@pytest.mark.asyncio
+async def test_async_bill_manager_http_error(
+    async_bill_manager, mock_async_http_client
+):
+    """Test handling of HTTP errors when sending a single invoice asynchronously."""
+    request = valid_single_invoice_request()
+    mock_async_http_client.post.side_effect = Exception("HTTP error")
+    with pytest.raises(Exception) as excinfo:
+        await async_bill_manager.send_single_invoice(request)
+    assert "HTTP error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_app_key_required_for_invoice(
+    mock_async_http_client, mock_async_token_manager
+):
+    """Test app_key requirement for sending a single invoice asynchronously."""
+    manager = AsyncBillManager(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+    request = valid_single_invoice_request()
+    with pytest.raises(ValueError) as excinfo:
+        await manager.send_single_invoice(request)
+    assert "app_key must be set" in str(excinfo.value)

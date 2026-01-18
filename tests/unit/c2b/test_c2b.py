@@ -1,20 +1,22 @@
 """Unit tests for the C2B functionality of the Mpesa SDK."""
 
-import pytest
-from unittest.mock import MagicMock
 import warnings
+from unittest.mock import AsyncMock, MagicMock
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.c2b import (
     C2B,
+    AsyncC2B,
+    C2BConfirmationResponse,
     C2BRegisterUrlRequest,
     C2BRegisterUrlResponse,
     C2BValidationRequest,
     C2BValidationResponse,
-    C2BConfirmationResponse,
     C2BValidationResultCodeType,
 )
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -367,6 +369,7 @@ def test_warn_long_resultdesc_none(monkeypatch):
     assert len(warn_calls) == 0
     assert result == values
 
+
 def test_is_successful_with_mixed_string_response_code_no_type_error():
     """Ensure is_successful handles mixed/numeric-like string ResponseCode without TypeError and returns False for non-success codes."""
     resp = C2BRegisterUrlResponse(
@@ -379,6 +382,98 @@ def test_is_successful_with_mixed_string_response_code_no_type_error():
     try:
         result = resp.is_successful()
     except TypeError as e:
-        pytest.fail(f"is_successful raised TypeError when ResponseCode is a mixed string: {e}")
+        pytest.fail(
+            f"is_successful raised TypeError when ResponseCode is a mixed string: {e}"
+        )
     assert isinstance(result, bool)
     assert result is False
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token for testing."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_async_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient for testing."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_c2b(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an instance of AsyncC2B with mocked dependencies."""
+    return AsyncC2B(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_register_url_success(async_c2b, mock_async_http_client):
+    """Test that a successful async C2B URL registration can be performed."""
+    request = C2BRegisterUrlRequest(
+        ShortCode=600997,
+        ResponseType="Completed",
+        ConfirmationURL="https://domainpath.com/c2b/confirmation",
+        ValidationURL="https://domainpath.com/c2b/validation",
+    )
+    response_data = {
+        "ResponseDescription": "Success",
+        "OriginatorCoversationID": "abc123",
+        "ConversationID": "conv456",
+        "CustomerMessage": "URLs registered",
+        "ResponseCode": "0",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_c2b.register_url(request)
+
+    assert isinstance(response, C2BRegisterUrlResponse)
+    assert response.ResponseDescription == "Success"
+    assert response.OriginatorConversationID == "abc123"
+    mock_async_http_client.post.assert_called_once()
+    args, kwargs = mock_async_http_client.post.call_args
+    assert args[0] == "/mpesa/c2b/v1/registerurl"
+    assert kwargs["headers"]["Authorization"] == "Bearer test_async_token"
+
+
+@pytest.mark.asyncio
+async def test_async_register_url_handles_typo_field(async_c2b, mock_async_http_client):
+    """Test that the async C2B URL registration handles the typo in the response field."""
+    request = C2BRegisterUrlRequest(
+        ShortCode=600997,
+        ResponseType="Completed",
+        ConfirmationURL="https://domainpath.com/c2b/confirmation",
+        ValidationURL="https://domainpath.com/c2b/validation",
+    )
+    response_data = {
+        "ResponseDescription": "Success",
+        "OriginatorCoversationID": "typo123",
+        "ConversationID": "conv456",
+        "CustomerMessage": "URLs registered",
+        "ResponseCode": "0",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_c2b.register_url(request)
+
+    assert response.OriginatorConversationID == "typo123"
+
+
+@pytest.mark.asyncio
+async def test_async_register_url_handles_http_error(async_c2b, mock_async_http_client):
+    """Test that the async C2B URL registration handles HTTP errors gracefully."""
+    request = C2BRegisterUrlRequest(
+        ShortCode=600997,
+        ResponseType="Completed",
+        ConfirmationURL="https://domainpath.com/c2b/confirmation",
+        ValidationURL="https://domainpath.com/c2b/validation",
+    )
+    mock_async_http_client.post.side_effect = Exception("HTTP error")
+
+    with pytest.raises(Exception) as excinfo:
+        await async_c2b.register_url(request)
+    assert "HTTP error" in str(excinfo.value)

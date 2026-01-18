@@ -4,13 +4,14 @@ This module tests the Business PayBill API client, ensuring it can handle paymen
 process responses correctly, and manage error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-from mpesakit.business_paybill.business_paybill import BusinessPayBill
+from unittest.mock import AsyncMock, MagicMock
 
-from mpesakit.business_paybill.schemas import (
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.business_paybill import (
+    AsyncBusinessPayBill,
+    BusinessPayBill,
     BusinessPayBillRequest,
     BusinessPayBillResponse,
     BusinessPayBillResultCallback,
@@ -18,6 +19,7 @@ from mpesakit.business_paybill.schemas import (
     BusinessPayBillTimeoutCallback,
     BusinessPayBillTimeoutCallbackResponse,
 )
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -148,6 +150,7 @@ def test_business_paybill_timeout_callback_response():
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
 
+
 def test_business_paybill_result_callback_with_string_result_code():
     """Ensure is_successful handles ResultCode provided as a string without raising TypeError."""
     payload = {
@@ -171,3 +174,82 @@ def test_business_paybill_result_callback_with_string_result_code():
     callback = BusinessPayBillResultCallback(**payload)
     assert callback.is_successful() is True
     assert callback.Result.TransactionID == "QKA81LK5CY"
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_async_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_business_paybill(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncBusinessPayBill instance with mocked dependencies."""
+    return AsyncBusinessPayBill(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_paybill_request_acknowledged(
+    async_business_paybill, mock_async_http_client
+):
+    """Test that async paybill request is acknowledged successfully."""
+    request = valid_business_paybill_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_business_paybill.paybill(request)
+
+    assert isinstance(response, BusinessPayBillResponse)
+    assert response.is_successful() is True
+    assert response.ConversationID == response_data["ConversationID"]
+    assert (
+        response.OriginatorConversationID == response_data["OriginatorConversationID"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_paybill_http_error(async_business_paybill, mock_async_http_client):
+    """Test handling of HTTP errors during async paybill request."""
+    request = valid_business_paybill_request()
+    mock_async_http_client.post.side_effect = Exception("Async HTTP error")
+    with pytest.raises(Exception) as excinfo:
+        await async_business_paybill.paybill(request)
+    assert "Async HTTP error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_paybill_token_retrieval(
+    async_business_paybill, mock_async_token_manager, mock_async_http_client
+):
+    """Test that async paybill correctly retrieves and uses the token."""
+    request = valid_business_paybill_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    await async_business_paybill.paybill(request)
+
+    mock_async_token_manager.get_token.assert_awaited_once()
+    mock_async_http_client.post.assert_awaited_once()
+    call_args = mock_async_http_client.post.call_args
+    assert "Authorization" in call_args.kwargs["headers"]
+    assert "Bearer test_async_token" in call_args.kwargs["headers"]["Authorization"]

@@ -5,8 +5,9 @@ using the M-Pesa API. Requires a valid access token for authentication and uses 
 """
 
 from pydantic import BaseModel, ConfigDict
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 from .schemas import (
     B2CAccountTopUpRequest,
@@ -44,6 +45,40 @@ class B2CAccountTopUp(BaseModel):
             "Content-Type": "application/json",
         }
         response_data = self.http_client.post(
+            url, json=request.model_dump(mode="json"), headers=headers
+        )
+        return B2CAccountTopUpResponse(**response_data)
+
+
+class AsyncB2CAccountTopUp(BaseModel):
+    """Represents the async B2C Account TopUp API client for M-Pesa operations.
+
+    Attributes:
+        http_client (AsyncHttpClient): Async HTTP client for making requests to the M-Pesa API.
+        token_manager (AsyncTokenManager): Async token manager for authentication.
+    """
+
+    http_client: AsyncHttpClient
+    token_manager: AsyncTokenManager
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def topup(self, request: B2CAccountTopUpRequest) -> B2CAccountTopUpResponse:
+        """Initiates a B2C Account TopUp transaction asynchronously.
+
+        Args:
+            request (B2CAccountTopUpRequest): The B2C Account TopUp request data.
+
+        Returns:
+            B2CAccountTopUpResponse: Response from the M-Pesa API.
+        """
+        url = "/mpesa/b2b/v1/paymentrequest"
+        token = await self.token_manager.get_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+        response_data = await self.http_client.post(
             url, json=request.model_dump(mode="json"), headers=headers
         )
         return B2CAccountTopUpResponse(**response_data)

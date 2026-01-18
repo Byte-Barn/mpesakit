@@ -3,13 +3,14 @@
 This module tests the TransactionStatus class and its methods for querying transaction status.
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.transaction_status import (
+    AsyncTransactionStatus,
     TransactionStatus,
     TransactionStatusIdentifierType,
     TransactionStatusRequest,
@@ -456,3 +457,65 @@ def test_transaction_status_result_callback_is_successful_empty_code():
     )
     callback = TransactionStatusResultCallback(Result=result)
     assert callback.is_successful() is False
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.mark.asyncio
+async def test_async_query_success(mock_async_http_client, mock_async_token_manager):
+    """Test querying transaction status asynchronously with a valid request."""
+    request = valid_transaction_status_request()
+    response_data = {
+        "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+        "OriginatorConversationID": "12345-67890-1",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    async_transaction_status = AsyncTransactionStatus(
+        http_client=mock_async_http_client,
+        token_manager=mock_async_token_manager,
+    )
+
+    response = await async_transaction_status.query(request)
+
+    assert isinstance(response, TransactionStatusResponse)
+    assert response.ConversationID == response_data["ConversationID"]
+    assert (
+        response.OriginatorConversationID == response_data["OriginatorConversationID"]
+    )
+    assert response.ResponseCode == response_data["ResponseCode"]
+    assert response.ResponseDescription == response_data["ResponseDescription"]
+    mock_async_http_client.post.assert_called_once()
+    args, kwargs = mock_async_http_client.post.call_args
+    assert args[0] == "/mpesa/transactionstatus/v1/query"
+    assert kwargs["headers"]["Authorization"] == "Bearer test_token"
+
+
+@pytest.mark.asyncio
+async def test_async_query_http_error(mock_async_http_client, mock_async_token_manager):
+    """Test handling HTTP errors during async transaction status query."""
+    request = valid_transaction_status_request()
+    mock_async_http_client.post.side_effect = Exception("HTTP error")
+    async_transaction_status = AsyncTransactionStatus(
+        http_client=mock_async_http_client,
+        token_manager=mock_async_token_manager,
+    )
+
+    with pytest.raises(Exception) as excinfo:
+        await async_transaction_status.query(request)
+
+    assert "HTTP error" in str(excinfo.value)

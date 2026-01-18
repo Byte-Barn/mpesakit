@@ -1,15 +1,17 @@
+from .c2b import C2B, AsyncC2B
 from .schemas import (
+    C2BConfirmationResponse,
     C2BRegisterUrlRequest,
     C2BRegisterUrlResponse,
+    C2BResponseType,
     C2BValidationRequest,
     C2BValidationResponse,
-    C2BConfirmationResponse,
     C2BValidationResultCodeType,
-    C2BResponseType,
 )
-from .c2b import C2B
 
 __all__ = [
+    "AsyncC2B",
+    "C2B",
     "C2BResponseType",
     "C2BRegisterUrlRequest",
     "C2BRegisterUrlResponse",
@@ -17,5 +19,4 @@ __all__ = [
     "C2BValidationResponse",
     "C2BConfirmationResponse",
     "C2BValidationResultCodeType",
-    "C2B",
 ]

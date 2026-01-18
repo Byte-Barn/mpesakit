@@ -4,12 +4,13 @@ This module tests the Business Buy Goods API client, ensuring it can handle paym
 process responses correctly, and manage error cases.
 """
 
-import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.business_buy_goods import (
+    AsyncBusinessBuyGoods,
     BusinessBuyGoods,
     BusinessBuyGoodsRequest,
     BusinessBuyGoodsResponse,
@@ -18,6 +19,7 @@ from mpesakit.business_buy_goods import (
     BusinessBuyGoodsTimeoutCallback,
     BusinessBuyGoodsTimeoutCallbackResponse,
 )
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -148,6 +150,7 @@ def test_business_buy_goods_timeout_callback_response():
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
 
+
 def test_business_buy_goods_result_callback_resultcode_string():
     """Ensure a string ResultCode does not raise when checking success."""
     payload = {
@@ -173,3 +176,101 @@ def test_business_buy_goods_result_callback_resultcode_string():
     # Also assert it is considered successful.
     assert callback.is_successful() is True
 
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient to simulate async HTTP requests."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_business_buy_goods(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncBusinessBuyGoods instance with mocked dependencies."""
+    return AsyncBusinessBuyGoods(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_buy_goods_request_acknowledged(
+    async_business_buy_goods, mock_async_http_client
+):
+    """Test that async buy goods request is acknowledged."""
+    request = valid_business_buy_goods_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_business_buy_goods.buy_goods(request)
+
+    assert isinstance(response, BusinessBuyGoodsResponse)
+    assert response.is_successful() is True
+    assert response.ConversationID == response_data["ConversationID"]
+
+
+@pytest.mark.asyncio
+async def test_async_buy_goods_http_error(
+    async_business_buy_goods, mock_async_http_client
+):
+    """Test handling of HTTP errors during async buy goods request."""
+    request = valid_business_buy_goods_request()
+    mock_async_http_client.post.side_effect = Exception("Async HTTP error")
+
+    with pytest.raises(Exception) as excinfo:
+        await async_business_buy_goods.buy_goods(request)
+
+    assert "Async HTTP error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_buy_goods_token_manager_called(
+    async_business_buy_goods, mock_async_token_manager, mock_async_http_client
+):
+    """Test that token manager is called during async buy goods request."""
+    request = valid_business_buy_goods_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    await async_business_buy_goods.buy_goods(request)
+
+    mock_async_token_manager.get_token.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_buy_goods_http_client_called_with_correct_params(
+    async_business_buy_goods, mock_async_http_client
+):
+    """Test that async HTTP client is called with correct parameters."""
+    request = valid_business_buy_goods_request()
+    response_data = {
+        "OriginatorConversationID": "5118-111210482-1",
+        "ConversationID": "AG_20230420_2010759fd5662ef6d054",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    await async_business_buy_goods.buy_goods(request)
+
+    mock_async_http_client.post.assert_called_once()
+    call_args = mock_async_http_client.post.call_args
+    assert call_args[0][0] == "/mpesa/b2b/v1/paymentrequest"
+    assert "Authorization" in call_args[1]["headers"]
+    assert call_args[1]["headers"]["Content-Type"] == "application/json"

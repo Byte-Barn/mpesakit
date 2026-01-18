@@ -3,19 +3,21 @@
 This module tests the AccountBalance class and its methods for querying account balance.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import MagicMock
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 
 from mpesakit.account_balance import (
-    AccountBalanceIdentifierType,
     AccountBalance,
+    AccountBalanceIdentifierType,
     AccountBalanceRequest,
     AccountBalanceResponse,
     AccountBalanceResultCallback,
     AccountBalanceTimeoutCallback,
+    AsyncAccountBalance,
 )
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -191,6 +193,7 @@ def test_timeout_callback_parsing():
     assert callback.Result.OriginatorConversationID == "16917-22577599-3"
     assert callback.Result.ConversationID == "AG_20200206_00005e091a8ec6b9eac5"
 
+
 def test_query_handles_string_response_code(account_balance, mock_http_client):
     """Ensure that ResponseCode as a string does not raise TypeError when checking is_successful."""
     request = valid_account_balance_request()
@@ -216,5 +219,87 @@ def test_query_handles_string_response_code(account_balance, mock_http_client):
 
     response_fail = account_balance.query(request)
     # should not raise and should consider "1" a failure
+    assert response_fail.is_successful() is False
+    assert response_fail.ResponseCode == "1"
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager for testing."""
+    mock = AsyncMock(spec=AsyncTokenManager)
+    mock.get_token.return_value = "test_async_token"
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient for testing."""
+    return AsyncMock(spec=AsyncHttpClient)
+
+
+@pytest.fixture
+def async_account_balance(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an AsyncAccountBalance instance with mocked dependencies."""
+    return AsyncAccountBalance(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_query_returns_acknowledgement(
+    async_account_balance, mock_async_http_client
+):
+    """Test that async query returns only the acknowledgement response, not the account balance."""
+    request = valid_account_balance_request()
+    response_data = {
+        "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+        "OriginatorConversationID": "12345-67890-1",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_account_balance.query(request)
+
+    assert response.is_successful() is True
+    assert isinstance(response, AccountBalanceResponse)
+    assert response.ConversationID == response_data["ConversationID"]
+    assert (
+        response.OriginatorConversationID == response_data["OriginatorConversationID"]
+    )
+    assert response.ResponseCode == response_data["ResponseCode"]
+    assert response.ResponseDescription == response_data["ResponseDescription"]
+
+    mock_async_http_client.post.assert_awaited_once()
+    args, kwargs = mock_async_http_client.post.await_args
+    assert args[0] == "/mpesa/accountbalance/v1/query"
+    assert kwargs["headers"]["Authorization"] == "Bearer test_async_token"
+    assert kwargs["headers"]["Content-Type"] == "application/json"
+
+
+@pytest.mark.asyncio
+async def test_async_query_handles_string_response_code(
+    async_account_balance, mock_async_http_client
+):
+    """Ensure that ResponseCode as a string does not raise TypeError when checking is_successful in async."""
+    request = valid_account_balance_request()
+    response_data_success = {
+        "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+        "OriginatorConversationID": "12345-67890-1",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+    mock_async_http_client.post.return_value = response_data_success
+
+    response = await async_account_balance.query(request)
+    assert response.is_successful() is True
+    assert response.ResponseCode == "0"
+
+    response_data_fail = response_data_success.copy()
+    response_data_fail["ResponseCode"] = "1"
+    response_data_fail["ResponseDescription"] = "Failure."
+    mock_async_http_client.post.return_value = response_data_fail
+
+    response_fail = await async_account_balance.query(request)
     assert response_fail.is_successful() is False
     assert response_fail.ResponseCode == "1"

@@ -1,3 +1,4 @@
+from .reversal import AsyncReversal, Reversal
 from .schemas import (
     ReversalRequest,
     ReversalResponse,
@@ -6,9 +7,9 @@ from .schemas import (
     ReversalTimeoutCallback,
     ReversalTimeoutCallbackResponse,
 )
-from .reversal import Reversal
 
 __all__ = [
+    "AsyncReversal",
     "Reversal",
     "ReversalRequest",
     "ReversalResponse",

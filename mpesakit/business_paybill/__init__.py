@@ -1,3 +1,4 @@
+from .business_paybill import AsyncBusinessPayBill, BusinessPayBill
 from .schemas import (
     BusinessPayBillRequest,
     BusinessPayBillResponse,
@@ -6,9 +7,9 @@ from .schemas import (
     BusinessPayBillTimeoutCallback,
     BusinessPayBillTimeoutCallbackResponse,
 )
-from .business_paybill import BusinessPayBill
 
 __all__ = [
+    "AsyncBusinessPayBill",
     "BusinessPayBill",
     "BusinessPayBillRequest",
     "BusinessPayBillResponse",
