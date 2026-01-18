@@ -5,8 +5,9 @@ Requires a valid access token for authentication and uses the HttpClient for HTT
 """
 
 from pydantic import BaseModel, ConfigDict
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 from .schemas import (
     B2CRequest,
@@ -43,5 +44,40 @@ class B2C(BaseModel):
             "Authorization": f"Bearer {self.token_manager.get_token()}",
             "Content-Type": "application/json",
         }
-        response_data = self.http_client.post(url, json=request.model_dump(by_alias=True), headers=headers)
+        response_data = self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
+        return B2CResponse(**response_data)
+
+
+class AsyncB2C(BaseModel):
+    """Represents the async B2C API client for M-Pesa Business to Customer operations.
+
+    Attributes:
+        http_client (AsyncHttpClient): Async HTTP client for making requests to the M-Pesa API.
+        token_manager (AsyncTokenManager): Async token manager for authentication.
+    """
+
+    http_client: AsyncHttpClient
+    token_manager: AsyncTokenManager
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def send_payment(self, request: B2CRequest) -> B2CResponse:
+        """Initiates a B2C payment request asynchronously.
+
+        Args:
+            request (B2CRequest): The payment request details.
+
+        Returns:
+            B2CResponse: Response from the M-Pesa API after payment initiation.
+        """
+        url = "/mpesa/b2c/v3/paymentrequest"
+        headers = {
+            "Authorization": f"Bearer {await self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+        response_data = await self.http_client.post(
+            url, json=request.model_dump(by_alias=True), headers=headers
+        )
         return B2CResponse(**response_data)

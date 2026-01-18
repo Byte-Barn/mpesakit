@@ -1,12 +1,13 @@
 """Unit tests for the B2C functionality of the Mpesa SDK."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from mpesakit.auth import TokenManager
-from mpesakit.b2c.b2c import B2C
-from mpesakit.b2c.schemas import (
+from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.b2c import (
+    B2C,
+    AsyncB2C,
     B2CCommandIDType,
     B2CRequest,
     B2CResponse,
@@ -14,7 +15,7 @@ from mpesakit.b2c.schemas import (
     B2CResultMetadata,
     B2CResultParameter,
 )
-from mpesakit.http_client import HttpClient
+from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 
 @pytest.fixture
@@ -421,3 +422,79 @@ def test_result_callback_is_successful_negative_code():
     )
     callback = B2CResultCallback(Result=meta)
     assert callback.is_successful() is False
+
+
+@pytest.fixture
+def mock_async_token_manager():
+    """Mock AsyncTokenManager to return a fixed token for testing."""
+    mock = MagicMock(spec=AsyncTokenManager)
+    mock.get_token = AsyncMock(return_value="test_token_async")
+    return mock
+
+
+@pytest.fixture
+def mock_async_http_client():
+    """Mock AsyncHttpClient for testing."""
+    mock = MagicMock(spec=AsyncHttpClient)
+    mock.post = AsyncMock()
+    return mock
+
+
+@pytest.fixture
+def async_b2c(mock_async_http_client, mock_async_token_manager):
+    """Fixture to create an instance of AsyncB2C with mocked dependencies."""
+    return AsyncB2C(
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_send_payment_success(
+    async_b2c, mock_async_http_client, mock_async_token_manager
+):
+    """Test that a successful async B2C payment can be performed."""
+    request = valid_b2c_request()
+    response_data = {
+        "ConversationID": "AG_20170717_00006c6f7f5b8b6b1a62",
+        "OriginatorConversationID": "12345-67890-1",
+        "ResponseCode": "0",
+        "ResponseDescription": "Accept the service request successfully.",
+    }
+
+    mock_async_http_client.post.return_value = response_data
+
+    response = await async_b2c.send_payment(request)
+
+    assert isinstance(response, B2CResponse)
+    assert response.ConversationID == response_data["ConversationID"]
+    assert (
+        response.OriginatorConversationID == response_data["OriginatorConversationID"]
+    )
+    assert response.ResponseCode == response_data["ResponseCode"]
+    assert response.ResponseDescription == response_data["ResponseDescription"]
+
+
+@pytest.mark.asyncio
+async def test_async_send_payment_http_error(
+    async_b2c, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async B2C payment handles HTTP errors gracefully."""
+    request = valid_b2c_request()
+    mock_async_token_manager.get_token.side_effect = Exception("Token error")
+
+    with pytest.raises(Exception) as excinfo:
+        await async_b2c.send_payment(request)
+    assert "Token error" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_async_send_payment_post_error(
+    async_b2c, mock_async_http_client, mock_async_token_manager
+):
+    """Test that async B2C payment handles POST request errors."""
+    request = valid_b2c_request()
+    mock_async_http_client.post.side_effect = Exception("HTTP error")
+
+    with pytest.raises(Exception) as excinfo:
+        await async_b2c.send_payment(request)
+    assert "HTTP error" in str(excinfo.value)
