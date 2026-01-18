@@ -281,4 +281,4 @@ async def test_async_generate_dynamic_qr_token_manager_called(
 
     await async_dynamic_qr_service.generate(request)
 
-    mock_async_token_manager.get_token.assert_called_once()
+    mock_async_token_manager.get_token.assert_awaited_once()
