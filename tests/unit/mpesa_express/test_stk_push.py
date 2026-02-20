@@ -3,12 +3,13 @@
 This module tests the StkPush class for initiating and querying M-Pesa STK Push transactions.
 """
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock , patch
 
 import pytest
 
+import httpx
 from mpesakit.auth import AsyncTokenManager, TokenManager
-from mpesakit.http_client import AsyncHttpClient, HttpClient
+from mpesakit.http_client import AsyncHttpClient, MpesaHttpClient , MpesaAsyncHttpClient
 from mpesakit.mpesa_express.stk_push import (
     AsyncStkPush,
     StkPush,
@@ -27,10 +28,11 @@ def mock_token_manager():
     return mock
 
 
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient for testing."""
-    return MagicMock(spec=HttpClient)
+@pytest.fixture(params=[True,False])
+def mock_http_client(request):
+    """Mock MpesaHttpClient for testing."""
+    use_session=request.param
+    return MagicMock(spec=MpesaHttpClient(env="sandbox",use_session=use_session))
 
 
 @pytest.fixture
@@ -160,6 +162,26 @@ def test_stk_push_simulate_request_invalid_transaction_type():
         StkPushSimulateRequest(**valid_kwargs)
     assert "TransactionType must be one of:" in str(excinfo.value)
 
+@pytest.mark.parametrize("use_session", [True, False])
+def test_stk_push_retry(use_session):
+    """Test that mutliple simulation sync of stk_push is successful."""
+    client = MpesaHttpClient(env="sandbox", use_session=use_session)
+
+    mock_response = MagicMock(spec=httpx.Response)
+    mock_response.is_success = True
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"MerchantRequestID": "12345", "ResponseCode": "0"}
+
+    with patch.object(httpx.Client, "post", return_value=mock_response) as mock_post:
+       succcess_count= 0
+
+       for _ in range(100):
+        result = client.post("/test", json={}, headers={})
+        if result["ResponseCode"] == "0":
+            succcess_count += 1
+
+    assert succcess_count == 100
+    assert mock_post.call_count == 100
 
 @pytest.fixture
 def mock_async_token_manager():
@@ -290,3 +312,28 @@ async def test_async_query_handles_http_error(async_stk_push, mock_async_http_cl
     with pytest.raises(Exception) as excinfo:
         await async_stk_push.query(request)
     assert "HTTP error" in str(excinfo.value)
+
+@pytest.mark.asyncio
+async def test_stk_push_retry_async():
+    """Test that multiple simulation of asnycClient stk_push is successful."""
+    client = MpesaAsyncHttpClient()
+
+    mock_response = MagicMock(spec=httpx.Response)
+    mock_response.is_success = True
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"MerchantRequestID": "12345", "ResponseCode": "0"}
+
+    async_mock = AsyncMock(return_value=mock_response)
+
+    with patch("httpx.AsyncClient.post", async_mock) as mock_async_post:
+
+
+        success_count = 0
+
+        for _ in range(100):
+            result = await client.post("/test", json={}, headers={})
+            if result["ResponseCode"] == "0":
+                success_count += 1
+
+        assert success_count == 100
+        assert mock_async_post.await_count == 100
