@@ -58,7 +58,7 @@ def handle_retry_exception(retry_state: RetryCallState):
             ) from exception
         elif isinstance(exception, httpx.ConnectError):
             raise MpesaApiException(
-                MpesaError(error_code="CONNECTION_ERROR", error_message=str(exception))
+                MpesaError(error_code="CONNECTION_ERROR", error_message="Failed to connect to M-Pesa API.")
             ) from exception
 
         raise MpesaApiException(
@@ -163,7 +163,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
-                    error_message=str(e),
+                    error_message="HTTP request failed.",
                     status_code=getattr(response, "status_code", None),
                     raw_response=getattr(response, "text", None),
                 )
@@ -217,7 +217,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
             raise MpesaApiException(
                 MpesaError(
                     error_code="REQUEST_FAILED",
-                    error_message=str(e),
+                    error_message="HTTP request failed.",
                     status_code=getattr(response, "status_code", None),
                     raw_response=getattr(response, "text", None),
                 )

@@ -31,8 +31,7 @@ def mock_token_manager():
 @pytest.fixture(params=[True,False])
 def mock_http_client(request):
     """Mock MpesaHttpClient for testing."""
-    use_session=request.param
-    return MagicMock(spec=MpesaHttpClient(env="sandbox",use_session=use_session))
+    return MagicMock(spec=MpesaHttpClient)
 
 
 @pytest.fixture
@@ -163,7 +162,7 @@ def test_stk_push_simulate_request_invalid_transaction_type():
     assert "TransactionType must be one of:" in str(excinfo.value)
 
 @pytest.mark.parametrize("use_session", [True, False])
-def test_stk_push_retry(use_session):
+def test_stk_push_multiple_times(use_session):
     """Test that mutliple simulation sync of stk_push is successful."""
     client = MpesaHttpClient(env="sandbox", use_session=use_session)
 
@@ -314,8 +313,8 @@ async def test_async_query_handles_http_error(async_stk_push, mock_async_http_cl
     assert "HTTP error" in str(excinfo.value)
 
 @pytest.mark.asyncio
-async def test_stk_push_retry_async():
-    """Test that multiple simulation of asnycClient stk_push is successful."""
+async def test_async_stk_push_multiple_times():
+    """Test that multiple simulation of asyncClient stk_push is successful."""
     client = MpesaAsyncHttpClient()
 
     mock_response = MagicMock(spec=httpx.Response)

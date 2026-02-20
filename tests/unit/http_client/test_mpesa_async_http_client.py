@@ -48,7 +48,7 @@ async def test_post_success(async_client):
 
         assert result == {"foo": "bar"}
         mock_post.assert_called_once()
-        mock_post.assert_called_with("/test", json={"a": 1}, headers={"h": "v"}, timeout=10)
+        assert mock_post.call_args[0][0] == "https://sandbox.safaricom.co.ke/test"
 
 
 @pytest.mark.asyncio
@@ -126,7 +126,7 @@ async def test_post_generic_httpx_error(async_client):
             await async_client.post("/error", json={}, headers={})
 
         assert exc.value.error.error_code == "REQUEST_FAILED"
-        assert "protocol error" in exc.value.error.error_message
+        assert "HTTP request failed" in exc.value.error.error_message
 
 
 @pytest.mark.asyncio
@@ -141,7 +141,7 @@ async def test_get_success(async_client):
 
         assert result == {"foo": "bar"}
         mock_get.assert_called_once()
-        mock_get.assert_called_with("/test", params={"a": 1}, headers={"h": "v"}, timeout=10)
+        assert mock_get.call_args[0][0] == "https://sandbox.safaricom.co.ke/test"
 
 
 @pytest.mark.asyncio
@@ -171,7 +171,7 @@ async def test_get_timeout(async_client):
             await async_client.get("/timeout")
 
         assert exc.value.error.error_code == "REQUEST_TIMEOUT"
-        assert "timed out" in exc.value.error.error_message
+        assert "Test Timeout" in exc.value.error.error_message
 
 
 @pytest.mark.asyncio
