@@ -89,7 +89,7 @@ class StkPushSimulateRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "BusinessShortCode": 654321,
-                "Password": "dGVzdF9wYXNzd29yZA==",
+                "Password": "<BASE64_ENCODED_PASSWORD>",
                 "Timestamp": "20240607123045",
                 "TransactionType": "CustomerPayBillOnline",
                 "Amount": 10,
@@ -499,7 +499,7 @@ class StkPushQueryRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "BusinessShortCode": 654321,
-                "Password": "dGVzdF9wYXNzd29yZA==",
+                "Password": "<BASE64_ENCODED_PASSWORD>",
                 "Timestamp": "20240607123045",
                 "CheckoutRequestID": "ws_CO_DMZ_123212312_2342347678234",
             }
