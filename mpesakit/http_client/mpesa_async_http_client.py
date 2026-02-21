@@ -9,9 +9,9 @@ from .http_client import AsyncHttpClient
 from urllib.parse import urljoin
 
 from tenacity import (
+    AsyncRetrying,
     RetryCallState,
     before_sleep_log,
-    retry,
     retry_if_exception_type,
     stop_after_attempt,
     wait_random_exponential,
@@ -39,7 +39,7 @@ def handle_request_error(response: httpx.Response):
             error_code=f"HTTP_{response.status_code}",
             error_message=error_message,
             status_code=response.status_code,
-            raw_response=response_data,
+            raw_response=response.text,
         )
     )
 
@@ -107,33 +107,43 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
     base_url: str
     _client: httpx.AsyncClient
 
-    def __init__(self, env: str = "sandbox"):
+    def __init__(self, env: str = "sandbox", retry_enabled_flag: bool = True, wait_strategy=None, stop_strategy=None):
         """Initializes the MpesaAsyncHttpClient with the specified environment."""
         self.base_url = self._resolve_base_url(env)
         self._client = httpx.AsyncClient(base_url=self.base_url)
+
+        self._retry_enabled_flag = retry_enabled_flag
+        self._wait_strategy = wait_strategy or wait_random_exponential(multiplier=5, max=8)
+        self._stop_strategy = stop_strategy or stop_after_attempt(3)
 
     def _resolve_base_url(self, env: str) -> str:
         if env.lower() == "production":
             return "https://api.safaricom.co.ke"
         return "https://sandbox.safaricom.co.ke"
 
+    def _build_retrying(self):
+        return AsyncRetrying(
+            retry=retry_enabled(enabled=self._retry_enabled_flag),
+            wait=self._wait_strategy,
+            stop=self._stop_strategy,
+            retry_error_callback=handle_retry_exception,
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )
 
 
 
-    @retry(
-        retry=retry_enabled(enabled=True),
-        wait=wait_random_exponential(multiplier=5, max=8),
-        stop=stop_after_attempt(3),
-        retry_error_callback=handle_retry_exception,
-        before_sleep=before_sleep_log(logger, logging.WARNING),
-    )
     async def async_raw_post(
         self, url: str, json: Dict[str, Any], headers: Dict[str, str], timeout: int = 10
     ) -> httpx.Response:
         """Low-level POST request - may raise httpx exceptions."""
         full_url = urljoin(self.base_url, url)
-        return await self._client.post(
-            full_url, json=json, headers=headers, timeout=timeout)
+
+        async for attempt in self._build_retrying():
+            with attempt:
+                return await self._client.post(
+                    full_url, json=json, headers=headers, timeout=timeout
+                )
 
 
 
@@ -169,13 +179,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
                 )
             ) from e
 
-    @retry(
-        retry=retry_enabled(enabled=True),
-        wait=wait_random_exponential(multiplier=5, max=8),
-        stop=stop_after_attempt(3),
-        retry_error_callback=handle_retry_exception,
-        before_sleep=before_sleep_log(logger, logging.WARNING),
-    )
+
     async def async_raw_get(
         self,
         url: str,
@@ -187,9 +191,12 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         if headers is None:
             headers = {}
         full_url = urljoin(self.base_url, url)
-        return await self._client.get(
-            full_url, params=params, headers=headers, timeout=timeout
-        )
+
+        async for attempt in self._build_retrying():
+            with attempt:
+                return await self._client.get(
+                    full_url, params=params, headers=headers, timeout=timeout
+                )
 
     async def get(
         self,

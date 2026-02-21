@@ -4,6 +4,7 @@ This module tests the StkPush class for initiating and querying M-Pesa STK Push 
 """
 
 from unittest.mock import AsyncMock, MagicMock , patch
+from tenacity import stop_after_attempt, wait_none
 
 import pytest
 
@@ -28,8 +29,8 @@ def mock_token_manager():
     return mock
 
 
-@pytest.fixture(params=[True,False])
-def mock_http_client(request):
+@pytest.fixture()
+def mock_http_client():
     """Mock MpesaHttpClient for testing."""
     return MagicMock(spec=MpesaHttpClient)
 
@@ -315,24 +316,27 @@ async def test_async_query_handles_http_error(async_stk_push, mock_async_http_cl
 @pytest.mark.asyncio
 async def test_async_stk_push_multiple_times():
     """Test that multiple simulation of asyncClient stk_push is successful."""
-    client = MpesaAsyncHttpClient()
+    async with MpesaAsyncHttpClient(
+        wait_strategy=wait_none(),
+        stop_strategy=stop_after_attempt(1),
+    ) as client:
 
-    mock_response = MagicMock(spec=httpx.Response)
-    mock_response.is_success = True
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"MerchantRequestID": "12345", "ResponseCode": "0"}
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.is_success = True
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"MerchantRequestID": "12345", "ResponseCode": "0"}
 
-    async_mock = AsyncMock(return_value=mock_response)
+        async_mock = AsyncMock(return_value=mock_response)
 
-    with patch("httpx.AsyncClient.post", async_mock) as mock_async_post:
+        with patch("httpx.AsyncClient.post", async_mock) as mock_async_post:
 
 
-        success_count = 0
+            success_count = 0
 
-        for _ in range(100):
-            result = await client.post("/test", json={}, headers={})
-            if result["ResponseCode"] == "0":
-                success_count += 1
+            for _ in range(100):
+                result = await client.post("/test", json={}, headers={})
+                if result["ResponseCode"] == "0":
+                    success_count += 1
 
-        assert success_count == 100
+            assert success_count == 100
         assert mock_async_post.await_count == 100
