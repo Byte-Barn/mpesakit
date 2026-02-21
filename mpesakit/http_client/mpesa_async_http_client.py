@@ -1,6 +1,7 @@
 """MpesaAsyncHttpClient: An asynchronous client for making HTTP requests to the M-Pesa API."""
 
 from typing import Dict, Any, Optional
+from urllib import response
 import httpx
 import logging
 
@@ -141,9 +142,15 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
 
         async for attempt in self._build_retrying():
             with attempt:
-                return await self._client.post(
+                response = await self._client.post(
                     full_url, json=json, headers=headers, timeout=timeout
                 )
+                break
+            
+        if response is None:
+            raise RuntimeError("Retry loop exited without returning a response or raising an exception.")
+        
+        return response
 
 
 
@@ -194,9 +201,16 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
 
         async for attempt in self._build_retrying():
             with attempt:
-                return await self._client.get(
+                response = await self._client.get(
                     full_url, params=params, headers=headers, timeout=timeout
                 )
+            
+        if response is None:
+            raise RuntimeError("Retry loop exited without returning a response or raising an exception.")
+        
+        return response
+
+
 
     async def get(
         self,
