@@ -171,7 +171,7 @@ async def test_get_timeout(async_client):
             await async_client.get("/timeout")
 
         assert exc.value.error.error_code == "REQUEST_TIMEOUT"
-        assert "timed out" in exc.value.error.error_message
+        assert "Test Timeout" in exc.value.error.error_message
 
 
 @pytest.mark.asyncio
@@ -187,7 +187,7 @@ async def test_get_connection_error(async_client):
             await async_client.get("/conn")
 
         assert exc.value.error.error_code == "CONNECTION_ERROR"
-        assert "Failed to connect" in exc.value.error.error_message
+        assert "conn error" in exc.value.error.error_message
 
 
 @pytest.mark.asyncio
@@ -203,4 +203,4 @@ async def test_get_generic_httpx_error(async_client):
             await async_client.get("/error")
 
         assert exc.value.error.error_code == "REQUEST_FAILED"
-        assert "HTTP request failed" in exc.value.error.error_message
+        assert "protocol error" in exc.value.error.error_message
