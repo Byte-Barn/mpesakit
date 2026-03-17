@@ -48,7 +48,10 @@ async def test_post_success(async_client):
 
         assert result == {"foo": "bar"}
         mock_post.assert_called_once()
-        mock_post.assert_called_with("/test", json={"a": 1}, headers={"h": "v"}, timeout=10)
+        mock_post.assert_called_with("/test",
+         json={"a": 1},
+         headers={"h": "v"},
+           timeout=10)
 
 
 @pytest.mark.asyncio
@@ -128,7 +131,58 @@ async def test_post_generic_httpx_error(async_client):
         assert exc.value.error.error_code == "REQUEST_FAILED"
         assert "protocol error" in exc.value.error.error_message
 
+@pytest.mark.asyncio
+async def test_post_idempotency_key_persistence(async_client):
+    """Test that the same idempotency key is reused across retries."""
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.is_success = True
+    mock_response.json.return_value = {"Result": "Success"}
 
+    with patch.object(
+        async_client._client,
+        "post",
+        side_effect=[httpx.ConnectError("Fail 1"), httpx.ConnectError("Fail 2"),mock_response],
+        new_callable=AsyncMock,
+        return_value=mock_response
+    ) as mock_post:
+
+        await async_client.post("/stkpush",json={"Amount":1},headers={},idempotent=True)
+        assert mock_post.call_count == 3
+
+        first_call_headers = mock_post.call_args_list[0].kwargs['headers']
+        third_call_headers = mock_post.call_args_list[2].kwargs['headers']
+
+        assert "X-Idempotency-Key" in first_call_headers
+        assert first_call_headers["X-Idempotency-Key"] == third_call_headers["X-Idempotency-Key"]
+
+@pytest.mark.asyncio
+async def test_post_does_not_retry_on_400(async_client):
+    """Test that 400 errors fail immediately without retrying."""
+    mock_response = Mock()
+    mock_response.status_code = 400
+    mock_response.is_success = False
+    mock_response.json.return_value={"errorMessage":"Invalid MSISDN"}
+
+    with patch.object(async_client._client,"post",new_callable=AsyncMock,return_value=mock_response) as mock_post:
+            with pytest.raises(MpesaApiException):
+                await async_client.post("/stkpush",json={"bad":"data"})
+
+            assert mock_post.call_count == 1
+
+@pytest.mark.asyncio
+async def test_post_retries_until_stop_limit(async_client):
+    """Verify that the client attempts 3 times for connection errors."""
+    with patch.object(
+        async_client._client,
+        "post",
+        side_effect=httpx.ConnectError("Dead pipe")
+    )as mock_post:
+
+        with pytest.raises(MpesaApiException):
+            await async_client.post("/any",json={},idempotent=True)
+
+        assert mock_post.call_count == 3
 @pytest.mark.asyncio
 async def test_get_success(async_client):
     """Test successful ASYNC GET request returns expected JSON."""
