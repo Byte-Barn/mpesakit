@@ -164,49 +164,49 @@ def test_stk_push_simulate_request_invalid_transaction_type():
 @pytest.mark.parametrize("use_session", [True, False])
 def test_stk_push_multiple_times(use_session, mock_token_manager):
     """Test that StkPush service layer works correctly over multiple iterations."""
-    client = MpesaHttpClient(env="sandbox", use_session=use_session)
-    stk = StkPush(http_client=client,token_manager=mock_token_manager)
-
-    request_data = StkPushSimulateRequest(
-        BusinessShortCode=174379,
-        Amount=1,
-        PhoneNumber="254700000000",
-        CallBackURL="https://example.com/callback",
-        AccountReference="TestRef",
-        TransactionDesc="TestDesc",
-        TransactionType="CustomerPayBillOnline",
-        PartyA="254700000000",
-        PartyB="174379",
-        Timestamp="20231010120000",
-        Password="base64_encoded_password"
-    )
-
-    mock_response = MagicMock(spec=httpx.Response)
-    mock_response.is_success = True
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "MerchantRequestID": "12345",
-        "ResponseCode": "0",
-        "CustomerMessage": "Success",
-        "CheckoutRequestID":"ws_CO_260520211133524545",
-        "ResponseDescription":"Test Description"
-    }
-
-
-    with patch.object(mock_token_manager, "get_token", return_value="mock_token"):
-        with patch.object(httpx.Client, "send", return_value=mock_response) as mock_send:
-            success_count = 0
-
-            for _ in range(100):
-                result = stk.push(
-                request=request_data
-
-                )
-                if str(result.ResponseCode) == "0":
-                    success_count += 1
-
-            assert success_count == 100
-            assert mock_send.call_count == 100
+    with MpesaHttpClient(env="sandbox", use_session=use_session) as client:
+        stk = StkPush(http_client=client,token_manager=mock_token_manager)
+    
+        request_data = StkPushSimulateRequest(
+            BusinessShortCode=174379,
+            Amount=1,
+            PhoneNumber="254700000000",
+            CallBackURL="https://example.com/callback",
+            AccountReference="TestRef",
+            TransactionDesc="TestDesc",
+            TransactionType="CustomerPayBillOnline",
+            PartyA="254700000000",
+            PartyB="174379",
+            Timestamp="20231010120000",
+            Password="base64_encoded_password"
+        )
+    
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.is_success = True
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "MerchantRequestID": "12345",
+            "ResponseCode": "0",
+            "CustomerMessage": "Success",
+            "CheckoutRequestID":"ws_CO_260520211133524545",
+            "ResponseDescription":"Test Description"
+        }
+    
+    
+        with patch.object(mock_token_manager, "get_token", return_value="mock_token"):
+            with patch.object(httpx.Client, "send", return_value=mock_response) as mock_send:
+                success_count = 0
+    
+                for _ in range(100):
+                    result = stk.push(
+                    request=request_data
+    
+                    )
+                    if str(result.ResponseCode) == "0":
+                        success_count += 1
+    
+                assert success_count == 100
+                assert mock_send.call_count == 100
 
 @pytest.fixture
 def mock_async_token_manager():
@@ -341,46 +341,46 @@ async def test_async_query_handles_http_error(async_stk_push, mock_async_http_cl
 @pytest.mark.asyncio
 async def test_async_stk_push_multiple_times(mock_async_token_manager):
     """Test that StkPush can be used multiple times."""
-    client = MpesaAsyncHttpClient()
-    stk = AsyncStkPush(http_client =client,token_manager=mock_async_token_manager)
+    async with MpesaAsyncHttpClient() as client:
+        stk = AsyncStkPush(http_client =client,token_manager=mock_async_token_manager)
 
-    request_data = StkPushSimulateRequest(
-        BusinessShortCode=174379,
-        Amount=1,
-        PhoneNumber="254700000000",
-        CallBackURL="https://example.com/callback",
-        AccountReference="TestRef",
-        TransactionDesc="TestDesc",
-        TransactionType="CustomerPayBillOnline",
-        PartyA="254700000000",
-        PartyB="174379",
-        Timestamp="20231010120000",
-        Password="base64_encoded_password"
-    )
+        request_data = StkPushSimulateRequest(
+            BusinessShortCode=174379,
+            Amount=1,
+            PhoneNumber="254700000000",
+            CallBackURL="https://example.com/callback",
+            AccountReference="TestRef",
+            TransactionDesc="TestDesc",
+            TransactionType="CustomerPayBillOnline",
+            PartyA="254700000000",
+            PartyB="174379",
+            Timestamp="20231010120000",
+            Password="base64_encoded_password"
+        )
 
 
-    mock_response = MagicMock(spec=httpx.Response)
-    mock_response.is_success = True
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "MerchantRequestID": "12345",
-        "CheckoutRequestID":"ws_CO_260520211133524545",
-        "ResponseDescription":"Test Description",
-        "CustomerMessage": "Success",
-        "ResponseCode": "0"}
+        mock_response = MagicMock(spec=httpx.Response)
+        mock_response.is_success = True
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "MerchantRequestID": "12345",
+            "CheckoutRequestID":"ws_CO_260520211133524545",
+            "ResponseDescription":"Test Description",
+            "CustomerMessage": "Success",
+            "ResponseCode": "0"}
 
-    with patch.object(mock_async_token_manager, "get_token", AsyncMock(return_value="mock_token")):
-        with patch.object(httpx.AsyncClient, "send", AsyncMock(return_value=mock_response)) as mock_send:
-            success_count = 0
+        with patch.object(mock_async_token_manager, "get_token", AsyncMock(return_value="mock_token")):
+            with patch.object(httpx.AsyncClient, "send", AsyncMock(return_value=mock_response)) as mock_send:
+                success_count = 0
 
-            for _ in range(100):
-                result = await stk.push(
-                    request=request_data
-                )
-                if str(result.ResponseCode) == "0":
-                    success_count += 1
+                for _ in range(100):
+                    result = await stk.push(
+                        request=request_data
+                    )
+                    if str(result.ResponseCode) == "0":
+                        success_count += 1
 
-        assert success_count == 100
-        assert mock_send.call_count == 100
+            assert success_count == 100
+            assert mock_send.call_count == 100
 
-    await client.aclose()
+        await client.aclose()

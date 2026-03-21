@@ -110,8 +110,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        if headers is None:
-            headers = {}
+        headers=dict(headers or {})
 
         if idempotent and "X-Idempotency-Key" not in headers:
             headers["X-Idempotency-Key"] = str(uuid.uuid4())
