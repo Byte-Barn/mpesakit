@@ -166,7 +166,7 @@ def test_stk_push_multiple_times(use_session, mock_token_manager):
     """Test that StkPush service layer works correctly over multiple iterations."""
     with MpesaHttpClient(env="sandbox", use_session=use_session) as client:
         stk = StkPush(http_client=client,token_manager=mock_token_manager)
-    
+
         request_data = StkPushSimulateRequest(
             BusinessShortCode=174379,
             Amount=1,
@@ -180,7 +180,7 @@ def test_stk_push_multiple_times(use_session, mock_token_manager):
             Timestamp="20231010120000",
             Password="base64_encoded_password"
         )
-    
+
         mock_response = MagicMock(spec=httpx.Response)
         mock_response.is_success = True
         mock_response.status_code = 200
@@ -191,20 +191,20 @@ def test_stk_push_multiple_times(use_session, mock_token_manager):
             "CheckoutRequestID":"ws_CO_260520211133524545",
             "ResponseDescription":"Test Description"
         }
-    
-    
+
+
         with patch.object(mock_token_manager, "get_token", return_value="mock_token"):
             with patch.object(httpx.Client, "send", return_value=mock_response) as mock_send:
                 success_count = 0
-    
+
                 for _ in range(100):
                     result = stk.push(
                     request=request_data
-    
+
                     )
                     if str(result.ResponseCode) == "0":
                         success_count += 1
-    
+
                 assert success_count == 100
                 assert mock_send.call_count == 100
 

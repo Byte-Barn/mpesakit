@@ -2,7 +2,7 @@
 
 import logging
 import uuid
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional , MutableMapping
 import httpx
 
 from mpesakit.errors import MpesaError, MpesaApiException
@@ -57,7 +57,7 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         self,
         url: str,
         json: Dict[str, Any],
-        headers: Dict[str, str],
+        headers: MutableMapping[str, str],
         timeout: int = 10,
     ) -> httpx.Response:
         """Low-level asynchronous POST request - may raise httpx exceptions."""
@@ -80,14 +80,14 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
     self,
     url: str,
     json: Dict[str, Any],
-    headers: Dict[str, str],
+    headers: MutableMapping[str, str],
     timeout: int = 10,
 ) -> httpx.Response:
-     return await self._client.post(
+     return await self._raw_post(
         url,
-        json=json,
-        headers=headers,
-        timeout=timeout,
+        json,
+        headers,
+        timeout,
     )
 
     async def post(
@@ -110,18 +110,18 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         Returns:
             Dict[str, Any]: The JSON response from the API.
         """
-        headers=dict(headers or {})
+        h= httpx.Headers( headers or {})
 
-        if idempotent and "X-Idempotency-Key" not in headers:
-            headers["X-Idempotency-Key"] = str(uuid.uuid4())
+        if idempotent and "X-Idempotency-Key"  not in h:
+            h["X-Idempotency-Key"] = str(uuid.uuid4())
 
         response: httpx.Response | None = None
 
         try:
             if idempotent:
-                response = await self._retryable_post(url, json, headers, timeout)
+                response = await self._retryable_post(url, json, h, timeout)
             else:
-                response = await self._raw_post(url, json, headers, timeout)
+                response = await self._raw_post(url, json, h, timeout)
             handle_request_error(response)
             return response.json()
         except httpx.ConnectTimeout as e:
