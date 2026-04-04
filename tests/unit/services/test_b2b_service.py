@@ -169,13 +169,6 @@ def test_b2b_service_initializes_services_correctly(
     if hasattr(service, "buygoods_service"):
         assert service.buygoods_service.http_client is mock_http_client
         assert service.buygoods_service.token_manager is mock_token_manager
-        @pytest.fixture
-        def mock_async_http_client():
-            """Mock async HttpClient to simulate async HTTP requests."""
-            client = MagicMock(spec=HttpClient)
-            client.post = AsyncMock()
-            return client
-
 
 @pytest.fixture
 def async_b2b_service(mock_async_http_client, mock_async_token_manager):
