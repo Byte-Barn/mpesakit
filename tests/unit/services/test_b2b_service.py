@@ -306,12 +306,18 @@ def test_async_b2b_service_initializes_services_correctly(
     assert service.http_client is mock_async_http_client
     assert service.token_manager is mock_async_token_manager
 
-    if hasattr(service, "express_checkout_service"):
-        assert service.express_checkout_service.http_client is mock_async_http_client
-        assert service.express_checkout_service.token_manager is mock_async_token_manager
-    if hasattr(service, "paybill_service"):
-        assert service.paybill_service.http_client is mock_async_http_client
-        assert service.paybill_service.token_manager is mock_async_token_manager
-    if hasattr(service, "buygoods_service"):
-        assert service.buygoods_service.http_client is mock_async_http_client
-        assert service.buygoods_service.token_manager is mock_async_token_manager
+    express_checkout_delegate = getattr(service, "_express_checkout", None)
+    paybill_delegate = getattr(service, "_business_paybill", None)
+    buygoods_delegate = getattr(service, "_business_buygoods", None)
+
+    assert express_checkout_delegate is not None
+    assert express_checkout_delegate.http_client is mock_async_http_client
+    assert express_checkout_delegate.token_manager is mock_async_token_manager
+
+    assert paybill_delegate is not None
+    assert paybill_delegate.http_client is mock_async_http_client
+    assert paybill_delegate.token_manager is mock_async_token_manager
+
+    assert buygoods_delegate is not None
+    assert buygoods_delegate.http_client is mock_async_http_client
+    assert buygoods_delegate.token_manager is mock_async_token_manager
