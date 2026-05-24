@@ -3,12 +3,14 @@
 This module tests the StkPush class for initiating and querying M-Pesa STK Push transactions.
 """
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 
 from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.http_client import AsyncHttpClient, HttpClient
+from mpesakit.http_client.mpesa_http_client import MpesaHttpClient
 from mpesakit.mpesa_express.stk_push import (
     AsyncStkPush,
     StkPush,
@@ -37,6 +39,22 @@ def mock_http_client():
 def stk_push(mock_http_client, mock_token_manager):
     """Fixture to create an instance of StkPush with mocked dependencies."""
     return StkPush(http_client=mock_http_client, token_manager=mock_token_manager)
+
+
+def build_stk_push_simulate_request():
+    return StkPushSimulateRequest(
+        BusinessShortCode=174379,
+        Password="test_password",
+        Timestamp="20220101010101",
+        TransactionType="CustomerPayBillOnline",
+        Amount=10,
+        PartyA="254700000000",
+        PartyB="174379",
+        PhoneNumber="254700000000",
+        CallBackURL="https://test.com/callback",
+        AccountReference="TestAccount",
+        TransactionDesc="Test Payment",
+    )
 
 
 def test_push_success(stk_push, mock_http_client):
@@ -160,6 +178,49 @@ def test_stk_push_simulate_request_invalid_transaction_type():
         StkPushSimulateRequest(**valid_kwargs)
     assert "TransactionType must be one of:" in str(excinfo.value)
 
+
+@pytest.mark.parametrize("use_session", [True, False])
+def test_stk_push_simulation_session_behavior(use_session, mock_token_manager):
+    """Test repeated STK Push simulation with and without the sync HTTP client session."""
+    request = build_stk_push_simulate_request()
+    response_data = {
+        "MerchantRequestID": "12345",
+        "CheckoutRequestID": "ws_CO_260520211133524545",
+        "ResponseCode": 0,
+        "ResponseDescription": "Success",
+        "ResultCode": 0,
+        "ResultDesc": "The service request is processed successfully.",
+        "CustomerMessage": "Success.Request accepted for processing.",
+    }
+
+    client = MpesaHttpClient(env="sandbox", use_session=use_session)
+    stk_push = StkPush(http_client=client, token_manager=mock_token_manager)
+
+    if use_session:
+        assert client._client is not None
+        with patch.object(client._client, "post", return_value=httpx.Response(200, json=response_data)) as mock_post:
+            success_count = 0
+            for _ in range(100):
+                response = stk_push.push(request)
+                if response.is_successful():
+                    success_count += 1
+
+            assert success_count == 100
+            assert mock_post.call_count == 100
+    else:
+        assert client._client is None
+        with patch("mpesakit.http_client.mpesa_http_client.httpx.Client.post", return_value=httpx.Response(200, json=response_data)) as mock_post:
+            success_count = 0
+            for _ in range(98):
+                response = stk_push.push(request)
+                if response.is_successful():
+                    success_count += 1
+
+            assert success_count == 98
+            assert mock_post.call_count == 98
+
+    if client._client is not None:
+        client.close()
 
 @pytest.fixture
 def mock_async_token_manager():
@@ -290,3 +351,29 @@ async def test_async_query_handles_http_error(async_stk_push, mock_async_http_cl
     with pytest.raises(Exception) as excinfo:
         await async_stk_push.query(request)
     assert "HTTP error" in str(excinfo.value)
+
+@pytest.mark.asyncio
+async def test_async_stk_push_simulation_repeated_calls(async_stk_push, mock_async_http_client):
+    """Test repeated async STK Push simulation calls with the async client."""
+    request = build_stk_push_simulate_request()
+    response_data = {
+        "MerchantRequestID": "12345",
+        "CheckoutRequestID": "ws_CO_260520211133524545",
+        "ResponseCode": 0,
+        "ResponseDescription": "Success",
+        "ResultCode": 0,
+        "ResultDesc": "The service request is processed successfully.",
+        "CustomerMessage": "Success.Request accepted for processing.",
+    }
+
+    mock_async_http_client.post.return_value = response_data
+
+    success_count = 0
+    for _ in range(99):
+        response = await async_stk_push.push(request)
+        if response.is_successful():
+            success_count += 1
+
+    assert success_count == 99
+    assert mock_async_http_client.post.call_count == 99
+
