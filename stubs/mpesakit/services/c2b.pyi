@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
-from mpesakit.auth import TokenManager as TokenManager
+from mpesakit.auth import TokenManager as TokenManager, AsyncTokenManager as AsyncTokenManager
 from mpesakit.c2b import C2B as C2B, C2BRegisterUrlRequest as C2BRegisterUrlRequest, C2BRegisterUrlResponse as C2BRegisterUrlResponse
-from mpesakit.http_client import HttpClient as HttpClient
+from mpesakit.http_client import HttpClient as HttpClient, AsyncHttpClient as AsyncHttpClient
 
 class C2BService:
     http_client: Incomplete
@@ -9,3 +9,10 @@ class C2BService:
     c2b: Incomplete
     def __init__(self, http_client: HttpClient, token_manager: TokenManager) -> None: ...
     def register_url(self, short_code: int, response_type: str, confirmation_url: str, validation_url: str, **kwargs) -> C2BRegisterUrlResponse: ...
+
+class AsyncC2BService:
+    http_client: Incomplete
+    token_manager: Incomplete
+    c2b: Incomplete
+    def __init__(self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager) -> None: ...
+    async def register_url(self, short_code: int, response_type: str, confirmation_url: str, validation_url: str, **kwargs) -> C2BRegisterUrlResponse: ...

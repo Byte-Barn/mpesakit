@@ -1,11 +1,12 @@
 """Facade for M-Pesa STK Push (Mpesa Express) service."""
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
 
 
 from mpesakit.mpesa_express import (
     StkPush,
+    AsyncStkPush,
     StkPushSimulateRequest,
     StkPushSimulateResponse,
     StkPushQueryRequest,
@@ -115,3 +116,78 @@ class StkPushService:
             },
         )
         return self.stk_push.query(request)
+
+
+class AsyncStkPushService:
+    """Async facade for M-Pesa STK Push operations."""
+
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
+        """Initialize the async STK Push service."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self.stk_push = AsyncStkPush(
+            http_client=self.http_client,
+            token_manager=self.token_manager,
+        )
+
+    async def push(
+        self,
+        business_short_code: int,
+        transaction_type: str,
+        amount: float,
+        party_a: str,
+        party_b: str,
+        phone_number: str,
+        callback_url: str,
+        account_reference: str,
+        transaction_desc: str,
+        passkey: str | None = None,
+        timestamp: str | None = None,
+        password: str | None = None,
+        **kwargs,
+    ) -> StkPushSimulateResponse:
+        """Initiate an M-Pesa STK Push transaction asynchronously."""
+        request = StkPushSimulateRequest(
+            BusinessShortCode=business_short_code,
+            TransactionType=transaction_type,
+            Amount=amount,
+            PartyA=party_a,
+            PartyB=party_b,
+            PhoneNumber=phone_number,
+            CallBackURL=callback_url,
+            AccountReference=account_reference,
+            TransactionDesc=transaction_desc,
+            Passkey=passkey,
+            Timestamp=timestamp,
+            Password=password,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k in StkPushSimulateRequest.model_fields
+            },
+        )
+        return await self.stk_push.push(request)
+
+    async def query(
+        self,
+        business_short_code: int,
+        checkout_request_id: str,
+        passkey: str | None = None,
+        password: str | None = None,
+        timestamp: str | None = None,
+        **kwargs,
+    ) -> StkPushQueryResponse:
+        """Query the status of an M-Pesa STK Push transaction asynchronously."""
+        request = StkPushQueryRequest(
+            BusinessShortCode=business_short_code,
+            Passkey=passkey,
+            CheckoutRequestID=checkout_request_id,
+            Password=password,
+            Timestamp=timestamp,
+            **{
+                k: v for k, v in kwargs.items() if k in StkPushQueryRequest.model_fields
+            },
+        )
+        return await self.stk_push.query(request)

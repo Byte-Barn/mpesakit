@@ -1,10 +1,11 @@
 """Facade for M-Pesa Transaction Reversal API interactions."""
 
 from typing import Optional
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
 from mpesakit.reversal import (
     Reversal,
+    AsyncReversal,
     ReversalRequest,
     ReversalResponse,
 )
@@ -65,3 +66,46 @@ class ReversalService:
             **{k: v for k, v in kwargs.items() if k in ReversalRequest.model_fields},
         )
         return self._reversal.reverse(request)
+
+
+class AsyncReversalService:
+    """Async facade for M-Pesa Transaction Reversal operations."""
+
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
+        """Initialize the async Reversal service."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self._reversal = AsyncReversal(
+            http_client=self.http_client,
+            token_manager=self.token_manager,
+        )
+
+    async def reverse(
+        self,
+        initiator: str,
+        security_credential: str,
+        transaction_id: str,
+        amount: int,
+        receiver_party: int,
+        result_url: str,
+        queue_timeout_url: str,
+        remarks: str,
+        occasion: Optional[str] = None,
+        **kwargs,
+    ) -> ReversalResponse:
+        """Initiate a transaction reversal asynchronously."""
+        request = ReversalRequest(
+            Initiator=initiator,
+            SecurityCredential=security_credential,
+            TransactionID=transaction_id,
+            Amount=amount,
+            ReceiverParty=receiver_party,
+            ResultURL=result_url,
+            QueueTimeOutURL=queue_timeout_url,
+            Remarks=remarks,
+            Occasion=occasion,
+            **{k: v for k, v in kwargs.items() if k in ReversalRequest.model_fields},
+        )
+        return await self._reversal.reverse(request)

@@ -1,10 +1,11 @@
 """Facade for M-Pesa B2C APIs (Business to Customer, Account TopUp)."""
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-from mpesakit.b2c import B2C, B2CRequest, B2CResponse, B2CCommandIDType
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
+from mpesakit.b2c import B2C, AsyncB2C, B2CRequest, B2CResponse, B2CCommandIDType
 from mpesakit.b2c_account_top_up import (
     B2CAccountTopUp,
+    AsyncB2CAccountTopUp,
     B2CAccountTopUpRequest,
     B2CAccountTopUpResponse,
 )
@@ -122,3 +123,86 @@ class B2CService:
             },
         )
         return self._account_topup.topup(request)
+
+
+class AsyncB2CService:
+    """Async facade for all M-Pesa B2C APIs."""
+
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
+        """Initialize the async B2C service facade."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self.b2c = AsyncB2C(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+        self._account_topup = AsyncB2CAccountTopUp(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+    async def send_payment(
+        self,
+        originator_conversation_id: str,
+        initiator_name: str,
+        security_credential: str,
+        command_id: B2CCommandIDType,
+        amount: int,
+        party_a: str,
+        party_b: str,
+        remarks: str,
+        queue_timeout_url: str,
+        result_url: str,
+        occasion: str = "",
+        **kwargs,
+    ) -> B2CResponse:
+        """Initiate a B2C payment request asynchronously."""
+        request = B2CRequest(
+            OriginatorConversationID=originator_conversation_id,
+            InitiatorName=initiator_name,
+            SecurityCredential=security_credential,
+            CommandID=command_id.value,
+            Amount=amount,
+            PartyA=party_a,
+            PartyB=party_b,
+            Remarks=remarks,
+            QueueTimeOutURL=queue_timeout_url,
+            ResultURL=result_url,
+            Occasion=occasion,
+            **{k: v for k, v in kwargs.items() if k in B2CRequest.model_fields},
+        )
+        return await self.b2c.send_payment(request)
+
+    async def account_topup(
+        self,
+        initiator: str,
+        security_credential: str,
+        amount: int,
+        party_a: str,
+        party_b: str,
+        account_reference: str,
+        requester: str,
+        remarks: str,
+        queue_timeout_url: str,
+        result_url: str,
+        **kwargs,
+    ) -> B2CAccountTopUpResponse:
+        """Initiate a B2C Account TopUp transaction asynchronously."""
+        request = B2CAccountTopUpRequest(
+            Initiator=initiator,
+            SecurityCredential=security_credential,
+            Amount=amount,
+            PartyA=party_a,
+            PartyB=party_b,
+            AccountReference=account_reference,
+            Requester=requester,
+            Remarks=remarks,
+            QueueTimeOutURL=queue_timeout_url,
+            ResultURL=result_url,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k in B2CAccountTopUpRequest.model_fields
+            },
+        )
+        return await self._account_topup.topup(request)
