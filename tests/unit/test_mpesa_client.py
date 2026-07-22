@@ -1,7 +1,7 @@
 """Unit tests for MpesaClient and its services."""
 
 import pytest
-from mpesakit.mpesa_client import MpesaClient
+from mpesakit.mpesa_client import MpesaClient, MpesaCallbackMixin
 from mpesakit.auth import TokenManager
 from mpesakit.http_client import MpesaHttpClient
 
@@ -24,6 +24,11 @@ from mpesakit.services import (
 def client():
     """Creates a MpesaClient instance for testing."""
     return MpesaClient("dummy_key", "dummy_secret")
+
+
+def test_uses_callback_mixin(client):
+    """Test that MpesaClient inherits shared callback helpers."""
+    assert isinstance(client, MpesaCallbackMixin)
 
 
 def test_http_client_instance(client):
