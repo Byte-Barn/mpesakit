@@ -1,9 +1,10 @@
 """Facade for M-Pesa Standing Order (Ratiba) API interactions."""
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
 from mpesakit.mpesa_ratiba import (
     MpesaRatiba,
+    AsyncMpesaRatiba,
     StandingOrderRequest,
     StandingOrderResponse,
     TransactionTypeEnum,
@@ -80,3 +81,56 @@ class RatibaService:
             },
         )
         return self.ratiba.create_standing_order(request)
+
+
+class AsyncRatibaService:
+    """Async facade for M-Pesa Standing Order (Ratiba) operations."""
+
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
+        """Initialize the async Ratiba service."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self.ratiba = AsyncMpesaRatiba(
+            http_client=self.http_client,
+            token_manager=self.token_manager,
+        )
+
+    async def create_standing_order(
+        self,
+        standing_order_name: str,
+        start_date: str,
+        end_date: str,
+        business_short_code: str,
+        transaction_type: TransactionTypeEnum,
+        receiver_party_identifier_type: ReceiverPartyIdentifierTypeEnum,
+        amount: str,
+        party_a: str,
+        callback_url: str,
+        account_reference: str,
+        transaction_desc: str,
+        frequency: FrequencyEnum,
+        **kwargs,
+    ) -> StandingOrderResponse:
+        """Initiate a Standing Order transaction asynchronously."""
+        request = StandingOrderRequest(
+            StandingOrderName=standing_order_name,
+            StartDate=start_date,
+            EndDate=end_date,
+            BusinessShortCode=business_short_code,
+            TransactionType=transaction_type,
+            ReceiverPartyIdentifierType=receiver_party_identifier_type,
+            Amount=amount,
+            PartyA=party_a,
+            CallBackURL=callback_url,
+            AccountReference=account_reference,
+            TransactionDesc=transaction_desc,
+            Frequency=frequency,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k in StandingOrderRequest.model_fields
+            },
+        )
+        return await self.ratiba.create_standing_order(request)

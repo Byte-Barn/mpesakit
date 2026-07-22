@@ -1,3 +1,3 @@
-from .mpesa_client import MpesaClient as MpesaClient
+from .mpesa_client import MpesaClient as MpesaClient, AsyncMpesaClient as AsyncMpesaClient
 
-__all__ = ['MpesaClient']
+__all__ = ['MpesaClient', 'AsyncMpesaClient']

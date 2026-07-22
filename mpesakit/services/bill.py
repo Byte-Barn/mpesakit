@@ -1,10 +1,11 @@
 """Facade for M-PESA Bill Manager API interactions."""
 
 from typing import Optional, List
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
 from mpesakit.bill_manager import (
     BillManager,
+    AsyncBillManager,
     BillManagerOptInRequest,
     BillManagerOptInResponse,
     BillManagerUpdateOptInRequest,
@@ -133,3 +134,118 @@ class BillService:
         ]
         request = BillManagerCancelBulkInvoiceRequest(invoices=invoice_requests)
         return self.bill_manager.cancel_bulk_invoice(request)
+
+
+class AsyncBillService:
+    """Async facade for M-PESA Bill Manager operations."""
+
+    def __init__(
+        self,
+        http_client: AsyncHttpClient,
+        token_manager: AsyncTokenManager,
+        app_key: Optional[str] = None,
+    ) -> None:
+        """Initialize the async Bill service."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self.bill_manager = AsyncBillManager(
+            http_client=self.http_client,
+            token_manager=self.token_manager,
+            app_key=app_key,
+        )
+
+    async def opt_in(
+        self,
+        shortcode: int,
+        email: str,
+        official_contact: str,
+        send_reminders: int,
+        logo: Optional[str],
+        callback_url: str,
+    ) -> BillManagerOptInResponse:
+        """Onboard a paybill to Bill Manager asynchronously."""
+        request = BillManagerOptInRequest(
+            shortcode=shortcode,
+            email=email,
+            officialContact=official_contact,
+            sendReminders=send_reminders,
+            logo=logo,
+            callbackurl=callback_url,
+        )
+        return await self.bill_manager.opt_in(request)
+
+    async def update_opt_in(
+        self,
+        shortcode: int,
+        email: str,
+        official_contact: str,
+        send_reminders: int,
+        logo: Optional[str] = None,
+        callback_url: Optional[str] = None,
+    ) -> BillManagerUpdateOptInResponse:
+        """Update opt-in details for Bill Manager asynchronously."""
+        request = BillManagerUpdateOptInRequest(
+            shortcode=shortcode,
+            email=email,
+            officialContact=official_contact,
+            sendReminders=send_reminders,
+            logo=logo,
+            callbackurl=callback_url,
+        )
+        return await self.bill_manager.update_opt_in(request)
+
+    async def send_single_invoice(
+        self,
+        external_reference: str,
+        billed_full_name: str,
+        billed_phone_number: str,
+        billed_period: str,
+        invoice_name: str,
+        due_date: str,
+        account_reference: str,
+        amount: int,
+        invoice_items: Optional[List[InvoiceItem]] = None,
+    ) -> BillManagerSingleInvoiceResponse:
+        """Send a single invoice via Bill Manager asynchronously."""
+        request = BillManagerSingleInvoiceRequest(
+            externalReference=external_reference,
+            billedFullName=billed_full_name,
+            billedPhoneNumber=billed_phone_number,
+            billedPeriod=billed_period,
+            invoiceName=invoice_name,
+            dueDate=due_date,
+            accountReference=account_reference,
+            amount=amount,
+            invoiceItems=invoice_items,
+        )
+        return await self.bill_manager.send_single_invoice(request)
+
+    async def send_bulk_invoice(
+        self,
+        invoices: List[BillManagerSingleInvoiceRequest],
+    ) -> BillManagerBulkInvoiceResponse:
+        """Send multiple invoices via Bill Manager asynchronously."""
+        request = BillManagerBulkInvoiceRequest(invoices=invoices)
+        return await self.bill_manager.send_bulk_invoice(request)
+
+    async def cancel_single_invoice(
+        self,
+        external_reference: str,
+    ) -> BillManagerCancelInvoiceResponse:
+        """Cancel a single invoice via Bill Manager asynchronously."""
+        request = BillManagerCancelSingleInvoiceRequest(
+            externalReference=external_reference
+        )
+        return await self.bill_manager.cancel_single_invoice(request)
+
+    async def cancel_bulk_invoice(
+        self,
+        external_references: List[str],
+    ) -> BillManagerCancelInvoiceResponse:
+        """Cancel multiple invoices via Bill Manager asynchronously."""
+        invoice_requests = [
+            BillManagerCancelSingleInvoiceRequest(externalReference=ref)
+            for ref in external_references
+        ]
+        request = BillManagerCancelBulkInvoiceRequest(invoices=invoice_requests)
+        return await self.bill_manager.cancel_bulk_invoice(request)

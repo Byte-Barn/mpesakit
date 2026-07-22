@@ -1,9 +1,10 @@
 """Facade for M-Pesa Transaction Status API interactions."""
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
 from mpesakit.transaction_status import (
     TransactionStatus,
+    AsyncTransactionStatus,
     TransactionStatusRequest,
     TransactionStatusResponse,
 )
@@ -82,3 +83,62 @@ class TransactionService:
                 setattr(request, field_name, value)
 
         return self.transaction_status.query(request)
+
+
+class AsyncTransactionService:
+    """Async facade for M-Pesa Transaction Status operations."""
+
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
+        """Initialize the async Transaction service."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self.transaction_status = AsyncTransactionStatus(
+            http_client=self.http_client,
+            token_manager=self.token_manager,
+        )
+
+    async def query_status(
+        self,
+        initiator: str,
+        security_credential: str,
+        transaction_id: str,
+        party_a: int,
+        identifier_type: int,
+        result_url: str,
+        queue_timeout_url: str,
+        occasion: str = "",
+        command_id: str | None = None,
+        remarks: str | None = None,
+        original_conversation_id: str | None = None,
+        **kwargs,
+    ) -> TransactionStatusResponse:
+        """Query the status of a transaction asynchronously."""
+        request = TransactionStatusRequest(
+            Initiator=initiator,
+            SecurityCredential=security_credential,
+            TransactionID=transaction_id,
+            PartyA=party_a,
+            IdentifierType=identifier_type,
+            ResultURL=result_url,
+            QueueTimeOutURL=queue_timeout_url,
+            Occasion=occasion,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k in TransactionStatusRequest.model_fields
+            },
+        )
+
+        optionals = {
+            "CommandID": command_id,
+            "Remarks": remarks,
+            "OriginalConversationID": original_conversation_id,
+        }
+
+        for field_name, value in optionals.items():
+            if value is not None:
+                setattr(request, field_name, value)
+
+        return await self.transaction_status.query(request)

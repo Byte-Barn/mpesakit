@@ -1,9 +1,10 @@
 """Facade for M-Pesa Account Balance API interactions."""
 
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import HttpClient, AsyncHttpClient
 from mpesakit.account_balance import (
     AccountBalance,
+    AsyncAccountBalance,
     AccountBalanceRequest,
     AccountBalanceResponse,
 )
@@ -65,3 +66,48 @@ class BalanceService:
             },
         )
         return self.account_balance.query(request)
+
+
+class AsyncBalanceService:
+    """Async facade for M-Pesa Account Balance operations."""
+
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
+        """Initialize the async Balance service."""
+        self.http_client = http_client
+        self.token_manager = token_manager
+        self.account_balance = AsyncAccountBalance(
+            http_client=self.http_client,
+            token_manager=self.token_manager,
+        )
+
+    async def query(
+        self,
+        initiator: str,
+        security_credential: str,
+        command_id: str,
+        party_a: int,
+        identifier_type: int,
+        remarks: str,
+        result_url: str,
+        queue_timeout_url: str,
+        **kwargs,
+    ) -> AccountBalanceResponse:
+        """Query account balance asynchronously."""
+        request = AccountBalanceRequest(
+            Initiator=initiator,
+            SecurityCredential=security_credential,
+            CommandID=command_id,
+            PartyA=party_a,
+            IdentifierType=identifier_type,
+            Remarks=remarks,
+            ResultURL=result_url,
+            QueueTimeOutURL=queue_timeout_url,
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k in AccountBalanceRequest.model_fields
+            },
+        )
+        return await self.account_balance.query(request)
