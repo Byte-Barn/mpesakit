@@ -286,10 +286,15 @@ class AsyncMpesaClient:
             http_client=self.http_client, token_manager=self.token_manager
         )
     async def __aenter__(self):
+        await self.http_client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.http_client.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def aclose(self) -> None:
+        """Close the underlying HTTP client connection pool."""
+        await self.http_client.aclose()
 
     def process_stk_callback(self, payload):
         """Process STK Push callback payload.
