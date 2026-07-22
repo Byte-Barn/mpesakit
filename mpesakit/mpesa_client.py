@@ -285,6 +285,11 @@ class AsyncMpesaClient:
         self.ratiba = AsyncRatibaService(
             http_client=self.http_client, token_manager=self.token_manager
         )
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.http_client.__aexit__(exc_type, exc_val, exc_tb)
 
     def process_stk_callback(self, payload):
         """Process STK Push callback payload.
