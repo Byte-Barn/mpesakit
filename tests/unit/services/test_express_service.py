@@ -1,7 +1,7 @@
 """Unit tests for the StkPushService facade in mpesakit.services.express module."""
 
 import pytest
-from mpesakit.services.express import StkPushService
+from mpesakit.services.express import StkPushService, AsyncStkPushService
 
 from mpesakit.mpesa_express import (
     StkPushSimulateResponse,
@@ -9,15 +9,25 @@ from mpesakit.mpesa_express import (
     TransactionType,
 )
 
+
 @pytest.fixture
 def stk_push_service(mock_http_client, mock_token_manager):
     """Creates a StkPushService instance for testing."""
-    # Patch StkPush inside the service to use a mock
     service = StkPushService(
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
     return service
+
+
+@pytest.fixture
+def async_stk_push_service(mock_async_http_client, mock_async_token_manager):
+    """Creates an AsyncStkPushService instance for testing."""
+    return AsyncStkPushService(
+        http_client=mock_async_http_client,
+        token_manager=mock_async_token_manager,
+    )
+
 
 def test_push_success(stk_push_service, mock_http_client):
     """Test successful STK Push transaction."""
@@ -45,6 +55,7 @@ def test_push_success(stk_push_service, mock_http_client):
 
     assert isinstance(resp, StkPushSimulateResponse)
     assert resp.is_successful() is True
+
 
 def test_push_filters_kwargs(stk_push_service, mock_http_client):
     """Test that extra kwargs are filtered out in push."""
@@ -74,6 +85,7 @@ def test_push_filters_kwargs(stk_push_service, mock_http_client):
     assert isinstance(resp, StkPushSimulateResponse)
     assert not hasattr(resp, "ExtraField")
 
+
 def test_query_success(stk_push_service, mock_http_client):
     """Test successful STK Push query."""
     response = {
@@ -93,6 +105,7 @@ def test_query_success(stk_push_service, mock_http_client):
     )
     assert isinstance(resp, StkPushQueryResponse)
     assert resp.is_successful() is True
+
 
 def test_query_filters_kwargs(stk_push_service, mock_http_client):
     """Test that extra kwargs are filtered out in query."""
@@ -116,6 +129,7 @@ def test_query_filters_kwargs(stk_push_service, mock_http_client):
     resp.is_successful() is True
     assert not hasattr(resp, "ExtraField")
 
+
 def test_stk_push_service_initializes_stk_push_correctly(
     mock_http_client, mock_token_manager
 ):
@@ -128,3 +142,125 @@ def test_stk_push_service_initializes_stk_push_correctly(
     assert service.token_manager is mock_token_manager
     assert service.stk_push.http_client is mock_http_client
     assert service.stk_push.token_manager is mock_token_manager
+
+
+@pytest.mark.asyncio
+async def test_async_push_success(async_stk_push_service, mock_async_http_client):
+    """Test successful async STK Push transaction."""
+    response = {
+        "MerchantRequestID": "16813-1590513-1",
+        "CheckoutRequestID": "ws_CO_DMZ_123212312_2342347678234",
+        "ResponseCode": 0,
+        "ResponseDescription": "Accepted",
+        "CustomerMessage": "Success. Request accepted for processing.",
+    }
+    mock_async_http_client.post.return_value = response
+
+    resp = await async_stk_push_service.push(
+        business_short_code=654321,
+        passkey="testpasskey",
+        transaction_type=TransactionType.CUSTOMER_PAYBILL_ONLINE.value,
+        amount=10,
+        party_a="254712345678",
+        party_b="654321",
+        phone_number="254712345678",
+        callback_url="https://example.com/callback",
+        account_reference="Test",
+        transaction_desc="Payment",
+    )
+
+    assert isinstance(resp, StkPushSimulateResponse)
+    assert resp.is_successful() is True
+
+
+@pytest.mark.asyncio
+async def test_async_push_filters_kwargs(
+    async_stk_push_service, mock_async_http_client
+):
+    """Test that async push filters out unexpected kwargs."""
+    response = {
+        "MerchantRequestID": "16813-1590513-1",
+        "CheckoutRequestID": "ws_CO_DMZ_123212312_2342347678234",
+        "ResponseCode": 0,
+        "ResponseDescription": "Accepted",
+        "CustomerMessage": "Success. Request accepted for processing.",
+    }
+    mock_async_http_client.post.return_value = response
+
+    resp = await async_stk_push_service.push(
+        business_short_code=654321,
+        passkey="testpasskey",
+        transaction_type=TransactionType.CUSTOMER_PAYBILL_ONLINE.value,
+        amount=10,
+        party_a="254712345678",
+        party_b="654321",
+        phone_number="254712345678",
+        callback_url="https://example.com/callback",
+        account_reference="Test",
+        transaction_desc="Payment",
+        ExtraField="should_be_filtered",
+    )
+    assert isinstance(resp, StkPushSimulateResponse)
+    assert not hasattr(resp, "ExtraField")
+
+
+@pytest.mark.asyncio
+async def test_async_query_success(async_stk_push_service, mock_async_http_client):
+    """Test successful async STK Push query."""
+    response = {
+        "MerchantRequestID": "22205-34066-1",
+        "CheckoutRequestID": "ws_CO_13012021093521236557",
+        "ResponseCode": 0,
+        "ResponseDescription": "Accepted",
+        "ResultCode": 0,
+        "ResultDesc": "Processed successfully.",
+    }
+    mock_async_http_client.post.return_value = response
+
+    resp = await async_stk_push_service.query(
+        business_short_code=654321,
+        passkey="testpasskey",
+        checkout_request_id="ws_CO_13012021093521236557",
+    )
+    assert isinstance(resp, StkPushQueryResponse)
+    assert resp.is_successful() is True
+
+
+@pytest.mark.asyncio
+async def test_async_query_filters_kwargs(
+    async_stk_push_service, mock_async_http_client
+):
+    """Test that async query filters out unexpected kwargs."""
+    response = {
+        "MerchantRequestID": "22205-34066-1",
+        "CheckoutRequestID": "ws_CO_13012021093521236557",
+        "ResponseCode": 0,
+        "ResponseDescription": "Accepted",
+        "ResultCode": 0,
+        "ResultDesc": "Processed successfully.",
+    }
+    mock_async_http_client.post.return_value = response
+
+    resp = await async_stk_push_service.query(
+        business_short_code=654321,
+        passkey="testpasskey",
+        checkout_request_id="ws_CO_13012021093521236557",
+        ExtraField="should_be_filtered",
+    )
+    assert isinstance(resp, StkPushQueryResponse)
+    assert resp.is_successful() is True
+    assert not hasattr(resp, "ExtraField")
+
+
+def test_async_stk_push_service_initializes_stk_push_correctly(
+    mock_async_http_client, mock_async_token_manager
+):
+    """Test AsyncStkPushService initializes with correct arguments."""
+    service = AsyncStkPushService(
+        http_client=mock_async_http_client,
+        token_manager=mock_async_token_manager,
+    )
+    assert service.http_client is mock_async_http_client
+    assert service.token_manager is mock_async_token_manager
+    assert service.stk_push.http_client is mock_async_http_client
+    assert service.stk_push.token_manager is mock_async_token_manager
