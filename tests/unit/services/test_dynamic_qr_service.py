@@ -1,29 +1,11 @@
 """Unit tests for the DynamicQRCodeService class in mpesakit.services.dynamic_qr module."""
 
 import pytest
-from unittest.mock import MagicMock
 from mpesakit.services.dynamic_qr import DynamicQRCodeService
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 from mpesakit.dynamic_qr_code import (
     DynamicQRGenerateResponse,
     DynamicQRTransactionType,
 )
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Creates a mock TokenManager."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Creates a mock HttpClient."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def dynamic_qr_service(mock_http_client, mock_token_manager):
@@ -32,7 +14,6 @@ def dynamic_qr_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 def test_generate_success(dynamic_qr_service, mock_http_client):
     """Test successful generation of a dynamic QR code."""
@@ -55,7 +36,6 @@ def test_generate_success(dynamic_qr_service, mock_http_client):
     )
     assert isinstance(resp, DynamicQRGenerateResponse)
     assert resp.is_successful() is True
-
 
 def test_generate_filters_kwargs(dynamic_qr_service, mock_http_client):
     """Test that extra kwargs are filtered out in the request."""
@@ -83,7 +63,6 @@ def test_generate_filters_kwargs(dynamic_qr_service, mock_http_client):
     )
     assert isinstance(resp, DynamicQRGenerateResponse)
     assert resp.is_successful() is True
-
 
 def test_dynamic_qr_service_initializes_correctly(mock_http_client, mock_token_manager):
     """Test DynamicQRCodeService initializes with correct arguments."""

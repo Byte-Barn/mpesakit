@@ -1,31 +1,13 @@
 """Unit tests for the RatibaService facade in mpesakit.services.ratiba module."""
 
 import pytest
-from unittest.mock import MagicMock
 from mpesakit.services.ratiba import RatibaService
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 from mpesakit.mpesa_ratiba import (
     StandingOrderResponse,
     TransactionTypeEnum,
     ReceiverPartyIdentifierTypeEnum,
     FrequencyEnum,
 )
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Creates a mock TokenManager."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Creates a mock HttpClient."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def ratiba_service(mock_http_client, mock_token_manager):
@@ -34,7 +16,6 @@ def ratiba_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 def test_create_standing_order_success(ratiba_service, mock_http_client):
     """Test successful Standing Order creation."""
@@ -69,7 +50,6 @@ def test_create_standing_order_success(ratiba_service, mock_http_client):
 
     assert isinstance(resp, StandingOrderResponse)
     assert resp.is_successful() is True
-
 
 def test_create_standing_order_filters_kwargs(ratiba_service, mock_http_client):
     """Test that extra kwargs are filtered out in create_standing_order."""
@@ -106,7 +86,6 @@ def test_create_standing_order_filters_kwargs(ratiba_service, mock_http_client):
     assert isinstance(resp, StandingOrderResponse)
     assert resp.is_successful() is True
     assert not hasattr(resp, "ExtraField")
-
 
 def test_ratiba_service_initializes_ratiba_correctly(
     mock_http_client, mock_token_manager

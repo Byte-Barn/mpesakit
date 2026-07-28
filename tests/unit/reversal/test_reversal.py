@@ -4,12 +4,8 @@ This module tests the Reversal API client, ensuring it can handle reversal reque
 process responses correctly, and manage error cases.
 """
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
-from mpesakit.auth import AsyncTokenManager, TokenManager
-from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.reversal import (
     ReversalRequest,
     ReversalResponse,
@@ -20,26 +16,10 @@ from mpesakit.reversal import (
 )
 from mpesakit.reversal.reversal import AsyncReversal, Reversal
 
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
-
 @pytest.fixture
 def reversal(mock_http_client, mock_token_manager):
     """Fixture to create a Reversal instance with mocked dependencies."""
     return Reversal(http_client=mock_http_client, token_manager=mock_token_manager)
-
 
 def valid_reversal_request():
     """Create a valid ReversalRequest for testing."""
@@ -54,7 +34,6 @@ def valid_reversal_request():
         Remarks="Test",
         Occasion="work",
     )
-
 
 def test_reverse_request_acknowledged(reversal, mock_http_client):
     """Test that reversal request is acknowledged, not finalized."""
@@ -80,7 +59,6 @@ def test_reverse_request_acknowledged(reversal, mock_http_client):
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
-
 def test_reverse_http_error(reversal, mock_http_client):
     """Test handling of HTTP errors during reversal request."""
     request = valid_reversal_request()
@@ -88,7 +66,6 @@ def test_reverse_http_error(reversal, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         reversal.reverse(request)
     assert "HTTP error" in str(excinfo.value)
-
 
 def test_reversal_result_callback_success():
     """Test parsing of a successful reversal result callback."""
@@ -120,13 +97,11 @@ def test_reversal_result_callback_success():
     assert callback.Result.TransactionID == "MJ561H6X5O"
     assert callback.Result.ResultParameters.ResultParameter[0].Key == "Amount"
 
-
 def test_reversal_result_callback_response():
     """Test the response schema for result callback."""
     resp = ReversalResultCallbackResponse()
     assert resp.ResultCode == 0
     assert "processed successfully" in resp.ResultDesc
-
 
 def test_reversal_timeout_callback():
     """Test parsing of a reversal timeout callback."""
@@ -144,13 +119,11 @@ def test_reversal_timeout_callback():
     assert callback.Result.ResultCode == "1"
     assert "timed out" in callback.Result.ResultDesc
 
-
 def test_reversal_timeout_callback_response():
     """Test the response schema for timeout callback."""
     resp = ReversalTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
-
 
 def test_reversal_request_identifier_type_is_valid():
     """Test that invalid ReceiverIdentifierType raises ValueError."""
@@ -167,7 +140,6 @@ def test_reversal_request_identifier_type_is_valid():
     request = ReversalRequest(**kwargs)
     assert request.RecieverIdentifierType == "11"
 
-
 def test_reversal_request_remarks_too_long_raises():
     """Test that Remarks exceeding length raises ValueError."""
     kwargs = dict(
@@ -183,7 +155,6 @@ def test_reversal_request_remarks_too_long_raises():
     with pytest.raises(ValueError) as excinfo:
         ReversalRequest(**kwargs)
     assert "Remarks must not exceed 100 characters." in str(excinfo.value)
-
 
 def test_reversal_request_occasion_too_long_raises():
     """Test that Occasion exceeding length raises ValueError."""
@@ -202,7 +173,6 @@ def test_reversal_request_occasion_too_long_raises():
         ReversalRequest(**kwargs)
     assert "Occasion must not exceed 100 characters." in str(excinfo.value)
 
-
 def test_reverse_responsecode_string_no_type_error(reversal, mock_http_client):
     """Ensure is_successful handles ResponseCode as a string without TypeError."""
     request = valid_reversal_request()
@@ -219,7 +189,6 @@ def test_reverse_responsecode_string_no_type_error(reversal, mock_http_client):
     assert isinstance(response, ReversalResponse)
     # Calling is_successful should not raise a TypeError when comparing str to int
     assert response.is_successful() is True
-
 
 def test_reversal_result_callback_success_is_successful():
     """Test is_successful method for a successful reversal result callback."""
@@ -247,7 +216,6 @@ def test_reversal_result_callback_success_is_successful():
     callback = ReversalResultCallback(**payload)
     assert callback.is_successful() is True
 
-
 def test_reversal_result_callback_failure_is_successful():
     """Test is_successful method for a failure reversal result callback."""
     payload = {
@@ -274,7 +242,6 @@ def test_reversal_result_callback_failure_is_successful():
     callback = ReversalResultCallback(**payload)
     assert callback.is_successful() is False
 
-
 def test_reversal_result_callback_success_code_is_successful():
     """Test is_successful method with a success code as a string."""
     payload = {
@@ -289,7 +256,6 @@ def test_reversal_result_callback_success_code_is_successful():
     }
     callback = ReversalResultCallback(**payload)
     assert callback.is_successful() is True
-
 
 def test_reversal_result_callback_failure_code_is_successful():
     """Test is_successful method with a failure code."""
@@ -306,28 +272,12 @@ def test_reversal_result_callback_failure_code_is_successful():
     callback = ReversalResultCallback(**payload)
     assert callback.is_successful() is False
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token."""
-    mock = AsyncMock(spec=AsyncTokenManager)
-    mock.get_token.return_value = "test_token_async"
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient to simulate async HTTP requests."""
-    return AsyncMock(spec=AsyncHttpClient)
-
-
 @pytest.fixture
 def async_reversal(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncReversal instance with mocked dependencies."""
     return AsyncReversal(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_reverse_request_acknowledged(
@@ -349,7 +299,6 @@ async def test_async_reverse_request_acknowledged(
     assert response.is_successful() is True
     assert response.ConversationID == response_data["ConversationID"]
 
-
 @pytest.mark.asyncio
 async def test_async_reverse_http_error(async_reversal, mock_async_http_client):
     """Test handling of HTTP errors during async reversal request."""
@@ -358,7 +307,6 @@ async def test_async_reverse_http_error(async_reversal, mock_async_http_client):
     with pytest.raises(Exception) as excinfo:
         await async_reversal.reverse(request)
     assert "Async HTTP error" in str(excinfo.value)
-
 
 @pytest.mark.asyncio
 async def test_async_reverse_token_manager_called(
@@ -377,7 +325,6 @@ async def test_async_reverse_token_manager_called(
     await async_reversal.reverse(request)
 
     mock_async_token_manager.get_token.assert_awaited_once()
-
 
 @pytest.mark.asyncio
 async def test_async_reverse_http_client_post_called(
@@ -399,9 +346,8 @@ async def test_async_reverse_http_client_post_called(
     call_args = mock_async_http_client.post.call_args
     assert call_args[0][0] == "/mpesa/reversal/v1/request"
     assert "Authorization" in call_args[1]["headers"]
-    assert call_args[1]["headers"]["Authorization"] == "Bearer test_token_async"
+    assert call_args[1]["headers"]["Authorization"] == "Bearer test_token"
     assert call_args[1]["headers"]["Content-Type"] == "application/json"
-
 
 @pytest.mark.asyncio
 async def test_async_reverse_responsecode_string_no_type_error(

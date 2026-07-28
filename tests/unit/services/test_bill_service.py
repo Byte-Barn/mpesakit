@@ -3,8 +3,6 @@
 import pytest
 from unittest.mock import MagicMock
 from mpesakit.services.bill import BillService
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 
 from mpesakit.bill_manager import (
     BillManagerOptInResponse,
@@ -16,21 +14,6 @@ from mpesakit.bill_manager import (
     InvoiceItem,
 )
 
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
-
 @pytest.fixture
 def bill_service(mock_http_client, mock_token_manager):
     """Fixture to create a BillService instance with mocked dependencies."""
@@ -38,7 +21,6 @@ def bill_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 @pytest.fixture
 def bill_service_with_app_key(mock_http_client, mock_token_manager):
@@ -48,7 +30,6 @@ def bill_service_with_app_key(mock_http_client, mock_token_manager):
         token_manager=mock_token_manager,
         app_key="test_app_key",
     )
-
 
 def test_opt_in_calls_bill_manager_opt_in(bill_service, mock_http_client):
     """Test opt_in calls BillManager.opt_in."""
@@ -71,7 +52,6 @@ def test_opt_in_calls_bill_manager_opt_in(bill_service, mock_http_client):
     assert isinstance(resp, BillManagerOptInResponse)
     resp.is_successful() is True
 
-
 def test_bill_manager_update_opt_in(bill_service_with_app_key, mock_http_client):
     """Test update_opt_in calls BillManager.update_opt_in."""
     response_data = {
@@ -90,7 +70,6 @@ def test_bill_manager_update_opt_in(bill_service_with_app_key, mock_http_client)
     )
     assert isinstance(resp, BillManagerUpdateOptInResponse)
     assert resp.is_successful() is True
-
 
 def test_bill_manager_send_single_invoice(
     bill_service_with_app_key,
@@ -121,7 +100,6 @@ def test_bill_manager_send_single_invoice(
     assert isinstance(resp, BillManagerSingleInvoiceResponse)
     assert resp.is_successful() is True
 
-
 def test_bill_manager_send_bulk_invoice(bill_service_with_app_key, mock_http_client):
     """Test send_bulk_invoice calls BillManager.send_bulk_invoice."""
     response_data = {
@@ -137,7 +115,6 @@ def test_bill_manager_send_bulk_invoice(bill_service_with_app_key, mock_http_cli
 
     assert isinstance(resp, BillManagerBulkInvoiceResponse)
     assert resp.is_successful() is True
-
 
 def test_bill_manager_cancel_single_invoice(
     bill_service_with_app_key,
@@ -156,7 +133,6 @@ def test_bill_manager_cancel_single_invoice(
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
     assert resp.is_successful() is True
 
-
 def test_bill_manager_cancel_bulk_invoice(bill_service_with_app_key, mock_http_client):
     """Test cancel_bulk_invoice calls BillManager.cancel_bulk_invoice."""
     response_data = {
@@ -172,7 +148,6 @@ def test_bill_manager_cancel_bulk_invoice(bill_service_with_app_key, mock_http_c
 
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
     assert resp.is_successful() is True
-
 
 def test_bill_service_initializes_bill_manager_correctly(
     mock_http_client, mock_token_manager

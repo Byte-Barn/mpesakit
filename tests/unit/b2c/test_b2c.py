@@ -1,10 +1,7 @@
 """Unit tests for the B2C functionality of the Mpesa SDK."""
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
-from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.b2c import (
     B2C,
     AsyncB2C,
@@ -15,28 +12,11 @@ from mpesakit.b2c import (
     B2CResultMetadata,
     B2CResultParameter,
 )
-from mpesakit.http_client import AsyncHttpClient, HttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token for testing."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient for testing."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def b2c(mock_http_client, mock_token_manager):
     """Fixture to create an instance of B2C with mocked dependencies."""
     return B2C(http_client=mock_http_client, token_manager=mock_token_manager)
-
 
 def valid_b2c_request():
     """Return a valid B2CRequest instance."""
@@ -53,7 +33,6 @@ def valid_b2c_request():
         ResultURL="https://example.com/result",
         Occasion="JuneSalary",
     )
-
 
 def test_send_payment_success(b2c, mock_http_client):
     """Test that a successful B2C payment can be performed."""
@@ -80,7 +59,6 @@ def test_send_payment_success(b2c, mock_http_client):
     assert args[0] == "/mpesa/b2c/v3/paymentrequest"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
-
 def test_send_payment_http_error(b2c, mock_http_client):
     """Test that B2C payment handles HTTP errors gracefully."""
     request = valid_b2c_request()
@@ -89,7 +67,6 @@ def test_send_payment_http_error(b2c, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         b2c.send_payment(request)
     assert "HTTP error" in str(excinfo.value)
-
 
 def test_b2c_response_is_successful_zero_code():
     """Test is_successful returns True for ResponseCode '0'."""
@@ -101,7 +78,6 @@ def test_b2c_response_is_successful_zero_code():
     )
     assert resp.is_successful() is True
 
-
 def test_b2c_response_is_successful_all_zeros():
     """Test is_successful returns True for ResponseCode '00000000'."""
     resp = B2CResponse(
@@ -111,7 +87,6 @@ def test_b2c_response_is_successful_all_zeros():
         ResponseDescription="Accept the service request successfully.",
     )
     assert resp.is_successful() is True
-
 
 def test_b2c_response_is_successful_non_zero_code():
     """Test is_successful returns False for non-success ResponseCode."""
@@ -123,7 +98,6 @@ def test_b2c_response_is_successful_non_zero_code():
     )
     assert resp.is_successful() is False
 
-
 def test_b2c_response_is_successful_mixed_code():
     """Test is_successful returns False for mixed ResponseCode like '00001'."""
     resp = B2CResponse(
@@ -134,7 +108,6 @@ def test_b2c_response_is_successful_mixed_code():
     )
     assert resp.is_successful() is False
 
-
 def test_b2c_response_is_successful_empty_code():
     """Test is_successful returns False for empty ResponseCode."""
     resp = B2CResponse(
@@ -144,7 +117,6 @@ def test_b2c_response_is_successful_empty_code():
         ResponseDescription="Failed.",
     )
     assert resp.is_successful() is False
-
 
 @pytest.mark.parametrize("invalid_command_id", ["InvalidCommand", "", None])
 def test_b2c_request_invalid_command_id_raises(invalid_command_id):
@@ -165,7 +137,6 @@ def test_b2c_request_invalid_command_id_raises(invalid_command_id):
         B2CRequest(**kwargs)
     assert "CommandID must be one of" in str(excinfo.value)
 
-
 def test_b2c_request_invalid_partyb_raises():
     """Test that B2CRequest raises ValueError for invalid PartyB phone number."""
     kwargs = dict(
@@ -184,7 +155,6 @@ def test_b2c_request_invalid_partyb_raises():
         B2CRequest(**kwargs)
     assert "PartyB must be a valid Kenyan phone number" in str(excinfo.value)
 
-
 def test_b2c_request_remarks_too_long_raises():
     """Test that B2CRequest raises ValueError for Remarks > 100 chars."""
     kwargs = dict(
@@ -202,7 +172,6 @@ def test_b2c_request_remarks_too_long_raises():
     with pytest.raises(ValueError) as excinfo:
         B2CRequest(**kwargs)
     assert "Remarks must not exceed 100 characters." in str(excinfo.value)
-
 
 def test_b2c_request_occasion_too_long_raises():
     """Test that B2CRequest raises ValueError for Occasion > 100 chars."""
@@ -223,11 +192,9 @@ def test_b2c_request_occasion_too_long_raises():
         B2CRequest(**kwargs)
     assert "Occasion must not exceed 100 characters." in str(excinfo.value)
 
-
 def make_result_parameters(params):
     """Helper to create list of B2CResultParameter from dict."""
     return [B2CResultParameter(Key=k, Value=v) for k, v in params.items()]
-
 
 def test_result_metadata_properties_all_present():
     """Test that B2CResultMetadata properties are correctly parsed."""
@@ -259,7 +226,6 @@ def test_result_metadata_properties_all_present():
     assert meta.utility_account_available_funds == 2000.0
     assert meta.working_account_available_funds == 10000.0
 
-
 def test_result_metadata_properties_some_missing():
     """Test that B2CResultMetadata handles missing parameters gracefully."""
     params = {
@@ -285,7 +251,6 @@ def test_result_metadata_properties_some_missing():
     assert meta.utility_account_available_funds is None
     assert meta.working_account_available_funds is None
 
-
 def test_result_metadata_properties_none_parameters():
     """Test that B2CResultMetadata handles None parameters correctly."""
     meta = B2CResultMetadata(
@@ -306,7 +271,6 @@ def test_result_metadata_properties_none_parameters():
     assert meta.utility_account_available_funds is None
     assert meta.working_account_available_funds is None
 
-
 def test_result_metadata_recipient_is_registered_none():
     """Test that B2CResultMetadata handles invalid recipient_is_registered value."""
     params = {
@@ -324,7 +288,6 @@ def test_result_metadata_recipient_is_registered_none():
         ResultParameters=make_result_parameters(params),
     )
     assert meta.recipient_is_registered is None
-
 
 def test_result_callback_schema():
     """Test that B2CResultCallback schema is correctly instantiated."""
@@ -346,7 +309,6 @@ def test_result_callback_schema():
     assert callback.Result.transaction_amount == 1000
     assert callback.Result.transaction_receipt == "LKXXXX1234"
 
-
 def test_result_callback_is_successful_zero_code():
     """Test is_successful returns True for ResultCode 0."""
     meta = B2CResultMetadata(
@@ -360,7 +322,6 @@ def test_result_callback_is_successful_zero_code():
     )
     callback = B2CResultCallback(Result=meta)
     assert callback.is_successful() is True
-
 
 def test_result_callback_is_successful_all_zeros():
     """Test is_successful returns True for ResultCode as string of zeros."""
@@ -378,7 +339,6 @@ def test_result_callback_is_successful_all_zeros():
     callback.Result.ResultCode = 0
     assert callback.is_successful() is True
 
-
 def test_result_callback_is_successful_non_zero_code():
     """Test is_successful returns False for non-zero ResultCode."""
     meta = B2CResultMetadata(
@@ -392,7 +352,6 @@ def test_result_callback_is_successful_non_zero_code():
     )
     callback = B2CResultCallback(Result=meta)
     assert callback.is_successful() is False
-
 
 def test_result_callback_is_successful_mixed_code():
     """Test is_successful returns False for mixed code like 00001."""
@@ -408,7 +367,6 @@ def test_result_callback_is_successful_mixed_code():
     callback = B2CResultCallback(Result=meta)
     assert callback.is_successful() is False
 
-
 def test_result_callback_is_successful_negative_code():
     """Test is_successful returns False for negative ResultCode."""
     meta = B2CResultMetadata(
@@ -423,30 +381,12 @@ def test_result_callback_is_successful_negative_code():
     callback = B2CResultCallback(Result=meta)
     assert callback.is_successful() is False
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token for testing."""
-    mock = MagicMock(spec=AsyncTokenManager)
-    mock.get_token = AsyncMock(return_value="test_token_async")
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient for testing."""
-    mock = MagicMock(spec=AsyncHttpClient)
-    mock.post = AsyncMock()
-    return mock
-
-
 @pytest.fixture
 def async_b2c(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an instance of AsyncB2C with mocked dependencies."""
     return AsyncB2C(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_send_payment_success(
@@ -473,7 +413,6 @@ async def test_async_send_payment_success(
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
-
 @pytest.mark.asyncio
 async def test_async_send_payment_token_error(
     async_b2c, mock_async_http_client, mock_async_token_manager
@@ -485,7 +424,6 @@ async def test_async_send_payment_token_error(
     with pytest.raises(Exception) as excinfo:
         await async_b2c.send_payment(request)
     assert "Token error" in str(excinfo.value)
-
 
 @pytest.mark.asyncio
 async def test_async_send_payment_post_error(

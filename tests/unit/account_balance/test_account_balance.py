@@ -3,8 +3,6 @@
 This module tests the AccountBalance class and its methods for querying account balance.
 """
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
 from mpesakit.account_balance import (
@@ -16,23 +14,6 @@ from mpesakit.account_balance import (
     AccountBalanceTimeoutCallback,
     AsyncAccountBalance,
 )
-from mpesakit.auth import AsyncTokenManager, TokenManager
-from mpesakit.http_client import AsyncHttpClient, HttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager for testing."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient for testing."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def account_balance(mock_http_client, mock_token_manager):
@@ -40,7 +21,6 @@ def account_balance(mock_http_client, mock_token_manager):
     return AccountBalance(
         http_client=mock_http_client, token_manager=mock_token_manager
     )
-
 
 def valid_account_balance_request():
     """Create a valid AccountBalanceRequest for testing."""
@@ -54,7 +34,6 @@ def valid_account_balance_request():
         QueueTimeOutURL="https://example.com/timeout",
         ResultURL="https://example.com/result",
     )
-
 
 def test_query_returns_acknowledgement(account_balance, mock_http_client):
     """Test that query returns only the acknowledgement response, not the account balance."""
@@ -84,7 +63,6 @@ def test_query_returns_acknowledgement(account_balance, mock_http_client):
     assert args[0] == "/mpesa/accountbalance/v1/query"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
     assert kwargs["headers"]["Content-Type"] == "application/json"
-
 
 def test_callback_result_parsing():
     """Test parsing of AccountBalanceResultCallback with actual account balance data."""
@@ -134,7 +112,6 @@ def test_callback_result_parsing():
     assert account_balance_param is not None
     assert "Working Account|KES|700000.00" in account_balance_param.Value
 
-
 def test_account_balance_request_identifier_type_validation():
     """Test that AccountBalanceRequest raises ValueError for invalid IdentifierType."""
     valid_data = dict(
@@ -156,7 +133,6 @@ def test_account_balance_request_identifier_type_validation():
     with pytest.raises(ValueError, match="IdentifierType must be one of"):
         AccountBalanceRequest(**invalid_data)
 
-
 def test_account_balance_request_remarks_length_validation():
     """Test that AccountBalanceRequest raises ValueError for remarks exceeding 100 chars."""
     long_remarks = "x" * 101
@@ -172,7 +148,6 @@ def test_account_balance_request_remarks_length_validation():
     )
     with pytest.raises(ValueError, match="Remarks must not exceed 100 characters."):
         AccountBalanceRequest(**data)
-
 
 def test_timeout_callback_parsing():
     """Test parsing of AccountBalanceTimeoutCallback."""
@@ -192,7 +167,6 @@ def test_timeout_callback_parsing():
     assert callback.Result.ResultDesc == "The service request timed out."
     assert callback.Result.OriginatorConversationID == "16917-22577599-3"
     assert callback.Result.ConversationID == "AG_20200206_00005e091a8ec6b9eac5"
-
 
 def test_query_handles_string_response_code(account_balance, mock_http_client):
     """Ensure that ResponseCode as a string does not raise TypeError when checking is_successful."""
@@ -222,28 +196,12 @@ def test_query_handles_string_response_code(account_balance, mock_http_client):
     assert response_fail.is_successful() is False
     assert response_fail.ResponseCode == "1"
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager for testing."""
-    mock = AsyncMock(spec=AsyncTokenManager)
-    mock.get_token.return_value = "test_async_token"
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient for testing."""
-    return AsyncMock(spec=AsyncHttpClient)
-
-
 @pytest.fixture
 def async_account_balance(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncAccountBalance instance with mocked dependencies."""
     return AsyncAccountBalance(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_query_returns_acknowledgement(
@@ -273,9 +231,8 @@ async def test_async_query_returns_acknowledgement(
     mock_async_http_client.post.assert_awaited_once()
     args, kwargs = mock_async_http_client.post.await_args
     assert args[0] == "/mpesa/accountbalance/v1/query"
-    assert kwargs["headers"]["Authorization"] == "Bearer test_async_token"
+    assert kwargs["headers"]["Authorization"] == "Bearer test_token"
     assert kwargs["headers"]["Content-Type"] == "application/json"
-
 
 @pytest.mark.asyncio
 async def test_async_query_handles_string_response_code(

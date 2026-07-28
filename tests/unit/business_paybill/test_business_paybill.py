@@ -4,11 +4,8 @@ This module tests the Business PayBill API client, ensuring it can handle paymen
 process responses correctly, and manage error cases.
 """
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
-from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.business_paybill import (
     AsyncBusinessPayBill,
     BusinessPayBill,
@@ -19,22 +16,6 @@ from mpesakit.business_paybill import (
     BusinessPayBillTimeoutCallback,
     BusinessPayBillTimeoutCallbackResponse,
 )
-from mpesakit.http_client import AsyncHttpClient, HttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def business_paybill(mock_http_client, mock_token_manager):
@@ -42,7 +23,6 @@ def business_paybill(mock_http_client, mock_token_manager):
     return BusinessPayBill(
         http_client=mock_http_client, token_manager=mock_token_manager
     )
-
 
 def valid_business_paybill_request():
     """Create a valid BusinessPayBillRequest for testing."""
@@ -57,7 +37,6 @@ def valid_business_paybill_request():
         QueueTimeOutURL="https://mydomain.com/b2b/paybill/queue/",
         ResultURL="https://mydomain.com/b2b/paybill/result/",
     )
-
 
 def test_paybill_request_acknowledged(business_paybill, mock_http_client):
     """Test that paybill request is acknowledged, not finalized."""
@@ -81,7 +60,6 @@ def test_paybill_request_acknowledged(business_paybill, mock_http_client):
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
-
 def test_paybill_http_error(business_paybill, mock_http_client):
     """Test handling of HTTP errors during paybill request."""
     request = valid_business_paybill_request()
@@ -89,7 +67,6 @@ def test_paybill_http_error(business_paybill, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         business_paybill.paybill(request)
     assert "HTTP error" in str(excinfo.value)
-
 
 def test_business_paybill_result_callback_success():
     """Test parsing of a successful business paybill result callback."""
@@ -119,13 +96,11 @@ def test_business_paybill_result_callback_success():
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultParameters.ResultParameter[0].Key == "Amount"
 
-
 def test_business_paybill_result_callback_response():
     """Test the response schema for result callback."""
     resp = BusinessPayBillResultCallbackResponse()
     assert resp.ResultCode == 0
     assert "Callback received successfully" in resp.ResultDesc
-
 
 def test_business_paybill_timeout_callback():
     """Test parsing of a business paybill timeout callback."""
@@ -143,13 +118,11 @@ def test_business_paybill_timeout_callback():
     assert callback.Result.ResultCode == 1
     assert "timed out" in callback.Result.ResultDesc
 
-
 def test_business_paybill_timeout_callback_response():
     """Test the response schema for timeout callback."""
     resp = BusinessPayBillTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
-
 
 def test_business_paybill_result_callback_with_string_result_code():
     """Ensure is_successful handles ResultCode provided as a string without raising TypeError."""
@@ -175,28 +148,12 @@ def test_business_paybill_result_callback_with_string_result_code():
     assert callback.is_successful() is True
     assert callback.Result.TransactionID == "QKA81LK5CY"
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token."""
-    mock = AsyncMock(spec=AsyncTokenManager)
-    mock.get_token.return_value = "test_async_token"
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient to simulate async HTTP requests."""
-    return AsyncMock(spec=AsyncHttpClient)
-
-
 @pytest.fixture
 def async_business_paybill(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncBusinessPayBill instance with mocked dependencies."""
     return AsyncBusinessPayBill(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_paybill_request_acknowledged(
@@ -221,7 +178,6 @@ async def test_async_paybill_request_acknowledged(
         response.OriginatorConversationID == response_data["OriginatorConversationID"]
     )
 
-
 @pytest.mark.asyncio
 async def test_async_paybill_http_error(async_business_paybill, mock_async_http_client):
     """Test handling of HTTP errors during async paybill request."""
@@ -230,7 +186,6 @@ async def test_async_paybill_http_error(async_business_paybill, mock_async_http_
     with pytest.raises(Exception) as excinfo:
         await async_business_paybill.paybill(request)
     assert "Async HTTP error" in str(excinfo.value)
-
 
 @pytest.mark.asyncio
 async def test_async_paybill_token_retrieval(
@@ -252,4 +207,4 @@ async def test_async_paybill_token_retrieval(
     mock_async_http_client.post.assert_awaited_once()
     call_args = mock_async_http_client.post.call_args
     assert "Authorization" in call_args.kwargs["headers"]
-    assert "Bearer test_async_token" in call_args.kwargs["headers"]["Authorization"]
+    assert "Bearer test_token" in call_args.kwargs["headers"]["Authorization"]

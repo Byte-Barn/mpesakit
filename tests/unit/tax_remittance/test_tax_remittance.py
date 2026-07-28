@@ -4,12 +4,8 @@ This module tests the Tax Remittance API client, ensuring it can handle remittan
 process responses correctly, and manage error cases.
 """
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
-from mpesakit.auth import AsyncTokenManager, TokenManager
-from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.tax_remittance import (
     TaxRemittanceRequest,
     TaxRemittanceResponse,
@@ -20,26 +16,10 @@ from mpesakit.tax_remittance import (
 )
 from mpesakit.tax_remittance.tax_remittance import AsyncTaxRemittance, TaxRemittance
 
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
-
 @pytest.fixture
 def tax_remittance(mock_http_client, mock_token_manager):
     """Fixture to create a TaxRemittance instance with mocked dependencies."""
     return TaxRemittance(http_client=mock_http_client, token_manager=mock_token_manager)
-
 
 def valid_tax_remittance_request():
     """Create a valid TaxRemittanceRequest for testing."""
@@ -53,7 +33,6 @@ def valid_tax_remittance_request():
         QueueTimeOutURL="https://mydomain.com/b2b/remittax/queue/",
         ResultURL="https://mydomain.com/b2b/remittax/result/",
     )
-
 
 def test_remittance_request_acknowledged(tax_remittance, mock_http_client):
     """Test that remittance request is acknowledged, not finalized."""
@@ -77,7 +56,6 @@ def test_remittance_request_acknowledged(tax_remittance, mock_http_client):
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
-
 def test_remittance_http_error(tax_remittance, mock_http_client):
     """Test handling of HTTP errors during remittance request."""
     request = valid_tax_remittance_request()
@@ -85,7 +63,6 @@ def test_remittance_http_error(tax_remittance, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         tax_remittance.remittance(request)
     assert "HTTP error" in str(excinfo.value)
-
 
 def test_tax_remittance_result_callback_success():
     """Test parsing of a successful tax remittance result callback."""
@@ -115,13 +92,11 @@ def test_tax_remittance_result_callback_success():
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultParameters.ResultParameter[0].Key == "Amount"
 
-
 def test_tax_remittance_result_callback_response():
     """Test the response schema for result callback."""
     resp = TaxRemittanceResultCallbackResponse()
     assert resp.ResultCode == 0
     assert "Callback received successfully" in resp.ResultDesc
-
 
 def test_tax_remittance_timeout_callback():
     """Test parsing of a tax remittance timeout callback."""
@@ -139,13 +114,11 @@ def test_tax_remittance_timeout_callback():
     assert callback.Result.ResultCode == 1
     assert "timed out" in callback.Result.ResultDesc
 
-
 def test_tax_remittance_timeout_callback_response():
     """Test the response schema for timeout callback."""
     resp = TaxRemittanceTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
-
 
 def test_tax_remittance_result_callback_with_string_resultcode():
     """Ensure is_successful handles ResultCode provided as a string without type errors."""
@@ -169,28 +142,12 @@ def test_tax_remittance_result_callback_with_string_resultcode():
     # Should not raise a TypeError comparing str and int; should treat "0" as success
     assert callback.is_successful() is True
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token."""
-    mock = AsyncMock(spec=AsyncTokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient to simulate async HTTP requests."""
-    return AsyncMock(spec=AsyncHttpClient)
-
-
 @pytest.fixture
 def async_tax_remittance(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncTaxRemittance instance with mocked dependencies."""
     return AsyncTaxRemittance(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_remittance_request_acknowledged(
@@ -212,7 +169,6 @@ async def test_async_remittance_request_acknowledged(
     assert response.is_successful() is True
     assert response.ConversationID == response_data["ConversationID"]
 
-
 @pytest.mark.asyncio
 async def test_async_remittance_http_error(
     async_tax_remittance, mock_async_http_client
@@ -223,7 +179,6 @@ async def test_async_remittance_http_error(
     with pytest.raises(Exception) as excinfo:
         await async_tax_remittance.remittance(request)
     assert "Async HTTP error" in str(excinfo.value)
-
 
 @pytest.mark.asyncio
 async def test_async_remittance_token_retrieval(

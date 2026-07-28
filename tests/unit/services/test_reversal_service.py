@@ -1,26 +1,8 @@
 """Unit tests for ReversalService class."""
 
 import pytest
-from unittest.mock import MagicMock
 from mpesakit.services.reversal import ReversalService
 from mpesakit.reversal import ReversalResponse
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def reversal_service(mock_http_client, mock_token_manager):
@@ -29,7 +11,6 @@ def reversal_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 def test_reverse_calls_reversal(reversal_service, mock_http_client):
     """Test that reverse calls the Reversal.reverse method with correct request."""
@@ -55,7 +36,6 @@ def test_reverse_calls_reversal(reversal_service, mock_http_client):
     assert isinstance(resp, ReversalResponse)
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
-
 
 def test_reverse_filters_kwargs(reversal_service, mock_http_client):
     """Test that reverse filters out unexpected kwargs."""
@@ -84,7 +64,6 @@ def test_reverse_filters_kwargs(reversal_service, mock_http_client):
 
     # unexpected_field should not be present
     assert not hasattr(resp, "unexpected_field")
-
 
 def test_reversal_service_initializes_reversal_correctly(
     mock_http_client, mock_token_manager

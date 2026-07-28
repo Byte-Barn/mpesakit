@@ -3,12 +3,8 @@
 This module tests the StkPush class for initiating and querying M-Pesa STK Push transactions.
 """
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
-from mpesakit.auth import AsyncTokenManager, TokenManager
-from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.mpesa_express.stk_push import (
     AsyncStkPush,
     StkPush,
@@ -18,26 +14,10 @@ from mpesakit.mpesa_express.stk_push import (
     StkPushSimulateResponse,
 )
 
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token for testing."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient for testing."""
-    return MagicMock(spec=HttpClient)
-
-
 @pytest.fixture
 def stk_push(mock_http_client, mock_token_manager):
     """Fixture to create an instance of StkPush with mocked dependencies."""
     return StkPush(http_client=mock_http_client, token_manager=mock_token_manager)
-
 
 def test_push_success(stk_push, mock_http_client):
     """Test that a successful STK Push transaction can be initiated."""
@@ -73,7 +53,6 @@ def test_push_success(stk_push, mock_http_client):
     assert args[0] == "/mpesa/stkpush/v1/processrequest"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
-
 def test_query_success(stk_push, mock_http_client):
     """Test that the status of an STK Push transaction can be queried successfully."""
     request = StkPushQueryRequest(
@@ -102,7 +81,6 @@ def test_query_success(stk_push, mock_http_client):
     assert args[0] == "/mpesa/stkpushquery/v1/query"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
-
 def test_push_handles_http_error(stk_push, mock_http_client):
     """Test that an HTTP error during STK Push initiation is handled."""
     request = StkPushSimulateRequest(
@@ -124,7 +102,6 @@ def test_push_handles_http_error(stk_push, mock_http_client):
         stk_push.push(request)
     assert "HTTP error" in str(excinfo.value)
 
-
 def test_query_handles_http_error(stk_push, mock_http_client):
     """Test that an HTTP error during STK Push query is handled."""
     request = StkPushQueryRequest(
@@ -138,7 +115,6 @@ def test_query_handles_http_error(stk_push, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         stk_push.query(request)
     assert "HTTP error" in str(excinfo.value)
-
 
 def test_stk_push_simulate_request_invalid_transaction_type():
     """Test that StkPushSimulateRequest raises ValueError for invalid TransactionType."""
@@ -160,28 +136,12 @@ def test_stk_push_simulate_request_invalid_transaction_type():
         StkPushSimulateRequest(**valid_kwargs)
     assert "TransactionType must be one of:" in str(excinfo.value)
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token for testing."""
-    mock = AsyncMock(spec=AsyncTokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient for testing."""
-    return AsyncMock(spec=AsyncHttpClient)
-
-
 @pytest.fixture
 def async_stk_push(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an instance of AsyncStkPush with mocked dependencies."""
     return AsyncStkPush(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_push_success(
@@ -220,7 +180,6 @@ async def test_async_push_success(
     assert args[0] == "/mpesa/stkpush/v1/processrequest"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
-
 @pytest.mark.asyncio
 async def test_async_query_success(
     async_stk_push, mock_async_http_client, mock_async_token_manager
@@ -252,7 +211,6 @@ async def test_async_query_success(
     assert args[0] == "/mpesa/stkpushquery/v1/query"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
-
 @pytest.mark.asyncio
 async def test_async_push_handles_http_error(async_stk_push, mock_async_http_client):
     """Test that an HTTP error during async STK Push initiation is handled."""
@@ -274,7 +232,6 @@ async def test_async_push_handles_http_error(async_stk_push, mock_async_http_cli
     with pytest.raises(Exception) as excinfo:
         await async_stk_push.push(request)
     assert "HTTP error" in str(excinfo.value)
-
 
 @pytest.mark.asyncio
 async def test_async_query_handles_http_error(async_stk_push, mock_async_http_client):

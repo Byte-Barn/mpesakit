@@ -1,26 +1,8 @@
 """Unit tests for the C2BService class in mpesakit.services.c2b module."""
 
 import pytest
-from unittest.mock import MagicMock
 from mpesakit.services.c2b import C2BService
 from mpesakit.c2b import C2BRegisterUrlResponse, C2BResponseType
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Creates a mock TokenManager."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Creates a mock HttpClient."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def c2b_service(mock_http_client, mock_token_manager):
@@ -29,7 +11,6 @@ def c2b_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 def test_register_url_success(c2b_service, mock_http_client):
     """Test successful registration of C2B URLs."""
@@ -51,7 +32,6 @@ def test_register_url_success(c2b_service, mock_http_client):
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "URLs registered successfully."
 
-
 def test_register_url_filters_kwargs(c2b_service, mock_http_client):
     """Test that extra kwargs are filtered out in the request."""
     response_data = {
@@ -72,7 +52,6 @@ def test_register_url_filters_kwargs(c2b_service, mock_http_client):
     assert isinstance(resp, C2BRegisterUrlResponse)
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "URLs registered successfully."
-
 
 def test_c2b_service_initializes_correctly(mock_http_client, mock_token_manager):
     """Test C2BService initializes with correct arguments."""

@@ -1,7 +1,6 @@
 """Unit tests for B2BService class."""
 
 import pytest
-from unittest.mock import MagicMock
 
 from mpesakit.services.b2b import B2BService, AsyncB2BService
 from mpesakit.business_buy_goods import (
@@ -13,36 +12,6 @@ from mpesakit.business_paybill import (
 from mpesakit.b2b_express_checkout import (
     B2BExpressCheckoutResponse,
 )
-from mpesakit.auth import TokenManager, AsyncTokenManager
-from mpesakit.http_client import HttpClient, AsyncHttpClient
-from unittest.mock import AsyncMock
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token."""
-    mock = AsyncMock(spec=AsyncTokenManager)
-    mock.get_token.return_value = "async_test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient to simulate async HTTP requests."""
-    return AsyncMock(spec=AsyncHttpClient)
 
 @pytest.fixture
 def b2b_service(mock_http_client, mock_token_manager):
@@ -52,7 +21,6 @@ def b2b_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 def test_express_checkout_calls_ussd_push(b2b_service, mock_http_client):
     """Test that express_checkout calls the B2BExpressCheckout service."""
@@ -71,7 +39,6 @@ def test_express_checkout_calls_ussd_push(b2b_service, mock_http_client):
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.code == "0"
     assert resp.status == "USSD Initiated Successfully"
-
 
 def test_paybill_calls_paybill(b2b_service, mock_http_client):
     """Test that paybill calls the BusinessPayBill service."""
@@ -98,7 +65,6 @@ def test_paybill_calls_paybill(b2b_service, mock_http_client):
     assert isinstance(resp, BusinessPayBillResponse)
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
-
 
 def test_buygoods_calls_buy_goods(b2b_service, mock_http_client):
     """Test that buygoods calls the BusinessBuyGoods service."""
@@ -127,7 +93,6 @@ def test_buygoods_calls_buy_goods(b2b_service, mock_http_client):
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
-
 def test_express_checkout_filters_kwargs(b2b_service, mock_http_client):
     """Test that express_checkout filters out unexpected kwargs."""
     response_data = {"code": "0", "status": "USSD Initiated Successfully"}
@@ -147,7 +112,6 @@ def test_express_checkout_filters_kwargs(b2b_service, mock_http_client):
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.is_successful() is True
     assert resp.status == "USSD Initiated Successfully"
-
 
 def test_b2b_service_initializes_services_correctly(
     mock_http_client, mock_token_manager
@@ -178,7 +142,6 @@ def async_b2b_service(mock_async_http_client, mock_async_token_manager):
         token_manager=mock_async_token_manager
     )
 
-
 @pytest.mark.asyncio
 async def test_async_express_checkout_calls_ussd_push(
     async_b2b_service, mock_async_http_client
@@ -200,7 +163,6 @@ async def test_async_express_checkout_calls_ussd_push(
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.code == "0"
     assert resp.status == "USSD Initiated Successfully"
-
 
 @pytest.mark.asyncio
 async def test_async_paybill_calls_paybill(async_b2b_service, mock_async_http_client):
@@ -229,7 +191,6 @@ async def test_async_paybill_calls_paybill(async_b2b_service, mock_async_http_cl
     assert isinstance(resp, BusinessPayBillResponse)
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
-
 
 @pytest.mark.asyncio
 async def test_async_buygoods_calls_buy_goods(
@@ -262,7 +223,6 @@ async def test_async_buygoods_calls_buy_goods(
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
-
 @pytest.mark.asyncio
 async def test_async_express_checkout_filters_kwargs(
     async_b2b_service, mock_async_http_client
@@ -285,7 +245,6 @@ async def test_async_express_checkout_filters_kwargs(
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.is_successful() is True
     assert resp.status == "USSD Initiated Successfully"
-
 
 def test_async_b2b_service_initializes_services_correctly(
     mock_async_http_client, mock_async_token_manager
