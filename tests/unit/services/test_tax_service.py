@@ -1,26 +1,8 @@
 """Unit tests for TaxService class."""
 
 import pytest
-from unittest.mock import MagicMock
 from mpesakit.services.tax import TaxService
 from mpesakit.tax_remittance import TaxRemittanceResponse
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock HttpClient to simulate HTTP requests."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def tax_service(mock_http_client, mock_token_manager):
@@ -29,7 +11,6 @@ def tax_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
-
 
 def test_remittance_calls_tax_remittance(tax_service, mock_http_client):
     """Test that remittance calls TaxRemittance.remittance with correct request."""
@@ -54,7 +35,6 @@ def test_remittance_calls_tax_remittance(tax_service, mock_http_client):
     assert isinstance(resp, TaxRemittanceResponse)
     assert resp.is_successful() is True
     assert resp.ResponseDescription == "Accept the service request successfully."
-
 
 def test_remittance_filters_kwargs(tax_service, mock_http_client):
     """Test that remittance filters out unexpected kwargs."""
@@ -81,7 +61,6 @@ def test_remittance_filters_kwargs(tax_service, mock_http_client):
     assert resp.is_successful() is True
     # unexpected_field should not be present in the response
     assert not hasattr(resp, "unexpected_field")
-
 
 def test_tax_service_initializes_tax_correctly(mock_http_client, mock_token_manager):
     """Test TaxService initializes with correct http_client and token_manager."""

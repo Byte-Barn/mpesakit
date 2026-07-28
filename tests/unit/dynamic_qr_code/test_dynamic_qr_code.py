@@ -1,38 +1,18 @@
 """Unit tests for the Dynamic QR Code functionality of the Mpesa SDK."""
 
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 
-from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.dynamic_qr_code import (
     AsyncDynamicQRCode,
     DynamicQRCode,
     DynamicQRGenerateRequest,
     DynamicQRTransactionType,
 )
-from mpesakit.http_client import AsyncHttpClient, MpesaHttpClient
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Mock TokenManager to return a fixed token for testing."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Mock MpesaHttpClient for testing."""
-    return MagicMock(spec=MpesaHttpClient)
-
 
 @pytest.fixture
 def dynamic_qr_service(mock_http_client, mock_token_manager):
     """Fixture to create an instance of DynamicQRCode with mocked dependencies."""
     return DynamicQRCode(http_client=mock_http_client, token_manager=mock_token_manager)
-
 
 def test_generate_dynamic_qr_success(dynamic_qr_service, mock_http_client):
     """Test successful Dynamic QR Code generation."""
@@ -66,7 +46,6 @@ def test_generate_dynamic_qr_success(dynamic_qr_service, mock_http_client):
     assert "Authorization" in kwargs["headers"]
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
-
 def test_generate_dynamic_qr_handles_http_error(dynamic_qr_service, mock_http_client):
     """Test that an HTTP error during Dynamic QR Code generation is handled."""
     request = DynamicQRGenerateRequest(
@@ -83,7 +62,6 @@ def test_generate_dynamic_qr_handles_http_error(dynamic_qr_service, mock_http_cl
         dynamic_qr_service.generate(request)
     assert "HTTP error" in str(excinfo.value)
 
-
 def test_generate_dynamic_qr_invalid_trx_code():
     """Test that providing an invalid TrxCode raises a ValueError."""
     # Use an invalid TrxCode value
@@ -98,7 +76,6 @@ def test_generate_dynamic_qr_invalid_trx_code():
             Size="300",
         )
     assert "TrxCode must be one of:" in str(excinfo.value)
-
 
 def test_generate_dynamic_qr_send_money_cpi_normalization(monkeypatch):
     """Test CPI normalization for SEND_MONEY TrxCode."""
@@ -157,7 +134,6 @@ def test_generate_dynamic_qr_send_money_cpi_normalization(monkeypatch):
         excinfo.value
     )
 
-
 def test_generate_dynamic_qr_string_response_code_no_type_error(
     dynamic_qr_service, mock_http_client
 ):
@@ -182,30 +158,12 @@ def test_generate_dynamic_qr_string_response_code_no_type_error(
     response = dynamic_qr_service.generate(request)
     assert response.is_successful() is True
 
-
-@pytest.fixture
-def mock_async_token_manager():
-    """Mock AsyncTokenManager to return a fixed token for testing."""
-    mock = MagicMock(spec=AsyncTokenManager)
-    mock.get_token = AsyncMock(return_value="test_async_token")
-    return mock
-
-
-@pytest.fixture
-def mock_async_http_client():
-    """Mock AsyncHttpClient for testing."""
-    mock = MagicMock(spec=AsyncHttpClient)
-    mock.post = AsyncMock()
-    return mock
-
-
 @pytest.fixture
 def async_dynamic_qr_service(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an instance of AsyncDynamicQRCode with mocked dependencies."""
     return AsyncDynamicQRCode(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
-
 
 @pytest.mark.asyncio
 async def test_async_generate_dynamic_qr_success(
@@ -237,8 +195,7 @@ async def test_async_generate_dynamic_qr_success(
     mock_async_http_client.post.assert_called_once()
     args, kwargs = mock_async_http_client.post.call_args
     assert "Authorization" in kwargs["headers"]
-    assert kwargs["headers"]["Authorization"] == "Bearer test_async_token"
-
+    assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
 @pytest.mark.asyncio
 async def test_async_generate_dynamic_qr_handles_http_error(
@@ -258,7 +215,6 @@ async def test_async_generate_dynamic_qr_handles_http_error(
     with pytest.raises(Exception) as excinfo:
         await async_dynamic_qr_service.generate(request)
     assert "Async HTTP error" in str(excinfo.value)
-
 
 @pytest.mark.asyncio
 async def test_async_generate_dynamic_qr_token_manager_called(

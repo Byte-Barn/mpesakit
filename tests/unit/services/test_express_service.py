@@ -1,31 +1,13 @@
 """Unit tests for the StkPushService facade in mpesakit.services.express module."""
 
 import pytest
-from unittest.mock import MagicMock
 from mpesakit.services.express import StkPushService
-from mpesakit.auth import TokenManager
-from mpesakit.http_client import HttpClient
 
 from mpesakit.mpesa_express import (
     StkPushSimulateResponse,
     StkPushQueryResponse,
     TransactionType,
 )
-
-
-@pytest.fixture
-def mock_token_manager():
-    """Creates a mock TokenManager."""
-    mock = MagicMock(spec=TokenManager)
-    mock.get_token.return_value = "test_token"
-    return mock
-
-
-@pytest.fixture
-def mock_http_client():
-    """Creates a mock HttpClient."""
-    return MagicMock(spec=HttpClient)
-
 
 @pytest.fixture
 def stk_push_service(mock_http_client, mock_token_manager):
@@ -36,7 +18,6 @@ def stk_push_service(mock_http_client, mock_token_manager):
         token_manager=mock_token_manager,
     )
     return service
-
 
 def test_push_success(stk_push_service, mock_http_client):
     """Test successful STK Push transaction."""
@@ -64,7 +45,6 @@ def test_push_success(stk_push_service, mock_http_client):
 
     assert isinstance(resp, StkPushSimulateResponse)
     assert resp.is_successful() is True
-
 
 def test_push_filters_kwargs(stk_push_service, mock_http_client):
     """Test that extra kwargs are filtered out in push."""
@@ -94,7 +74,6 @@ def test_push_filters_kwargs(stk_push_service, mock_http_client):
     assert isinstance(resp, StkPushSimulateResponse)
     assert not hasattr(resp, "ExtraField")
 
-
 def test_query_success(stk_push_service, mock_http_client):
     """Test successful STK Push query."""
     response = {
@@ -114,7 +93,6 @@ def test_query_success(stk_push_service, mock_http_client):
     )
     assert isinstance(resp, StkPushQueryResponse)
     assert resp.is_successful() is True
-
 
 def test_query_filters_kwargs(stk_push_service, mock_http_client):
     """Test that extra kwargs are filtered out in query."""
@@ -137,7 +115,6 @@ def test_query_filters_kwargs(stk_push_service, mock_http_client):
     assert isinstance(resp, StkPushQueryResponse)
     resp.is_successful() is True
     assert not hasattr(resp, "ExtraField")
-
 
 def test_stk_push_service_initializes_stk_push_correctly(
     mock_http_client, mock_token_manager
