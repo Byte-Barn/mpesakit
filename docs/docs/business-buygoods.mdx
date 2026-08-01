@@ -162,8 +162,9 @@ parameters={[
 />
 
 <Alert type="info" title="Implementation Options">
-    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.  
+    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.
     - Use the Direct API (`BusinessBuyGoods` service + `TokenManager` + `HttpClient`) if you need full control over request/response handling, middleware, or custom error behaviors.
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `BusinessBuyGoods`/`AsyncBusinessBuyGoods`) — reach for async when calling from inside an async web framework, or when sending several Buy Goods payments concurrently.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -172,7 +173,7 @@ parameters={[
             The facade handles token retrieval and attaches Authorization headers so you can call high-level operations like initiating Business Buy Goods payments with minimal boilerplate.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -203,8 +204,46 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., `BusinessBuyGoodsResponse`) for ergonomic access to fields and helpers like `is_successful()`.  
+            - The facade returns typed Pydantic models (e.g., `BusinessBuyGoodsResponse`) for ergonomic access to fields and helpers like `is_successful()`.
             - Authentication tokens are handled transparently by the client.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp = await client.b2b.buygoods(
+            initiator="API_Username",
+            security_credential="encrypted_credential",
+            amount=239,
+            party_a=123456,
+            party_b=654321,
+            account_reference="353353",
+            requester="254700000000",
+            remarks="Payment for goods",
+            result_url="https://your.example/result",
+            queue_timeout_url="https://your.example/timeout",
+            occassion="Purchase"
+        )
+
+        if resp.is_successful():
+            print("Business Buy Goods payment initiated successfully")
+        else:
+            print("Business Buy Goods payment failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
@@ -213,7 +252,7 @@ else:
             Use the lower-level BusinessBuyGoods service when you must manipulate raw requests/responses or plug custom middleware.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -245,14 +284,56 @@ print(response.ResponseDescription)
 `}
         </CodeBlock>
 
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.business_buy_goods import AsyncBusinessBuyGoods, BusinessBuyGoodsRequest
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        business_buy_goods = AsyncBusinessBuyGoods(http_client=http_client, token_manager=token_manager)
+
+        request = BusinessBuyGoodsRequest(
+            Initiator="API_Username",
+            SecurityCredential="encrypted_credential",
+            Amount=239,
+            PartyA=123456,
+            PartyB=654321,
+            AccountReference="353353",
+            Requester="254700000000",
+            Remarks="Payment for goods",
+            ResultURL="https://your.example/result",
+            QueueTimeOutURL="https://your.example/timeout",
+            Occassion="Purchase"
+        )
+
+        response = await business_buy_goods.buy_goods(request)
+        print(response.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
         <Alert type="info" title="Direct API Details">
-            - The BusinessBuyGoods service attaches the Authorization header using the provided TokenManager.  
+            - The BusinessBuyGoods service attaches the Authorization header using the provided TokenManager (sync or async, matching the client you chose).
             - Implementations handle small inconsistencies in upstream responses (e.g., a common typo like 'OriginatorCoversationID' is normalized).
         </Alert>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Webhook Handling (Result & Timeout)" size="small" />
+
+<p>
+    The callback is an inbound HTTP POST from Safaricom to your `ResultURL`/`QueueTimeOutURL` — it isn't tied to whether the original request was sent via the sync or async client. The FastAPI handler below stays framework-async regardless, and validates the payload directly against the SDK's response schemas.
+</p>
 
 <CodeBlock language="python" title="Python">
 {`
@@ -283,6 +364,7 @@ async def buygoods_timeout(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
+    data = BusinessBuyGoodsTimeoutCallback(**payload)  # will validate incoming fields
     # process timeout notification (log, retry logic, etc.)
     ack = BusinessBuyGoodsTimeoutCallbackResponse()
     return ack.model_dump(mode="json")
@@ -290,7 +372,7 @@ async def buygoods_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Important behavior">
-    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.  
+    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.
     - Process the actual Business Buy Goods result asynchronously based on the data in the result callback.
 </Alert>
 
@@ -308,13 +390,15 @@ async def buygoods_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - BusinessBuyGoodsResponse provides is_successful() which normalizes success checks.
+    - BusinessBuyGoodsResponse provides is_successful() which normalizes success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 
 <SectionHeader title="Error Handling" size="small" />
 
-<CodeBlock language="python" title="Python">
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
 {`
 # Handle errors when calling the service
 try:
@@ -323,18 +407,33 @@ except Exception as exc:
     # The underlying HTTP client may raise exceptions on network errors; log and retry as appropriate
     print("Business Buy Goods payment failed:", exc)
 `}
-</CodeBlock>
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+    resp = await client.b2b.buygoods(...)
+except Exception as exc:
+    # The underlying async HTTP client may raise exceptions on network errors; log and retry as appropriate
+    print("Business Buy Goods payment failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <Alert type="info" title="Notes">
-    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except for robust production behavior.  
-    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails.
+    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except (sync) or around the awaited call (async) for robust production behavior.
+    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails, for both client variants.
 </Alert>
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - Business Buy Goods:
-    - The service posts to `/mpesa/b2b/v1/paymentrequest` with Authorization header set via TokenManager.
-    - Responses are returned as `BusinessBuyGoodsResponse` instances.
+    - The service posts to `/mpesa/b2b/v1/paymentrequest` with Authorization header set via TokenManager (or AsyncTokenManager).
+    - Responses are returned as `BusinessBuyGoodsResponse` instances, whether awaited from the async client or returned directly from the sync client.
     - The implementation tolerates a common provider typo ("OriginatorCoversationID") and maps it to `OriginatorConversationID`.
 
 - Validation:
@@ -344,7 +443,7 @@ except Exception as exc:
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.  
+    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.
     - Add observability and retry strategies around Business Buy Goods calls and webhook processing to handle transient failures.
 </Alert>
 

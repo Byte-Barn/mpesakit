@@ -155,8 +155,9 @@ parameters={[
 />
 
 <Alert type="info" title="Implementation Options">
-    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.  
+    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.
     - Use the Direct API (`B2CAccountTopUp` service + `TokenManager` + `HttpClient`) if you need full control over request/response handling, middleware, or custom error behaviors.
+    - Both the facade and the direct service have async counterparts (`AsyncMpesaClient`, `Async B2C` service) built on an async HTTP client — use them from `async def` route handlers or whenever you don't want the top-up request blocking your event loop.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -165,7 +166,7 @@ parameters={[
             The facade handles token retrieval and attaches Authorization headers so you can call high-level operations like initiating B2C Account TopUp with minimal boilerplate.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -195,30 +196,66 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed `Pydantic models` (e.g., `B2CAccountTopUpResponse`) for ergonomic access to fields and helpers like `is_successful()`.  
+            - The facade returns typed `Pydantic models` (e.g., `B2CAccountTopUpResponse`) for ergonomic access to fields and helpers like `is_successful()`.
             - Authentication tokens are handled transparently by the client.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp = await client.b2c.account_topup(
+            initiator="testapi",
+            security_credential="encrypted_credential",
+            amount=239,
+            party_a=600979,
+            party_b=600000,
+            account_reference="353353",
+            requester="254708374149",
+            remarks="Account top-up",
+            result_url="https://your.example/result",
+            queue_timeout_url="https://your.example/timeout"
+        )
+
+        if resp.is_successful():
+            print("B2C Account TopUp initiated successfully")
+        else:
+            print("B2C Account TopUp failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            For a long-lived service (e.g. `AsyncMpesaClient` as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
     <Tabs.TabPane label="Direct API" icon="⚡">
         <Alert type="warning" title="Advanced Usage">
-            Use the lower-level B2CAccountTopUp service when you must manipulate raw requests/responses or plug custom middleware.
+            Use the lower-level B2C service when you must manipulate raw requests/responses or plug custom middleware.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
 # Example: construct and send a B2C Account TopUp request using the B2C service
 from mpesakit.b2c_account_top_up import B2CAccountTopUpRequest
+from mpesakit.b2c import B2C
 from mpesakit.auth import TokenManager
 from mpesakit.http_client import MpesaHttpClient
 
 http_client = MpesaHttpClient(env="sandbox")
 token_manager = TokenManager(consumer_key="...", consumer_secret="...", http_client=http_client)
 
-# Assuming B2C service handles account topup
-# You may need to adjust this based on your actual implementation
 b2c_service = B2C(http_client=http_client, token_manager=token_manager)
 
 request = B2CAccountTopUpRequest(
@@ -234,19 +271,61 @@ request = B2CAccountTopUpRequest(
     QueueTimeOutURL="https://your.example/timeout"
 )
 
-response = b2c_service.account_topup(request) # This method needs to be implemented
+response = b2c_service.account_topup(request)
 print(response.ResponseDescription)
 `}
         </CodeBlock>
 
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.b2c_account_top_up import B2CAccountTopUpRequest
+from mpesakit.b2c import AsyncB2C
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        b2c_service = AsyncB2C(http_client=http_client, token_manager=token_manager)
+
+        request = B2CAccountTopUpRequest(
+            Initiator="testapi",
+            SecurityCredential="encrypted_credential",
+            Amount=239,
+            PartyA=600979,
+            PartyB=600000,
+            AccountReference="353353",
+            Requester="254708374149",
+            Remarks="Account top-up",
+            ResultURL="https://your.example/result",
+            QueueTimeOutURL="https://your.example/timeout"
+        )
+
+        response = await b2c_service.account_topup(request)
+        print(response.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
         <Alert type="info" title="Direct API Details">
-            - The B2C service attaches the Authorization header using the provided TokenManager.  
+            - The B2C service attaches the Authorization header using the provided TokenManager (sync or async, matching the client you chose).
             - Implementations handle small inconsistencies in upstream responses (e.g., a common typo like 'OriginatorCoversationID' is normalized).
         </Alert>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Webhook Handling (Result & Timeout)" size="small" />
+
+<p>
+    Webhook handlers themselves don't need to be async just because you're calling the M-Pesa API asynchronously elsewhere in your app — <code>async def</code> route handlers work the same regardless of which client variant triggered the original request. The example below stays framework-async (FastAPI) while validating the callback payload directly against the response schemas.
+</p>
 
 <CodeBlock language="python" title="Python">
 {`
@@ -277,6 +356,7 @@ async def account_topup_timeout(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
+    data = B2CAccountTopUpTimeoutCallback(**payload)  # will validate incoming fields
     # process timeout notification (log, retry logic, etc.)
     ack = B2CAccountTopUpTimeoutCallbackResponse()
     return ack.model_dump(mode="json")
@@ -284,8 +364,9 @@ async def account_topup_timeout(request: Request):
         </CodeBlock>
 
 <Alert type="info" title="Important behavior">
-    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.  
+    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.
     - Process the actual B2C Account TopUp result asynchronously based on the data in the result callback.
+    - Regardless of whether the original request was sent via `MpesaClient` or `AsyncMpesaClient`, the callback payload and validation shown above are identical — the callback is just an inbound HTTP POST from Safaricom, not part of the client that sent the request.
 </Alert>
 
 <SectionHeader title="Responses & Helpers" size="small" />
@@ -302,13 +383,15 @@ async def account_topup_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - B2CAccountTopUpResponse provides is_successful() which normalizes success checks.
+    - B2CAccountTopUpResponse provides is_successful() which normalizes success checks. This is available identically on the response returned by the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 
 <SectionHeader title="Error Handling" size="small" />
 
-<CodeBlock language="python" title="Python">
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
 {`
 # Handle errors when calling the service
 try:
@@ -317,18 +400,33 @@ except Exception as exc:
     # The underlying HTTP client may raise exceptions on network errors; log and retry as appropriate
     print("B2C Account TopUp failed:", exc)
 `}
-</CodeBlock>
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+    resp = await client.b2c.account_topup(...)
+except Exception as exc:
+    # The underlying async HTTP client may raise exceptions on network errors; log and retry as appropriate
+    print("B2C Account TopUp failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <Alert type="info" title="Notes">
-    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except for robust production behavior.  
-    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails.
+    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except (sync) or try/except around the awaited call (async) for robust production behavior.
+    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails, for both client variants.
 </Alert>
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - B2C Account TopUp:
-    - The service posts to `/mpesa/b2c/v3/paymentrequest` with Authorization header set via TokenManager.
-    - Responses are returned as `B2CAccountTopUpResponse` instances.
+    - The service posts to `/mpesa/b2c/v1/paymentrequest` with Authorization header set via TokenManager (or AsyncTokenManager).
+    - Responses are returned as `B2CAccountTopUpResponse` instances, whether awaited from the async client or returned directly from the sync client.
     - The implementation tolerates a common provider typo ("OriginatorCoversationID") and maps it to `OriginatorConversationID`.
 
 - Validation:
@@ -338,7 +436,7 @@ except Exception as exc:
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.  
+    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.
     - Add observability and retry strategies around B2C Account TopUp calls and webhook processing to handle transient failures.
 </Alert>
 

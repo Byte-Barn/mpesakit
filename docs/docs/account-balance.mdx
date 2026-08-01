@@ -24,7 +24,7 @@ import Tabs from '@site/docs/components/Tabs';
     - Backend system / automation: polls balances regularly and creates alerts or workflows on anomalies.
 
 <Alert type="info" title="What this page covers">
-    This guide documents the Account Balance flow: how to construct queries, expected acknowledgement responses, how to parse ResultURL callbacks (final balances) and QueueTimeOutURL notifications, and important validation/safety checks to implement on your side.
+    This guide documents the Account Balance flow: how to construct queries (sync and async), expected acknowledgement responses, how to parse ResultURL callbacks (final balances) and QueueTimeOutURL notifications using the SDK's built-in callback helpers, and important validation/safety checks to implement on your side.
 </Alert>
 
 <SectionHeader title="Parameters Definition" size="small" />
@@ -149,8 +149,9 @@ parameters={[
 <SectionHeader title="Overview" size="small" subtitle="Query lifecycle: send AccountBalance request → receive immediate ack → process asynchronous result or timeout." />
 
 <Alert type="info" title="Implementation Options">
-    - Use the high-level MpesaClient/BalanceService facade for token management, header injection and typed Pydantic models.  
+    - Use the high-level MpesaClient/BalanceService facade for token management, header injection and typed Pydantic models.
     - Use the lower-level AccountBalance class with a TokenManager and HttpClient if you need full control over request construction, middleware and error handling.
+    - Both the facade and the direct service are available as **sync** and **async** variants (`MpesaClient`/`AsyncMpesaClient`, `AccountBalance`/`AsyncAccountBalance`). Reach for async when you're querying from inside an async web framework, or want to fire off balance checks for several shortcodes concurrently.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -159,18 +160,12 @@ parameters={[
             The facade handles authentication and returns typed models (acknowledgement and parsed callbacks). Use it for concise integration in most applications.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python (example)">
 {`
-# Requires: mpesakit, fastapi (for webhook example)
 from mpesakit import MpesaClient
-from mpesakit.account_balance import (
-    AccountBalanceResultCallback,
-    AccountBalanceTimeoutCallback,
-    AccountBalanceIdentifierType,
-)
-from mpesakit.security.ip_whitelist import is_mpesa_ip_allowed
+from mpesakit.account_balance import AccountBalanceIdentifierType
 
 # ---- Client / Request (synchronous example) ----
 client = MpesaClient(consumer_key="YOUR_KEY", consumer_secret="YOUR_SECRET", environment="sandbox")
@@ -189,9 +184,49 @@ if resp.is_successful():
     print("Acknowledgement accepted:", resp.ConversationID or resp.OriginatorConversationID)
 else:
     print("Acknowledgement failed:", resp.ResponseDescription)
-
 `}
         </CodeBlock>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <Alert type="info" title="Why AsyncMpesaClient">
+            `AsyncMpesaClient` exposes the same `balance.query(...)` call as a coroutine. Use it inside `async def` route handlers, or when triggering balance checks for multiple shortcodes/tills at once with `asyncio.gather`.
+        </Alert>
+
+        <CodeBlock language="python" title="Python (example)">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+from mpesakit.account_balance import AccountBalanceIdentifierType
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="YOUR_KEY",
+        consumer_secret="YOUR_SECRET",
+        environment="sandbox",
+    ) as client:
+        resp = await client.balance.query(
+            initiator="apiuser",
+            security_credential="ENCRYPTED_SECURITY_CREDENTIAL",
+            party_a=600000,
+            identifier_type=AccountBalanceIdentifierType.SHORT_CODE,
+            remarks="Balance inquiry",
+            result_url="https://your.service/webhook/account-balance/result",
+            queue_timeout_url="https://your.service/webhook/account-balance/timeout",
+        )
+
+        if resp.is_successful():
+            print("Acknowledgement accepted:", resp.ConversationID or resp.OriginatorConversationID)
+        else:
+            print("Acknowledgement failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived app (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown rather than opening a new `async with` block per request.
+        </Alert>
     </Tabs.TabPane>
 
     <Tabs.TabPane label="Direct API" icon="⚡">
@@ -199,15 +234,66 @@ else:
             Use the direct AccountBalance service with explicit TokenManager and HttpClient if you need custom request shaping, retry policies or observability hooks.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python (example)">
 {`
-# Build an AccountBalanceRequest and call the low-level service.
+from mpesakit.account_balance import AccountBalance, AccountBalanceRequest, AccountBalanceIdentifierType
+from mpesakit.auth import TokenManager
+from mpesakit.http_client import MpesaHttpClient
+
+http_client = MpesaHttpClient(env="sandbox")
+token_manager = TokenManager(consumer_key="YOUR_KEY", consumer_secret="YOUR_SECRET", http_client=http_client)
+
+account_balance = AccountBalance(http_client=http_client, token_manager=token_manager)
+
+request = AccountBalanceRequest(
+    Initiator="apiuser",
+    SecurityCredential="ENCRYPTED_SECURITY_CREDENTIAL",
+    PartyA=600000,
+    IdentifierType=AccountBalanceIdentifierType.SHORT_CODE,
+    Remarks="Balance inquiry",
+    ResultURL="https://your.service/webhook/account-balance/result",
+    QueueTimeOutURL="https://your.service/webhook/account-balance/timeout",
+)
+
 # The service posts to /mpesa/accountbalance/v1/query and returns an acknowledgement.
-request = AccountBalanceRequest(...)
 response = account_balance.query(request)
 # response is an AccountBalanceResponse model.
+`}
+        </CodeBlock>
+
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python (example)">
+{`
+import asyncio
+from mpesakit.account_balance import AsyncAccountBalance, AccountBalanceRequest, AccountBalanceIdentifierType
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="YOUR_KEY", consumer_secret="YOUR_SECRET", http_client=http_client
+        )
+
+        account_balance = AsyncAccountBalance(http_client=http_client, token_manager=token_manager)
+
+        request = AccountBalanceRequest(
+            Initiator="apiuser",
+            SecurityCredential="ENCRYPTED_SECURITY_CREDENTIAL",
+            PartyA=600000,
+            IdentifierType=AccountBalanceIdentifierType.SHORT_CODE,
+            Remarks="Balance inquiry",
+            ResultURL="https://your.service/webhook/account-balance/result",
+            QueueTimeOutURL="https://your.service/webhook/account-balance/timeout",
+        )
+
+        response = await account_balance.query(request)
+        print(response)
+
+asyncio.run(main())
 `}
         </CodeBlock>
     </Tabs.TabPane>
@@ -215,13 +301,17 @@ response = account_balance.query(request)
 
 <SectionHeader title="Webhook Handling (Result & Timeout)" size="small" />
 
-<CodeBlock language="python" title="Webhook Example (FastAPI)">
+<p>
+    Instead of manually constructing <code>AccountBalanceResultCallback</code> / <code>AccountBalanceTimeoutCallback</code> models from the raw payload, use the client's built-in <code>process_account_balance_callback</code> and <code>process_account_balance_timeout</code> helpers. They validate and parse the payload for you and are available on both <code>MpesaClient</code> and <code>AsyncMpesaClient</code> since they only do validation, not I/O.
+</p>
+
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="FastAPI (Sync Client)" icon="🚀">
+        <CodeBlock language="python" title="Webhook Example (FastAPI)">
 {`
-# Example: FastAPI endpoints for Account Balance Result & Timeout callbacks
 from fastapi import FastAPI, Request, HTTPException
+from mpesakit import MpesaClient
 from mpesakit.account_balance import (
-    AccountBalanceResultCallback,
-    AccountBalanceTimeoutCallback,
     AccountBalanceResultCallbackResponse,
     AccountBalanceTimeoutCallbackResponse,
 )
@@ -230,6 +320,7 @@ import logging
 
 app = FastAPI()
 logger = logging.getLogger("mpesa.account_balance")
+client = MpesaClient(consumer_key="YOUR_KEY", consumer_secret="YOUR_SECRET", environment="sandbox")
 
 
 async def _caller_ip(request: Request) -> str:
@@ -243,15 +334,15 @@ async def account_balance_result(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
-    # Validate and parse incoming payload into project models
     try:
-        callback = AccountBalanceResultCallback(**payload)
+        # Validates and parses the payload into an AccountBalanceResultCallback object
+        callback = client.process_account_balance_callback(payload)
     except Exception as exc:
         logger.exception("Invalid AccountBalance result payload")
         return AccountBalanceResultCallbackResponse(ResultCode=1, ResultDesc=f"Invalid payload: {exc}")
 
-    response = callback.model_dump(mode="json")
-    logger.info("AccountBalance result received: %s", response)
+    logger.info("AccountBalance result received: %s", callback.model_dump(mode="json"))
+    # e.g. extract and persist the AccountBalance entry from callback.Result.ResultParameters here
 
     return AccountBalanceResultCallbackResponse()  # defaults to ResultCode=0, ResultDesc="Result received and processed successfully."
 
@@ -264,28 +355,97 @@ async def account_balance_timeout(request: Request):
         raise HTTPException(status_code=403, detail="forbidden")
 
     try:
-        callback = AccountBalanceTimeoutCallback(**payload)
+        # Validates and parses the payload into an AccountBalanceTimeoutCallback object
+        callback = client.process_account_balance_timeout(payload)
     except Exception as exc:
         logger.exception("Invalid AccountBalance timeout payload")
         return AccountBalanceTimeoutCallbackResponse(ResultCode=1, ResultDesc=f"Invalid payload: {exc}")
 
-    response = callback.model_dump(mode="json")
-    logger.warning("AccountBalance timeout received: %s", response)
+    logger.warning("AccountBalance timeout received: %s", callback.model_dump(mode="json"))
 
     # Quick typed acknowledgement to stop retries
     return AccountBalanceTimeoutCallbackResponse()  # defaults to ResultCode=0, ResultDesc="Timeout notification received and processed successfully."
 `}
-</CodeBlock>
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="FastAPI (Async Client)" icon="⚡">
+        <CodeBlock language="python" title="Webhook Example (FastAPI)">
+{`
+from fastapi import FastAPI, Request, HTTPException
+from mpesakit import AsyncMpesaClient
+from mpesakit.account_balance import (
+    AccountBalanceResultCallbackResponse,
+    AccountBalanceTimeoutCallbackResponse,
+)
+from mpesakit.security.ip_whitelist import is_mpesa_ip_allowed
+import logging
+
+app = FastAPI()
+logger = logging.getLogger("mpesa.account_balance")
+client = AsyncMpesaClient(consumer_key="YOUR_KEY", consumer_secret="YOUR_SECRET", environment="sandbox")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await client.aclose()
+
+
+async def _caller_ip(request: Request) -> str:
+    return (request.headers.get("x-forwarded-for") or request.client.host).split(",")[0].strip()
+
+
+@app.post("/webhook/account-balance/result")
+async def account_balance_result(request: Request):
+    payload = await request.json()
+    caller_ip = await _caller_ip(request)
+    if not is_mpesa_ip_allowed(caller_ip):
+        raise HTTPException(status_code=403, detail="forbidden")
+
+    try:
+        # process_account_balance_callback is a plain (non-awaited) helper on both
+        # clients — it only validates/parses the payload, it doesn't hit the network.
+        callback = client.process_account_balance_callback(payload)
+    except Exception as exc:
+        logger.exception("Invalid AccountBalance result payload")
+        return AccountBalanceResultCallbackResponse(ResultCode=1, ResultDesc=f"Invalid payload: {exc}")
+
+    logger.info("AccountBalance result received: %s", callback.model_dump(mode="json"))
+    # e.g. await your async persistence / reconciliation logic here
+
+    return AccountBalanceResultCallbackResponse()
+
+
+@app.post("/webhook/account-balance/timeout")
+async def account_balance_timeout(request: Request):
+    payload = await request.json()
+    caller_ip = await _caller_ip(request)
+    if not is_mpesa_ip_allowed(caller_ip):
+        raise HTTPException(status_code=403, detail="forbidden")
+
+    try:
+        callback = client.process_account_balance_timeout(payload)
+    except Exception as exc:
+        logger.exception("Invalid AccountBalance timeout payload")
+        return AccountBalanceTimeoutCallbackResponse(ResultCode=1, ResultDesc=f"Invalid payload: {exc}")
+
+    logger.warning("AccountBalance timeout received: %s", callback.model_dump(mode="json"))
+
+    return AccountBalanceTimeoutCallbackResponse()
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <SectionHeader title="Important behaviors & validations" size="small" />
 
 <Alert type="warning" title="IdentifierType & Remarks validation">
-    - IdentifierType must be one of the supported enum values (1=MSISDN, 2=Till number, 4=Short code). Invalid values should be rejected before sending requests.  
+    - IdentifierType must be one of the supported enum values (1=MSISDN, 2=Till number, 4=Short code). Invalid values should be rejected before sending requests.
     - Remarks must not exceed 100 characters; the client/model will raise validation errors if this rule is violated.
 </Alert>
 
 <Alert type="info" title="Acknowledgement semantics">
-    - The initial /query call returns an acknowledgement (ResponseCode/ResponseDescription). This does not contain the final balance.  
+    - The initial /query call returns an acknowledgement (ResponseCode/ResponseDescription). This does not contain the final balance.
     - Final account balances are delivered asynchronously to your ResultURL (ResultType/ResultCode = 0 indicates success).
 </Alert>
 
@@ -293,32 +453,35 @@ async def account_balance_timeout(request: Request):
 
 - A returned AccountBalanceResponse model exposes:
 - is_successful() helper that treats any all-zero ResponseCode string (e.g., "0" or "000") as success.
-- Result callbacks are parsed into AccountBalanceResultCallback with:
+- Result callbacks, once parsed via `process_account_balance_callback`, are typed `AccountBalanceResultCallback` objects with:
 - ResultParameter.ResultParameters list containing an 'AccountBalance' entry holding a delimited balance string.
 
+<Alert type="info" title="Same helpers, sync or async">
+    `process_account_balance_callback` and `process_account_balance_timeout` are identical on `MpesaClient` and `AsyncMpesaClient` — they're plain validation/parsing methods with no network I/O, so there's nothing to `await`, even inside an async webhook handler.
+</Alert>
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - Query:
-    - Should return an AccountBalanceResponse acknowledgement. Confirm `is_successful()` for `ResponseCode == 0`.
+    - Should return an AccountBalanceResponse acknowledgement. Confirm `is_successful()` for `ResponseCode == 0`. True whether called via `client.balance.query(...)` or `await client.balance.query(...)`.
     - HTTP client must receive the correct path and headers (`Authorization Bearer token + JSON content-type`).
 
 - Result Callback:
-    - Parse Result.ResultParameter.ResultParameters and extract the AccountBalance key. Persist parsed balances for reconciliation.
+    - Use `process_account_balance_callback` to parse Result.ResultParameter.ResultParameters and extract the AccountBalance key. Persist parsed balances for reconciliation.
     - Ensure your handler returns the expected acknowledgement payload quickly so provider retries are avoided.
 
 - Timeout Callback:
-    - QueueTimeOutURL receives a Result with ResultType=1; handle accordingly (mark request as timed out, alert operations).
+    - QueueTimeOutURL receives a Result with ResultType=1; parse it with `process_account_balance_timeout` and handle accordingly (mark request as timed out, alert operations).
 
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="Go-live checklist">
-    - Implement secure callback endpoints (IP restrictions, TLS).  
-    - Persist both acknowledgements and final result notifications for audit and reconciliation.  
+    - Implement secure callback endpoints (IP restrictions, TLS).
+    - Persist both acknowledgements and final result notifications for audit and reconciliation.
     - Add observability & alerting for timeout notifications and unexpected result codes.
 </Alert>
 
 ## Related Documentation
 
-- [📡 Webhook Setup Guide](/webhooks-best-practices) - Best practices for building reliable endpoints  
+- [📡 Webhook Setup Guide](/webhooks-best-practices) - Best practices for building reliable endpoints
 - [🏗️ Production Setup](/production) - Go-live checklist, security and monitoring

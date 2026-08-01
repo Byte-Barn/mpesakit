@@ -77,9 +77,13 @@ parameters={[
 
 <SectionHeader
     title="Integration Overview"
-    subtitle="Two integration patterns: use the library-level client (recommended) for quick setup or the lower-level service for custom workflows."
+    subtitle="Two integration patterns: use the library-level client (recommended) for quick setup or the lower-level service for custom workflows. Both are available as sync and async variants."
     size="small"
 />
+
+<Alert type="info" title="Sync vs async">
+    QR generation is a single request/response call with no result or timeout callback — there's no webhook step to reason about here, unlike STK Push or B2C. The only choice is whether you want `client.dynamic_qr.generate(...)` to block or to `await`. Reach for `AsyncMpesaClient` if you're generating QR codes from an `async def` route handler (e.g. an endpoint that returns a QR image per checkout session), or generating several QR codes for a batch of orders concurrently.
+</Alert>
 
 <Tabs defaultValue={0}>
     <Tabs.TabPane label="Library Client" icon="🚀">
@@ -87,7 +91,7 @@ parameters={[
             Use the high-level client to handle authentication and common defaults. It gives a simple surface for generating dynamic QR codes.
         </Alert>
 
-        <SectionHeader title="Quick Start (Python)" size="small" />
+        <SectionHeader title="Quick Start (Sync)" size="small" />
         <CodeBlock language="python" title="Python">
 {`# Example: using MpesaClient facade to create a dynamic QR
 from mpesakit import MpesaClient
@@ -118,6 +122,63 @@ else:
             - Provide either numeric/traditional values for TrxCode (use the transaction type enum) and ensure CPI matches the TrxCode semantics (mobile vs business).
             - Amount must be > 0.
         </Alert>
+
+        <SectionHeader title="Quick Start (Async)" size="small" />
+        <CodeBlock language="python" title="Python">
+{`import asyncio
+from mpesakit import AsyncMpesaClient
+from mpesakit.dynamic_qr_code import DynamicQRTransactionType
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="YOUR_KEY",
+        consumer_secret="YOUR_SECRET",
+        environment="sandbox",
+    ) as client:
+        response = await client.dynamic_qr.generate(
+            merchant_name="Corner Store",
+            ref_no="ORDER-1001",
+            amount=250,
+            trx_code=DynamicQRTransactionType.BUY_GOODS,
+            cpi="373132",
+            size="300",
+        )
+
+        if response.is_successful():
+            print("QR generated", response.QRCode)
+        else:
+            print("Failed:", response.ResponseDescription)
+
+asyncio.run(main())`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Generating QR codes for a batch of orders">
+            If you need to produce QR codes for many orders at once (e.g. a bulk invoice run), gather the coroutines rather than awaiting each one sequentially:
+
+```python
+orders = [
+    dict(ref_no="ORDER-1001", amount=250),
+    dict(ref_no="ORDER-1002", amount=1200),
+    # ...
+]
+
+responses = await asyncio.gather(*(
+    client.dynamic_qr.generate(
+        merchant_name="Corner Store",
+        ref_no=o["ref_no"],
+        amount=o["amount"],
+        trx_code=DynamicQRTransactionType.BUY_GOODS,
+        cpi="373132",
+        size="300",
+    )
+    for o in orders
+))
+```
+        </Alert>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
+        </Alert>
     </Tabs.TabPane>
 
     <Tabs.TabPane label="Direct Service" icon="⚡">
@@ -125,7 +186,7 @@ else:
             Use the direct service when you need explicit control over requests, middleware, or custom HTTP behavior.
         </Alert>
 
-        <SectionHeader title="Direct Service Usage" size="small" />
+        <SectionHeader title="Direct Service Usage (Sync)" size="small" />
         <CodeBlock language="python" title="Python">
 {`# Example: using the DynamicQRCode service directly
 from mpesakit.dynamic_qr_code import DynamicQRCode, DynamicQRGenerateRequest, DynamicQRTransactionType
@@ -161,14 +222,51 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="CPI Normalization">
-            When TrxCode is for sending to a mobile (SEND_MONEY), the service normalizes common Kenyan number formats (0..., +254..., 254...) to the canonical 254... format. Invalid numbers will raise a validation error.
+            When TrxCode is for sending to a mobile (SEND_MONEY), the service normalizes common Kenyan number formats (0..., +254..., 254...) to the canonical 254... format. Invalid numbers will raise a validation error. This validation happens at request-model construction time, before any network call — identical for the sync and async service.
         </Alert>
+
+        <SectionHeader title="Direct Service Usage (Async)" size="small" />
+        <CodeBlock language="python" title="Python">
+{`import asyncio
+import os
+from mpesakit.dynamic_qr_code import AsyncDynamicQRCode, DynamicQRGenerateRequest, DynamicQRTransactionType
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client.mpesa_http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_mgr = AsyncTokenManager(
+            consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+            consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+            http_client=http_client,
+        )
+
+        service = AsyncDynamicQRCode(http_client=http_client, token_manager=token_mgr)
+
+        req = DynamicQRGenerateRequest(
+            MerchantName="Corner Store",
+            RefNo="ORD-200",
+            Amount=150,
+            TrxCode=DynamicQRTransactionType.BUY_GOODS,
+            CPI="373132",
+            Size="300",
+        )
+
+        resp = await service.generate(req)
+
+        if resp.is_successful():
+            print("QR ready:", resp.QRCode)
+        else:
+            print("Error:", resp.ResponseDescription)
+
+asyncio.run(main())`}
+        </CodeBlock>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Response" size="small" />
 
-- Response objects are typed models with attributes matching the API response fields.
+- Response objects are typed models with attributes matching the API response fields, whether returned directly (sync) or via `await` (async).
 - Use `is_successful()` to check if the request succeeded.
 - If you need the raw response data, use `model_dump(mode="json")` to get a dictionary representation.
 
@@ -190,14 +288,14 @@ else:
 </CodeBlock>
 
 <Alert type="info" title="Error handling">
-    - Validation errors (invalid TrxCode, bad CPI for SEND_MONEY, etc.) raise exceptions at request model creation time.  
-    - HTTP or API-level errors should be caught and inspected (use the library exceptions to get code, message and HTTP status).
+    - Validation errors (invalid TrxCode, bad CPI for SEND_MONEY, etc.) raise exceptions at request model creation time — before any network call, so this behaves identically for `client.dynamic_qr.generate(...)` and `await client.dynamic_qr.generate(...)`.
+    - HTTP or API-level errors should be caught and inspected (use the library exceptions to get code, message and HTTP status). Wrap the sync call in try/except, or the awaited call the same way.
 </Alert>
 
 <SectionHeader title="Next Steps" size="small" />
 <Alert type="info" title="What's next?">
-    - Implement a flow to render or serve the QR image to customers after generation.  
-    - Monitor flow completion via M-Pesa app actions and reconcile transactions using your normal payment notifications and webhooks.
+    - Implement a flow to render or serve the QR image to customers after generation.
+    - Monitor flow completion via M-Pesa app actions and reconcile transactions using your normal payment notifications and webhooks (see the STK Push and C2B guides for callback handling patterns).
 </Alert>
 
 ## Related

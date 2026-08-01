@@ -134,8 +134,9 @@ parameters={[
 </Alert>
 
 <Alert type="info" title="Integration Options">
-    - Use the MpesaClient facade (recommended) for a simple, token-managed API to submit B2C payment requests and receive typed response models.  
+    - Use the MpesaClient facade (recommended) for a simple, token-managed API to submit B2C payment requests and receive typed response models.
     - Use the direct B2C service when you need fine-grained control over requests, headers, or custom behavior (token manager + http client).
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `B2C`/`AsyncB2C`). Use the async variants inside `async def` route handlers, or when you need to fan out several payouts concurrently instead of sending them one at a time.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -144,7 +145,7 @@ parameters={[
             The facade handles authentication and returns Pydantic models (responses & helpers) so you can focus on business logic.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -179,8 +180,81 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - Facade calls return typed responses (e.g., B2CResponse).  
+            - Facade calls return typed responses (e.g., B2CResponse).
             - The client manages Authorization headers via the TokenManager automatically.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <Alert type="info" title="Why AsyncMpesaClient">
+            `client.b2c.send_payment(...)` becomes a coroutine on `AsyncMpesaClient`. Use it in async route handlers, or to send a batch of payouts concurrently with `asyncio.gather` instead of awaiting each one sequentially.
+        </Alert>
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.client import AsyncMpesaClient
+from mpesakit.b2c import B2CCommandIDType, B2CResponse
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp: B2CResponse = await client.b2c.send_payment(
+            originator_conversation_id="ocid-1234-5678",
+            initiator_name="api_initiator",
+            security_credential="ENCRYPTED_SECURITY_CREDENTIAL",
+            command_id=B2CCommandIDType.BusinessPayment,
+            amount=1500,
+            party_a="600999",
+            party_b="254712345678",
+            remarks="Salary payout",
+            queue_timeout_url="https://example.com/b2c/timeout",
+            result_url="https://example.com/b2c/result",
+            occasion="JulySalary",
+        )
+
+        if resp.is_successful():
+            print("B2C sent:", resp.ResponseDescription)
+        else:
+            print("B2C failed:", resp.ResponseDescription, "code:", resp.ResponseCode)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Sending a payout batch concurrently">
+            For payroll-style runs (many recipients, one request each), gather the coroutines instead of awaiting in a loop:
+
+```python
+payouts = [
+    dict(party_b="2547XXXXXXXX", amount=1500, occasion="JulySalary"),
+    dict(party_b="2547YYYYYYYY", amount=2200, occasion="JulySalary"),
+    # ...
+]
+
+responses = await asyncio.gather(*(
+    client.b2c.send_payment(
+        originator_conversation_id=f"ocid-{p['party_b']}",
+        initiator_name="api_initiator",
+        security_credential="ENCRYPTED_SECURITY_CREDENTIAL",
+        command_id=B2CCommandIDType.SalaryPayment,
+        amount=p["amount"],
+        party_a="600999",
+        party_b=p["party_b"],
+        remarks="Salary payout",
+        queue_timeout_url="https://example.com/b2c/timeout",
+        result_url="https://example.com/b2c/result",
+        occasion=p["occasion"],
+    )
+    for p in payouts
+))
+```
+            Keep Safaricom's rate limits in mind — chunk large batches rather than firing hundreds of requests in one `gather`.
+        </Alert>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service, construct `AsyncMpesaClient` once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
@@ -189,7 +263,7 @@ else:
             Use the lower-level B2C service when you need to craft raw requests, add middleware, or change retry/error semantics.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -238,14 +312,72 @@ except Exception as exc:
 `}
         </CodeBlock>
 
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+from mpesakit.b2c.b2c import AsyncB2C
+from mpesakit.b2c.schemas import B2CRequest, B2CResponse, B2CCommandIDType
+
+async def main():
+    async with MpesaAsyncHttpClient(environment="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        b2c = AsyncB2C(http_client=http_client, token_manager=token_manager)
+
+        req = B2CRequest(
+            OriginatorConversationID="ocid-1234-5678",
+            InitiatorName="api_initiator",
+            SecurityCredential="ENCRYPTED_SECURITY_CREDENTIAL",
+            CommandID=B2CCommandIDType.BusinessPayment.value,
+            Amount=1500,
+            PartyA=600999,
+            PartyB=254712345678,
+            Remarks="Salary payout",
+            QueueTimeOutURL="https://example.com/b2c/timeout",
+            ResultURL="https://example.com/b2c/result",
+            Occasion="JulySalary",
+        )
+
+        try:
+            resp: B2CResponse = await b2c.send_payment(req)
+            if resp.is_successful():
+                print("B2C sent:", resp.ResponseDescription)
+            else:
+                print("B2C failed:", resp.ResponseDescription, "code:", resp.ResponseCode)
+        except Exception as exc:
+            print("Error sending B2C payment:", exc)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
         <Alert type="info" title="Direct API Details">
-            - The B2C service injects the Bearer token from TokenManager into outgoing requests.  
-            - Primary payment request endpoint used by the SDK: /mpesa/b2c/v3/paymentrequest (SDK tests assert this path).
+            - The B2C service injects the Bearer token from TokenManager (or AsyncTokenManager) into outgoing requests.
+            - Primary payment request endpoint used by the SDK: /mpesa/b2c/v3/paymentrequest (SDK tests assert this path), identical for both client variants.
         </Alert>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Callbacks (Result & Timeout)" size="small" />
+
+<p>
+    Whether the original payout was sent via `MpesaClient` or `AsyncMpesaClient`, the callback is just an inbound HTTP POST from Safaricom to your `ResultURL`/`QueueTimeOutURL` — it isn't tied to which client variant made the request. You have two ways to validate it: construct the schemas directly (shown below), or use the client's `process_b2c_callback` helper for the result payload, which does the same validation in one call.
+</p>
+
+<Alert type="info" title="Using process_b2c_callback">
+    Both `MpesaClient` and `AsyncMpesaClient` expose `process_b2c_callback(payload)`, which validates a raw dict into a `B2CResultCallback` object — equivalent to calling `B2CResultCallback.model_validate(payload)` yourself, just one call shorter. It's plain validation with no network I/O, so it's never awaited even on the async client:
+
+```python
+callback = client.process_b2c_callback(payload)  # same on MpesaClient or AsyncMpesaClient
+```
+    There's no dedicated timeout-callback helper on the mixin, so timeout payloads are still validated directly against `B2CTimeoutCallback`, as shown in the full example below.
+</Alert>
 
 <CodeBlock language="python" title="Webhook receivers (FastAPI)">
 {`# Minimal FastAPI webhook receivers for B2C Result & Timeout callbacks.
@@ -257,7 +389,7 @@ except Exception as exc:
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from mpesakit.security import is_mpesa_ip_allowed
-from mpesakit.http_client import MpesaHttpClient
+from mpesakit.client import MpesaClient  # or AsyncMpesaClient — process_b2c_callback is identical on both
 from mpesakit.b2c.schemas import (
     B2CResultCallback,
     B2CTimeoutCallback,
@@ -269,8 +401,7 @@ import logging
 log = logging.getLogger(__name__)
 app = FastAPI()
 
-# Optional HTTP client for any outgoing calls to MPesa (not required to accept callbacks)
-mpesa_http = MpesaHttpClient(environment="sandbox")  # or "production"
+client = MpesaClient(consumer_key="...", consumer_secret="...", environment="sandbox")
 
 def _get_remote_ip(request: Request) -> str:
     xff = request.headers.get("x-forwarded-for")
@@ -295,7 +426,8 @@ async def b2c_result(request: Request):
         )
 
     try:
-        callback = B2CResultCallback.model_validate(payload)
+        # Equivalent to B2CResultCallback.model_validate(payload)
+        callback = client.process_b2c_callback(payload)
     except Exception as exc:
         log.exception("B2C result callback validation error: %s", exc)
         return JSONResponse(
@@ -353,55 +485,80 @@ async def b2c_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Best practices for webhook handlers">
-    - Validate incoming payloads against the provided schemas (`B2CResultCallback` / `B2CTimeoutCallback`).  
-    - Persist notifications for reconciliation before returning a success acknowledgement.  
-    - Use `is_mpesa_ip_allowed` to restrict callers to known Safaricom IP ranges.  
+    - Validate incoming payloads against the provided schemas (`B2CResultCallback` / `B2CTimeoutCallback`), either directly or via `process_b2c_callback` for the result payload.
+    - Persist notifications for reconciliation before returning a success acknowledgement.
+    - Use `is_mpesa_ip_allowed` to restrict callers to known Safaricom IP ranges.
     - Run your app behind a trusted proxy and ensure `X-Forwarded-For` handling is correct for IP validation.
 </Alert>
 
 <SectionHeader title="Schemas & Runtime Behavior" size="small" />
 
 <Alert type="info" title="Request validation">
-    - `CommandID` must be one of the supported enum values (`SalaryPayment`, `BusinessPayment`, `PromotionPayment`). Invalid CommandID raises a validation error.  
-    - `PartyB` (recipient) is normalized/validated as a Kenyan phone number; invalid numbers raise a validation error.  
+    - `CommandID` must be one of the supported enum values (`SalaryPayment`, `BusinessPayment`, `PromotionPayment`). Invalid CommandID raises a validation error.
+    - `PartyB` (recipient) is normalized/validated as a Kenyan phone number; invalid numbers raise a validation error.
     - `Remarks` and `Occasion` are length-restricted (100 characters); exceeding the limit raises a validation error.
+    - These validations run the same way whether the request is built for `B2C` or `AsyncB2C` — only the transport differs.
 </Alert>
 
 <Alert type="info" title="Response helpers">
-    - `B2CResponse.is_successful()` treats any all-zero string (e.g., "0" or "00000000") as success. Empty strings or mixed non-zero codes are not considered successful.  
+    - `B2CResponse.is_successful()` treats any all-zero string (e.g., "0" or "00000000") as success. Empty strings or mixed non-zero codes are not considered successful.
     - `B2CResultMetadata` exposes convenience properties for common result parameters:
         - `transaction_amount`, `transaction_receipt`, `recipient_is_registered` (`returns True/False/None`), `receiver_party_public_name`, `transaction_completed_datetime`, `charges`/`utility`/`working account balances`.
 </Alert>
 
 <SectionHeader title="Error Handling" size="small" />
 
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
+{`
+try:
+    resp = client.b2c.send_payment(...)
+except Exception as exc:
+    print("Error sending B2C payment:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+try:
+    resp = await client.b2c.send_payment(...)
+except Exception as exc:
+    print("Error sending B2C payment:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <Alert type="warning" title="Edge cases & normalization">
-    - The SDK normalizes minor upstream inconsistencies so fields remain accessible (tests show the SDK tolerates typical provider quirks).  
+    - The SDK normalizes minor upstream inconsistencies so fields remain accessible (tests show the SDK tolerates typical provider quirks).
     - Ensure you log and surface provider conversation IDs (`OriginatorConversationID` / `ConversationID`) for troubleshooting and reconciliation.
+    - Network/HTTP errors raised by the underlying HttpClient bubble up the same way whether you're calling the sync or async service — wrap the call (or the `await`) in try/except.
 </Alert>
 
 <SectionHeader title="Testing & Expectations" size="small" />
 
 - Send payment:
-    - The service posts payment requests to the provider using the configured `HttpClient` and supplies Authorization via `TokenManager`.  
-    - Successful responses are returned as `B2CResponse` instances; call `is_successful()` to check outcome.
+    - The service posts payment requests to the provider using the configured `HttpClient` (or `MpesaAsyncHttpClient`) and supplies Authorization via `TokenManager` (or `AsyncTokenManager`).
+    - Successful responses are returned as `B2CResponse` instances; call `is_successful()` to check outcome. This holds whether the response came back directly (sync) or via `await` (async).
 
 - Request validation:
     - Invalid `CommandID`, malformed `PartyB` or overly long `Remarks`/`Occasion` should raise validation errors during model construction.
 
 - Result metadata:
-    - ResultParameters are provided as a list of Key/Value items. The SDK caches these into a dictionary so callers can access values using typed helper properties (`transaction_amount`, `transaction_receipt`, etc.).  
+    - ResultParameters are provided as a list of Key/Value items. The SDK caches these into a dictionary so callers can access values using typed helper properties (`transaction_amount`, `transaction_receipt`, etc.).
     - `recipient_is_registered` returns True for 'Y', False for 'N', and None for missing/invalid values.
 
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement robust webhook receivers for `ResultURL` and `QueueTimeOutURL`; persist notifications and return the acknowledged response model.  
+    - Implement robust webhook receivers for `ResultURL` and `QueueTimeOutURL`; persist notifications and return the acknowledged response model.
     - Add observability around sends and callbacks, and establish retry/compensation flows for transient failures.
 </Alert>
 
 ## Related Documentation
 
-- [📡 Webhook Setup Guide](/webhooks-best-practices) - Reliable endpoints and security best practices  
+- [📡 Webhook Setup Guide](/webhooks-best-practices) - Reliable endpoints and security best practices
 - [🏗️ Production Setup](/production) - Go-live checklist, security and monitoring

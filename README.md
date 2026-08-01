@@ -12,7 +12,7 @@
 
 Integrating Safaricom's Daraja API from scratch means wrestling with OAuth2 token rotation, security credential encryption, inconsistent sandbox vs. production endpoints, and documentation that rarely connects end-to-end.
 
-**`mpesakit`** handles all of that. Add your credentials, call a method, move on.
+**`mpesakit`** handles all of that. Add your credentials, call a method, move on. Every service is available as a **sync** client and a **fully async** client, so it fits whether you're scripting a one-off payment or wiring STK Push into a FastAPI backend.
 
 ---
 
@@ -71,6 +71,8 @@ else:
     print("Error:", response.error_message())
 ```
 
+Prefer async? Swap in `AsyncMpesaClient` and `await` the call — see [Async Support](#async-support) below.
+
 ### 3. Handle the payment callback
 
 The client exposes `process_*` methods that validate and deserialize incoming Safaricom payloads into typed Pydantic objects — no manual dict parsing required.
@@ -98,7 +100,7 @@ async def mpesa_callback(request: Request):
     return JSONResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
 ```
 
-All `process_*` methods follow the same pattern — pass in the raw JSON payload, get back a validated object:
+All `process_*` methods follow the same pattern — pass in the raw JSON payload, get back a validated object. They're plain validation with no network I/O, so they're identical on `MpesaClient` and `AsyncMpesaClient` and are never `await`ed, even inside an async webhook handler.
 
 | Method | Returns |
 |--------|---------|
@@ -107,7 +109,7 @@ All `process_*` methods follow the same pattern — pass in the raw JSON payload
 | `client.process_b2c_callback(payload)` | `B2CResultCallback` |
 | `client.process_account_balance_callback(payload)` | `AccountBalanceResultCallback` |
 | `client.process_account_balance_timeout(payload)` | `AccountBalanceTimeoutCallback` |
-| `client.process_transcations_callback(payload)` | `TransactionStatusResultCallback` |
+| `client.process_transactions_callback(payload)` | `TransactionStatusResultCallback` |
 | `client.process_reversal_callback(payload)` | `ReversalResultCallback` |
 | `client.process_tax_remittance_callback(payload)` | `TaxRemittanceResultCallback` |
 | `client.process_dynamic_qr_code_callback(payload)` | `DynamicQRGenerateResponse` |
@@ -131,6 +133,88 @@ except MpesaApiException as e:
 except Exception as exc:
     print(f"Unexpected error: {exc}")
 ```
+
+The same `try/except` shape works whether you're calling `client.stk_push(...)` or `await client.stk_push(...)`.
+
+---
+
+## Async Support
+
+Every client, service, and callback helper has a first-class async counterpart. Nothing about the API surface changes besides adding `Async` to the class name and `await` to the call site.
+
+```python
+import os
+import asyncio
+from dotenv import load_dotenv
+from mpesakit import AsyncMpesaClient
+from mpesakit.mpesa_express import TransactionType
+
+load_dotenv()
+
+async def main():
+    # Use as an async context manager so the connection pool is closed for you
+    async with AsyncMpesaClient(
+        consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+        consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+        environment="sandbox",
+    ) as client:
+        response = await client.stk_push(
+            business_short_code=int(os.getenv("MPESA_SHORTCODE")),
+            passkey=os.getenv("MPESA_PASSKEY"),
+            transaction_type=TransactionType.CUSTOMER_PAYBILL_ONLINE,
+            amount=250,
+            party_a=os.getenv("MPESA_PHONE_NUMBER"),
+            party_b=os.getenv("MPESA_SHORTCODE"),
+            phone_number=os.getenv("MPESA_PHONE_NUMBER"),
+            callback_url="https://yourdomain.com/mpesa/callback",
+            account_reference="Order-001",
+            transaction_desc="Payment for order",
+        )
+
+        if response.is_successful():
+            print("Request accepted:", response.CheckoutRequestID)
+        else:
+            print("Error:", response.error_message())
+
+asyncio.run(main())
+```
+
+In a long-lived app (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request:
+
+```python
+client = AsyncMpesaClient(
+    consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+    consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+    environment="sandbox",
+)
+
+# ... use client.stk_push(...), client.b2c.send_payment(...), etc. across requests ...
+
+# on shutdown
+await client.aclose()
+```
+
+Because every call returns a coroutine, you can fan requests out concurrently with `asyncio.gather` instead of awaiting them one at a time — handy for payroll-style B2C runs, bulk QR generation, or reconciliation jobs that check many transaction statuses at once:
+
+```python
+responses = await asyncio.gather(*(
+    client.transactions.query_status(
+        initiator="api_user",
+        security_credential="ENCRYPTED_CREDENTIAL",
+        transaction_id=tid,
+        party_a=int(os.getenv("MPESA_SHORTCODE")),
+        identifier_type=4,  # short code
+        result_url="https://yourdomain.com/mpesa/result",
+        queue_timeout_url="https://yourdomain.com/mpesa/timeout",
+        remarks="Nightly reconciliation",
+    )
+    for tid in pending_transaction_ids
+))
+```
+
+Keep Safaricom's rate limits in mind — chunk large batches rather than firing hundreds of requests in one `gather`.
+
+The direct/low-level API mirrors this same pattern: `Reversal` → `AsyncReversal`, `B2C` → `AsyncB2C`, `TokenManager` → `AsyncTokenManager`, `MpesaHttpClient` → `MpesaAsyncHttpClient`, and so on across every service.
 
 ---
 
@@ -183,6 +267,8 @@ client = MpesaClient(
 ---
 
 ## Supported APIs
+
+Every API below ships with both a sync and an async client.
 
 | API | Status | Description |
 |-----|--------|-------------|
