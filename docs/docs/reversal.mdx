@@ -127,8 +127,9 @@ parameters={[
 />
 
 <Alert type="info" title="Implementation Options">
-    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.  
+    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.
     - Use the Direct API (`Reversal service` + `TokenManager` + `HttpClient`) if you need full control over request/response handling, middleware, or custom error behaviors.
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `Reversal`/`AsyncReversal`) — reach for async when initiating reversals from inside an async web framework, or when processing several refund requests concurrently.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -137,7 +138,7 @@ parameters={[
             The facade handles token retrieval and attaches Authorization headers so you can call high-level operations like initiating a reversal with minimal boilerplate.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -166,8 +167,44 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., ReversalResponse) for ergonomic access to fields and helpers like is_successful().  
+            - The facade returns typed Pydantic models (e.g., ReversalResponse) for ergonomic access to fields and helpers like is_successful().
             - Authentication tokens are handled transparently by the client.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp = await client.reversal.reverse(
+            initiator="TestInit610",
+            security_credential="encrypted_credential",
+            transaction_id="LKXXXX1234",
+            amount=100,
+            receiver_party=600610,
+            result_url="https://your.example/result",
+            queue_timeout_url="https://your.example/timeout",
+            remarks="Wrong recipient",
+            occasion="Refund"
+        )
+
+        if resp.is_successful():
+            print("Reversal initiated successfully")
+        else:
+            print("Reversal failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency handling refund requests), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
@@ -176,7 +213,7 @@ else:
             Use the lower-level Reversal service when you must manipulate raw requests/responses or plug custom middleware.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -206,8 +243,44 @@ print(response.ResponseDescription)
 `}
         </CodeBlock>
 
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.reversal import AsyncReversal, ReversalRequest
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        reversal = AsyncReversal(http_client=http_client, token_manager=token_manager)
+
+        request = ReversalRequest(
+            Initiator="TestInit610",
+            SecurityCredential="encrypted_credential",
+            TransactionID="LKXXXX1234",
+            Amount=100,
+            ReceiverParty=600610,
+            ResultURL="https://your.example/result",
+            QueueTimeOutURL="https://your.example/timeout",
+            Remarks="Wrong recipient",
+            Occasion="Refund"
+        )
+
+        response = await reversal.reverse(request)
+        print(response.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
         <Alert type="info" title="Direct API Details">
-            - The Reversal service attaches the Authorization header using the provided TokenManager.  
+            - The Reversal service attaches the Authorization header using the provided TokenManager (sync or async, matching the client you chose).
             - Implementations handle small inconsistencies in upstream responses (e.g., a common typo like 'OriginatorCoversationID' is normalized).
         </Alert>
     </Tabs.TabPane>
@@ -215,14 +288,20 @@ print(response.ResponseDescription)
 
 <SectionHeader title="Webhook Handling (Result & Timeout)" size="small" />
 
+<p>
+    The callback is an inbound HTTP POST from Safaricom to your `ResultURL`/`QueueTimeOutURL` — independent of whether the original reversal was sent via `MpesaClient` or `AsyncMpesaClient`. For the result payload, both clients expose a `process_reversal_callback` helper that's a one-call shorthand for `ReversalResultCallback.model_validate(payload)`; it's plain validation with no I/O, so it's never awaited even on the async client. There's no equivalent helper for the timeout payload, so that one is still validated directly against `ReversalTimeoutCallback`.
+</p>
+
 <CodeBlock language="python" title="Python">
 {`
 # Example: simple FastAPI endpoints for Reversal Result and Timeout
 from fastapi import FastAPI, Request, HTTPException
-from mpesakit.reversal import ReversalResultCallback, ReversalResultCallbackResponse, ReversalTimeoutCallback, ReversalTimeoutCallbackResponse
+from mpesakit import MpesaClient  # or AsyncMpesaClient — process_reversal_callback is identical on both
+from mpesakit.reversal import ReversalResultCallbackResponse, ReversalTimeoutCallback, ReversalTimeoutCallbackResponse
 from mpesakit.security.ip_whitelist import is_mpesa_ip_allowed
 
 app = FastAPI()
+client = MpesaClient(consumer_key="...", consumer_secret="...", environment="sandbox")
 
 @app.post("/reversal/result")
 async def reversal_result(request: Request):
@@ -231,7 +310,8 @@ async def reversal_result(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
-    data = ReversalResultCallback(**payload)  # will validate incoming fields
+    # Equivalent to ReversalResultCallback.model_validate(payload)
+    data = client.process_reversal_callback(payload)
     # process the result (update database, notify user, etc.)
     ack = ReversalResultCallbackResponse()
     return ack.model_dump(mode="json")
@@ -244,6 +324,7 @@ async def reversal_timeout(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
+    data = ReversalTimeoutCallback(**payload)  # will validate incoming fields
     # process timeout notification (log, retry logic, etc.)
     ack = ReversalTimeoutCallbackResponse()
     return ack.model_dump(mode="json")
@@ -251,7 +332,7 @@ async def reversal_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Important behavior">
-    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.  
+    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.
     - Process the actual reversal result asynchronously based on the data in the result callback.
 </Alert>
 
@@ -269,13 +350,15 @@ async def reversal_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - ReversalResponse provides is_successful() which validates the ResponseCode for easy success checks.
+    - ReversalResponse provides is_successful() which validates the ResponseCode for easy success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 
 <SectionHeader title="Error Handling" size="small" />
 
-<CodeBlock language="python" title="Python">
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
 {`
 # Handle errors when calling the service
 try:
@@ -284,28 +367,43 @@ except Exception as exc:
     # The underlying HTTP client may raise exceptions on network errors; log and retry as appropriate
     print("Reversal failed:", exc)
 `}
-</CodeBlock>
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+    resp = await client.reversal.reverse(...)
+except Exception as exc:
+    # The underlying async HTTP client may raise exceptions on network errors; log and retry as appropriate
+    print("Reversal failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <Alert type="info" title="Notes">
-    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except for robust production behavior.  
-    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails.
+    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except (sync) or around the awaited call (async) for robust production behavior.
+    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails, for both client variants.
 </Alert>
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - Reversal:
-    - The service posts to `/mpesa/reversal/v1/request` with `Authorization` header set via `TokenManager`.
-    - Responses are returned as `ReversalResponse` instances.
+    - The service posts to `/mpesa/reversal/v1/request` with `Authorization` header set via `TokenManager` (or `AsyncTokenManager`).
+    - Responses are returned as `ReversalResponse` instances, whether awaited from the async client or returned directly from the sync client.
     - The implementation tolerates a common provider typo ("OriginatorCoversationID") and maps it to `OriginatorConversationID`.
 
 - Validation:
-    - Incoming payloads are validated against `ReversalResultCallback` and `ReversalTimeoutCallback`. Missing required fields or invalid formats will raise validation errors.
+    - Incoming payloads are validated against `ReversalResultCallback` (directly, or via `process_reversal_callback`) and `ReversalTimeoutCallback`. Missing required fields or invalid formats will raise validation errors.
     - Use the provided response schemas for acknowledgements; invalid codes are rejected by the model validator.
 
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.  
+    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.
     - Add observability and retry strategies around reversal calls and webhook processing to handle transient failures.
 </Alert>
 

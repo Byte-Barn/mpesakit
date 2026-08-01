@@ -139,8 +139,9 @@ parameters={[
 />
 
 <Alert type="info" title="Implementation Options">
-    - Use the MpesaClient facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.  
+    - Use the MpesaClient facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.
     - Use the Direct API (C2B service + TokenManager + HttpClient) if you need full control over request/response handling, middleware, or custom error behaviors.
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `C2B`/`AsyncC2B`) — reach for async when registering or reconciling from inside an async web framework, or when registering URLs for multiple shortcodes concurrently.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -149,7 +150,7 @@ parameters={[
             The facade handles token retrieval and attaches Authorization headers so you can call high-level operations like registering C2B URLs with minimal boilerplate.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -174,8 +175,58 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., C2BRegisterUrlResponse) for ergonomic access to fields and helpers like is_successful().  
+            - The facade returns typed Pydantic models (e.g., C2BRegisterUrlResponse) for ergonomic access to fields and helpers like is_successful().
             - Authentication tokens are handled transparently by the client.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+from mpesakit.c2b import C2BResponseType
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp = await client.c2b.register_url(
+            short_code=600999,
+            response_type=C2BResponseType.COMPLETED,
+            confirmation_url="https://your.example/confirmation",
+            validation_url="https://your.example/validation",
+        )
+
+        if resp.is_successful():
+            print("Registration accepted")
+        else:
+            print("Registration failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Registering multiple shortcodes concurrently">
+            If you manage several PayBill/Till shortcodes, register their URLs concurrently instead of one at a time:
+
+```python
+short_codes = [600999, 600123, 600456]
+
+responses = await asyncio.gather(*(
+    client.c2b.register_url(
+        short_code=sc,
+        response_type=C2BResponseType.COMPLETED,
+        confirmation_url="https://your.example/confirmation",
+        validation_url="https://your.example/validation",
+    )
+    for sc in short_codes
+))
+```
+        </Alert>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
@@ -184,7 +235,7 @@ else:
             Use the lower-level C2B service when you must manipulate raw requests/responses or plug custom middleware.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -209,14 +260,49 @@ print(response.ResponseDescription)
 `}
         </CodeBlock>
 
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.c2b import AsyncC2B, C2BRegisterUrlRequest
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        c2b = AsyncC2B(http_client=http_client, token_manager=token_manager)
+
+        request = C2BRegisterUrlRequest(
+            ShortCode=600999,
+            ResponseType="Completed",
+            ConfirmationURL="https://your.example/confirmation",
+            ValidationURL="https://your.example/validation",
+        )
+
+        response = await c2b.register_url(request)
+        print(response.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
         <Alert type="info" title="Direct API Details">
-            - The C2B service attaches the Authorization header using the provided TokenManager.  
+            - The C2B service attaches the Authorization header using the provided TokenManager (sync or async, matching the client you chose).
             - Implementations handle small inconsistencies in upstream responses (e.g., a common typo like 'OriginatorCoversationID' is normalized).
         </Alert>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Webhook Handling (Validation & Confirmation)" size="small" />
+
+<p>
+    Validation and Confirmation callbacks are inbound HTTP POSTs from Safaricom — independent of whether the URLs were registered via the sync or async client. Handlers stay framework-async either way (FastAPI shown below), and validate the payload directly against the SDK's request/response schemas.
+</p>
 
 <CodeBlock language="python" title="Python">
 {`
@@ -254,7 +340,7 @@ async def confirmation(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Important behavior">
-    - Validation endpoints should return a C2BValidationResponse. Use ResultCode="0" to accept or one of the defined error codes (see Validation Result Codes) to reject.  
+    - Validation endpoints should return a C2BValidationResponse. Use ResultCode="0" to accept or one of the defined error codes (see Validation Result Codes) to reject.
     - Confirmation endpoints should return an acknowledgement (ResultCode 0). This confirms receipt to Safaricom.
 </Alert>
 
@@ -293,7 +379,7 @@ async def confirmation(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - C2BRegisterUrlResponse provides is_successful() which treats any all-zero string (e.g., "0" or "00000000") as success.  
+    - C2BRegisterUrlResponse provides is_successful() which treats any all-zero string (e.g., "0" or "00000000") as success. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 
@@ -305,7 +391,9 @@ async def confirmation(request: Request):
 
 <SectionHeader title="Error Handling" size="small" />
 
-<CodeBlock language="python" title="Python">
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
 {`
 # Handle errors when calling the service
 try:
@@ -314,18 +402,33 @@ except Exception as exc:
         # The underlying HTTP client may raise exceptions on network errors; log and retry as appropriate
         print("Registration failed:", exc)
 `}
-</CodeBlock>
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+        resp = await client.c2b.register_url(...)
+except Exception as exc:
+        # The underlying async HTTP client may raise exceptions on network errors; log and retry as appropriate
+        print("Registration failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <Alert type="info" title="Notes">
-    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except for robust production behavior.  
-    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails.
+    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except (sync) or around the awaited call (async) for robust production behavior.
+    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails, for both client variants.
 </Alert>
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - Register URL:
-    - The service posts to /mpesa/c2b/v1/registerurl with Authorization header set via TokenManager.
-    - Responses are returned as C2BRegisterUrlResponse instances.
+    - The service posts to /mpesa/c2b/v1/registerurl with Authorization header set via TokenManager (or AsyncTokenManager).
+    - Responses are returned as C2BRegisterUrlResponse instances, whether awaited from the async client or returned directly from the sync client.
     - The implementation tolerates a common provider typo ("OriginatorCoversationID") and maps it to OriginatorConversationID.
 
 - Validation:
@@ -338,7 +441,7 @@ except Exception as exc:
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement robust webhook handlers for validation and confirmation. Log and persist notifications to support reconciliation.  
+    - Implement robust webhook handlers for validation and confirmation. Log and persist notifications to support reconciliation.
     - Add observability and retry strategies around register_url calls and webhook processing to handle transient failures.
 </Alert>
 

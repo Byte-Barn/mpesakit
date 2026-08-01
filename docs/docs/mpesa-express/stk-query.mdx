@@ -68,13 +68,17 @@ parameters={[
     Use the query API when you didn't receive a callback, want to reconcile a transaction, or need to poll for a final status after initiating an STK Push.
 </Alert>
 
+<Alert type="info" title="Sync and async">
+    Every option below — `MpesaClient`, `StkPush`, and the query call itself — has an async counterpart (`AsyncMpesaClient`, `AsyncStkPush`). Reach for the async variants when you're polling from inside an async framework like FastAPI, or when you want to query several `CheckoutRequestID`s concurrently instead of one at a time.
+</Alert>
+
 <Tabs defaultValue={0}>
     <Tabs.TabPane label="MpesaClient" icon="🚀">
         <Alert type="info" title="Recommended (Facade)">
             Use the high-level client for token handling and simpler calls.
         </Alert>
 
-        <SectionHeader title="Example (MpesaClient)" size="small" />
+        <SectionHeader title="Example (MpesaClient, Sync)" size="small" />
 
         <CodeBlock language="python">
 {`
@@ -109,6 +113,49 @@ else:
         <Alert type="info" title="Notes">
             You can give either `Passkey` (SDK generates `Password`+`Timestamp`) or provide `password` and `timestamp` directly by passing them to the `stk_query` method.
         </Alert>
+
+        <SectionHeader title="Example (AsyncMpesaClient, Async)" size="small" />
+
+        <CodeBlock language="python">
+{`
+import os
+import asyncio
+from dotenv import load_dotenv
+from mpesakit import AsyncMpesaClient
+
+load_dotenv()
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+        consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+        environment="sandbox",
+    ) as client:
+        result = await client.stk_query(
+            business_short_code=123456,
+            checkout_request_id="ws_CO_20250101_ABC123",
+            passkey="your_passkey_here",
+        )
+
+        if result.is_successful():
+            print("Transaction processed:", result.ResultDesc)
+        else:
+            print("Status:", result.ResponseDescription, "| Code:", result.ResponseCode)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="info" title="Polling many transactions concurrently">
+            Since `stk_query` is a coroutine on `AsyncMpesaClient`, you can check several `CheckoutRequestID`s at once with `asyncio.gather` instead of querying them one by one:
+
+```python
+results = await asyncio.gather(
+    *(client.stk_query(business_short_code=123456, checkout_request_id=cid, passkey="your_passkey_here")
+      for cid in pending_checkout_ids)
+)
+```
+        </Alert>
     </Tabs.TabPane>
 
     <Tabs.TabPane label="Direct API" icon="⚡">
@@ -116,7 +163,7 @@ else:
             Use the direct service object for custom flows, retries, or middleware.
         </Alert>
 
-        <SectionHeader title="Example (Direct Service)" size="small" />
+        <SectionHeader title="Example (Direct Service, Sync)" size="small" />
 
         <CodeBlock language="python">
 {`
@@ -150,12 +197,48 @@ else:
         <Alert type="info" title="Retrying & Polling">
             If the transaction is still pending, poll the query endpoint a few times (respect rate limits) until a terminal ResultCode is returned or a timeout is reached.
         </Alert>
+
+        <SectionHeader title="Example (Direct Service, Async)" size="small" />
+
+        <CodeBlock language="python">
+{`
+import asyncio
+from mpesakit.mpesa_express import AsyncStkPush, StkPushQueryRequest
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="your_key",
+            consumer_secret="your_secret",
+            http_client=http_client,
+        )
+
+        stk_service = AsyncStkPush(http_client=http_client, token_manager=token_manager)
+
+        payload = StkPushQueryRequest(
+            BusinessShortCode=123456,
+            CheckoutRequestID="ws_CO_20250101_ABC123",
+            Passkey="your_passkey_here",
+        )
+
+        response = await stk_service.query(request=payload)
+
+        if response.is_successful():
+            print("Success:", response.ResultDesc)
+        else:
+            print("ResultCode:", response.ResultCode, "→", response.ResultDesc)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Response shape & interpretation" size="small" />
 
-- The query response is a `StkPushQueryResponse` Pydantic object that contains identifiers and status fields such as MerchantRequestID, CheckoutRequestID, ResponseCode, ResponseDescription, ResultCode and ResultDesc.
+- The query response is a `StkPushQueryResponse` Pydantic object that contains identifiers and status fields such as MerchantRequestID, CheckoutRequestID, ResponseCode, ResponseDescription, ResultCode and ResultDesc. This shape is identical whether it came from `MpesaClient` or `AsyncMpesaClient`.
 - Interpreting results:
     - ResponseCode of 0 generally means the query request was accepted.
     - ResultCode of 0 indicates the transaction was successful. Other ResultCodes convey errors, timeouts or user cancellation.
@@ -163,7 +246,7 @@ else:
 <CodeBlock language="python">
 {`
 # Example handling snippet (pseudo)
-resp = stk_service.query(request=q)
+resp = stk_service.query(request=q)          # or: await stk_service.query(request=q)
 if resp.is_successful():
         # Final state returned by Daraja
         handle_success(resp)
@@ -177,8 +260,25 @@ else:
 - If you wish to use the response as a `Dict`, you can do so by `response.model_dump(mode="json")`.
 </Alert>
 
+<SectionHeader title="Validating a query response with process_stk_query_callback" size="small" />
+
+<p>
+    Both `MpesaClient` and `AsyncMpesaClient` expose a `process_stk_query_callback` helper. It's the same validation logic used for STK callbacks, applied to the query response — useful when you've stored the raw dict (e.g. from a database or log) and want to re-validate it into a typed `StkPushQueryResponse` object rather than trusting the dict shape.
+</p>
+
+<CodeBlock language="python" title="Python">
+{`
+# Works the same whether 'client' is MpesaClient or AsyncMpesaClient,
+# since process_stk_query_callback only validates/parses — it does no I/O.
+raw_dict = response.model_dump(mode="json")
+
+validated = client.process_stk_query_callback(raw_dict)
+print(validated.ResultDesc)
+`}
+</CodeBlock>
+
 <Alert type="success" title="Cross-validation">
-    If you received an STK callback, compare its CheckoutRequestID and MerchantRequestID with the query result to ensure they refer to the same transaction.
+    If you received an STK callback, compare its CheckoutRequestID and MerchantRequestID with the query result to ensure they refer to the same transaction. See the [STK Push callback guide](/mpesa-express/stk-push#handling-the-callback) for how `process_stk_callback` parses the callback side of this.
 </Alert>
 
 

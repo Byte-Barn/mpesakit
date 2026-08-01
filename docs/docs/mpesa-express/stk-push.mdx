@@ -122,13 +122,13 @@ parameters={[
 
 <SectionHeader
   title="M-Pesa STK Push Integration"
-  subtitle="Easily integrate M-Pesa STK Push (Lipa Na M-Pesa Online) into your Python applications using mpesakit. This guide covers both the recommended MpesaClient approach and direct API usage for advanced control."
+  subtitle="Easily integrate M-Pesa STK Push (Lipa Na M-Pesa Online) into your Python applications using mpesakit. This guide covers the recommended MpesaClient approach (sync and async) and direct API usage for advanced control."
   size="small"
 />
 
 <Alert type="info" title="Implementation Options">
-  - You can choose MpesaClient for a simple facade that handles `token management`, `defaults` and `error handling` for you, or use the Direct API (`StkPush`, `TokenManager`, `MpesaHttpClient`) when you need full control over `request construction`, `middleware`, and `custom workflows`. 
-
+  - You can choose `MpesaClient` for a simple facade that handles `token management`, `defaults` and `error handling` for you, or use the Direct API (`StkPush`, `TokenManager`, `MpesaHttpClient`) when you need full control over `request construction`, `middleware`, and `custom workflows`.
+  - Every option is available in both **sync** and **async** flavors. Reach for the async variants (`AsyncMpesaClient`, `AsyncStkPushService`) when you're integrating inside an async framework like FastAPI, or when you need to fire off multiple STK requests concurrently without blocking.
   - Use `MpesaClient` for fast integration and the `Direct API` for advanced customization.
 </Alert>
 
@@ -139,8 +139,8 @@ parameters={[
      For quick and easy integration, use the `MpesaClient` which abstracts away `token management` and `error handling`.
     </Alert>
 
-    <SectionHeader title="Quick Setup" size="small" />
-    
+    <SectionHeader title="Quick Setup (Sync)" size="small" />
+
     <CodeBlock language="python" title="Python">
 {`
 import os
@@ -178,6 +178,64 @@ response = client.stk_push(
         - You can provide either the `Passkey` or both `Password` and `Timestamp`. If you provide the `Passkey`, the SDK will generate the `Password` and `Timestamp` for you.
         - The `Password` and `Timestamp` fields must coexist since the `Password` is derived from the `Timestamp` (`Password = shortcode + "your_passkey" + Timestamp`).
     </Alert>
+
+    <SectionHeader title="Quick Setup (Async)" size="small" />
+
+    <Alert type="info" title="Why AsyncMpesaClient">
+      `AsyncMpesaClient` mirrors `MpesaClient` field-for-field but is built on `httpx`'s async client under the hood. Use it inside `async def` route handlers (FastAPI, Starlette) or anywhere you're already running an event loop, so the STK request doesn't block other requests while waiting on Safaricom's API.
+    </Alert>
+
+    <CodeBlock language="python" title="Python">
+{`
+import os
+import asyncio
+from dotenv import load_dotenv
+from mpesakit import AsyncMpesaClient
+from mpesakit.mpesa_express import TransactionType
+
+load_dotenv()
+
+async def main():
+    # Use as an async context manager so the connection pool is closed for you
+    async with AsyncMpesaClient(
+        consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+        consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+        environment="sandbox",
+    ) as client:
+        response = await client.stk_push(
+            business_short_code=int(os.getenv("MPESA_SHORTCODE")),
+            passkey=os.getenv("MPESA_PASSKEY"),
+            transaction_type=TransactionType.CUSTOMER_PAYBILL_ONLINE,
+            amount=1,
+            party_a=os.getenv("MPESA_PHONE_NUMBER"),
+            party_b=os.getenv("MPESA_SHORTCODE"),
+            phone_number=os.getenv("MPESA_PHONE_NUMBER"),
+            callback_url="https://example.com/callback",
+            account_reference="Test123",
+            transaction_desc="Test Payment",
+        )
+        print(response)
+
+asyncio.run(main())
+`}
+    </CodeBlock>
+
+    <Alert type="warning" title="Manual lifecycle (without the context manager)">
+      If you're wiring `AsyncMpesaClient` into a long-lived app (e.g. as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of using `async with` on every request:
+
+```python
+client = AsyncMpesaClient(
+    consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+    consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+    environment="sandbox",
+)
+
+# ... use client.stk_push(...) across requests ...
+
+# on shutdown
+await client.aclose()
+```
+    </Alert>
   </Tabs.TabPane>
 
   <Tabs.TabPane label="Direct API" icon="⚡">
@@ -185,8 +243,8 @@ response = client.stk_push(
       Direct API access for maximum control and customization. Requires manual token management.
     </Alert>
 
-    <SectionHeader title="Direct Implementation" size="small" />
-    
+    <SectionHeader title="Direct Implementation (Sync)" size="small" />
+
     <CodeBlock language="python" title="Python">
 {`
 from mpesakit.mpesa_express import (
@@ -232,15 +290,64 @@ print("Response:", response)
 `}
     </CodeBlock>
 
+    <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+    <Alert type="info" title="Async building blocks">
+      Each sync service has an `Async` counterpart (`AsyncStkPush`, `AsyncTokenManager`, `MpesaAsyncHttpClient`) with the same request/response schemas. Only the transport and token refresh are awaited.
+    </Alert>
+
+    <CodeBlock language="python" title="Python">
+{`
+import os
+import asyncio
+from mpesakit.mpesa_express import (
+    AsyncStkPush,
+    StkPushSimulateRequest,
+    TransactionType,
+)
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env=os.getenv("MPESA_ENV", "sandbox")) as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+            consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+            http_client=http_client,
+        )
+
+        stk_service = AsyncStkPush(http_client=http_client, token_manager=token_manager)
+
+        request = StkPushSimulateRequest(
+            BusinessShortCode=int(os.getenv("MPESA_SHORTCODE", "174379")),
+            Passkey=os.getenv("MPESA_PASSKEY"),
+            TransactionType=TransactionType.CUSTOMER_PAYBILL_ONLINE.value,
+            Amount=1,
+            PartyA=os.getenv("MPESA_TEST_PHONE", "254712345678"),
+            PartyB=os.getenv("MPESA_SHORTCODE", "174379"),
+            PhoneNumber=os.getenv("MPESA_TEST_PHONE", "254712345678"),
+            CallBackURL=os.getenv("MPESA_CALLBACK_URL", "https://example.com/callback"),
+            AccountReference="E2E-Test",
+            TransactionDesc="AutomatedTest",
+        )
+
+        print("📤 Sending STK Push request...")
+        response = await stk_service.push(request=request)
+        print("Response:", response)
+
+asyncio.run(main())
+`}
+    </CodeBlock>
+
     <Alert type="info" title="Full Control">
-      Access to all request parameters, custom middleware, advanced error handling, and response processing.
+      Access to all request parameters, custom middleware, advanced error handling, and response processing — in both sync and async form.
     </Alert>
   </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Response" size="small" />
 
-    Response is an `StkPushSimulateResponse` Pydantic object. If you prefer it as a dictionary, you can convert it using:
+    Response is an `StkPushSimulateResponse` Pydantic object (the async client returns the exact same schema, just via `await`). If you prefer it as a dictionary, you can convert it using:
     <CodeBlock language="python" title="Python">
 {`response_dict = response.model_dump(mode="json")  # Convert to dictionary`}
   </CodeBlock>
@@ -290,7 +397,9 @@ print(response.CustomerMessage)     # e.g Enter your PIN to complete payment`}
 
 <SectionHeader title="Error Handling" size="small" />
 
-<CodeBlock language="python" title="Python">
+<Tabs defaultValue={0}>
+  <Tabs.TabPane label="Sync" icon="🚀">
+    <CodeBlock language="python" title="Python">
 {`
 from mpesakit.errors import MpesaApiException
 
@@ -318,15 +427,50 @@ except MpesaApiException as e:
 except Exception as exc:
     print(f"Unexpected error: {exc}")
 `}
-</CodeBlock>
+    </CodeBlock>
+  </Tabs.TabPane>
+
+  <Tabs.TabPane label="Async" icon="⚡">
+    <CodeBlock language="python" title="Python">
+{`
+from mpesakit.errors import MpesaApiException
+
+try:
+    response = await client.stk_push(
+      business_short_code=int(os.getenv("MPESA_SHORTCODE")),
+      passkey=os.getenv("MPESA_PASSKEY"),
+      transaction_type=TransactionType.CUSTOMER_PAYBILL_ONLINE,
+      amount=1,
+      party_a=os.getenv("MPESA_PHONE_NUMBER"),
+      party_b=os.getenv("MPESA_SHORTCODE"),
+      phone_number=os.getenv("MPESA_PHONE_NUMBER"),
+      callback_url="https://example.com/callback",
+      account_reference="Test123",
+      transaction_desc="Test Payment",
+    )
+    data = response.model_dump(mode="json")
+except MpesaApiException as e:
+    err = e.error
+    print("M-Pesa API error:")
+    print(f"  Code: {err.error_code}")
+    print(f"  Message: {err.error_message}")
+    print(f"  HTTP status: {err.status_code}")
+    print(f"  Request ID: {err.request_id}")
+except Exception as exc:
+    print(f"Unexpected error: {exc}")
+`}
+    </CodeBlock>
+  </Tabs.TabPane>
+</Tabs>
+
 <Alert type="info" title="Error Handling">
   - The `MpesaApiException` provides detailed error information including error code, message, HTTP status, and raw response for effective debugging.
-  - Use what you need from the error object to log or handle errors appropriately.
+  - Use what you need from the error object to log or handle errors appropriately. This behaves identically whether you're on `MpesaClient` or `AsyncMpesaClient`.
 </Alert>
 
 #### Easier Error Handling with MpesaClient
 
-- We can do this to simplify and have efficient error handling and logging with `MpesaClient`:
+- We can do this to simplify and have efficient error handling and logging with `MpesaClient` (or `await` the same call on `AsyncMpesaClient`):
 
 <CodeBlock language="python" title="Python">
 {`
@@ -345,10 +489,167 @@ except Exception as exc:
 </CodeBlock>
 
 
+<SectionHeader title="Handling the Callback" size="small" />
+
+<p>
+  A successful <code>stk_push</code> response only means Safaricom accepted the request for processing — it does <strong>not</strong> mean the customer has paid. The actual payment outcome (success, cancellation, insufficient funds, timeout) is delivered asynchronously to the <code>callback_url</code> you supplied, as an HTTP POST. You should expose an endpoint there and use the client's built-in <code>process_stk_callback</code> helper to validate and parse the payload into a typed object rather than working with a raw dict.
+</p>
+
+<Alert type="warning" title="Callback URL requirements">
+  - Must be a publicly reachable HTTPS endpoint (Safaricom cannot reach `localhost`; use a tunnel like `ngrok` in sandbox).
+  - Should respond quickly with a `200 OK` acknowledging receipt — do your heavier processing (updating orders, notifying users) after acknowledging, or in a background task.
+  - Design the handler to be idempotent. Safaricom may retry delivery, so the same `CheckoutRequestID` can arrive more than once.
+</Alert>
+
+<Tabs defaultValue={0}>
+  <Tabs.TabPane label="FastAPI (Sync)" icon="🚀">
+    <CodeBlock language="python" title="Python">
+{`
+from fastapi import FastAPI, Request
+from mpesakit import MpesaClient
+
+app = FastAPI()
+client = MpesaClient(
+    consumer_key="...",
+    consumer_secret="...",
+    environment="sandbox",
+)
+
+@app.post("/mpesa/stk-callback")
+async def stk_callback(request: Request):
+    payload = await request.json()
+
+    # Validates and parses the payload into an StkPushSimulateCallback object
+    callback = client.process_stk_callback(payload)
+
+    if callback.is_successful():
+        amount = callback.amount()
+        receipt = callback.mpesa_receipt_number()
+        phone = callback.phone_number()
+        # e.g. mark the matching order as paid using callback.CheckoutRequestID
+        print(f"Payment of {amount} received from {phone}, receipt {receipt}")
+    else:
+        # e.g. customer cancelled the prompt or had insufficient funds
+        print(f"Payment failed: {callback.result_description()}")
+
+    # Acknowledge receipt so Safaricom stops retrying
+    return {"ResultCode": 0, "ResultDesc": "Accepted"}
+`}
+    </CodeBlock>
+  </Tabs.TabPane>
+
+  <Tabs.TabPane label="FastAPI (Async)" icon="⚡">
+    <CodeBlock language="python" title="Python">
+{`
+from fastapi import FastAPI, Request
+from mpesakit import AsyncMpesaClient
+
+app = FastAPI()
+client = AsyncMpesaClient(
+    consumer_key="...",
+    consumer_secret="...",
+    environment="sandbox",
+)
+
+@app.on_event("shutdown")
+async def shutdown():
+    await client.aclose()
+
+@app.post("/mpesa/stk-callback")
+async def stk_callback(request: Request):
+    payload = await request.json()
+
+    # process_stk_callback is a plain (non-awaited) helper on both clients —
+    # it only validates/parses the payload, it doesn't hit the network.
+    callback = client.process_stk_callback(payload)
+
+    if callback.is_successful():
+        amount = callback.amount()
+        receipt = callback.mpesa_receipt_number()
+        phone = callback.phone_number()
+        # await your async order-update / notification logic here
+        print(f"Payment of {amount} received from {phone}, receipt {receipt}")
+    else:
+        print(f"Payment failed: {callback.result_description()}")
+
+    return {"ResultCode": 0, "ResultDesc": "Accepted"}
+`}
+    </CodeBlock>
+  </Tabs.TabPane>
+</Tabs>
+
+<Alert type="success" title="Sample callback payload">
+  The raw payload passed to `process_stk_callback` looks like this on success:
+
+```json
+{
+  "Body": {
+    "stkCallback": {
+      "MerchantRequestID": "29115-34620561-1",
+      "CheckoutRequestID": "ws_CO_191220191020363925",
+      "ResultCode": 0,
+      "ResultDesc": "The service request is processed successfully.",
+      "CallbackMetadata": {
+        "Item": [
+          { "Name": "Amount", "Value": 1 },
+          { "Name": "MpesaReceiptNumber", "Value": "NLJ7RT61SV" },
+          { "Name": "TransactionDate", "Value": 20231201120000 },
+          { "Name": "PhoneNumber", "Value": 254712345678 }
+        ]
+      }
+    }
+  }
+}
+```
+</Alert>
+
+<SectionHeader title="Querying Status Instead of (or In Addition to) Waiting" size="small" />
+
+<p>
+  If the callback hasn't arrived yet (e.g. the customer hasn't responded to the prompt), you can actively query the transaction status with <code>stk_query</code>, then validate the response with <code>process_stk_query_callback</code>:
+</p>
+
+<Tabs defaultValue={0}>
+  <Tabs.TabPane label="Sync" icon="🚀">
+    <CodeBlock language="python" title="Python">
+{`
+raw_response = client.stk_query(
+    business_short_code=174379,
+    passkey=os.getenv("MPESA_PASSKEY"),
+    checkout_request_id="ws_CO_191220191020363925",
+)
+
+query_result = client.process_stk_query_callback(raw_response.model_dump(mode="json"))
+print(query_result.ResultDesc)
+`}
+    </CodeBlock>
+  </Tabs.TabPane>
+
+  <Tabs.TabPane label="Async" icon="⚡">
+    <CodeBlock language="python" title="Python">
+{`
+raw_response = await client.stk_query(
+    business_short_code=174379,
+    passkey=os.getenv("MPESA_PASSKEY"),
+    checkout_request_id="ws_CO_191220191020363925",
+)
+
+query_result = client.process_stk_query_callback(raw_response.model_dump(mode="json"))
+print(query_result.ResultDesc)
+`}
+    </CodeBlock>
+  </Tabs.TabPane>
+</Tabs>
+
+<Alert type="info" title="Why validate the callback payload at all?">
+  `process_stk_callback` and `process_stk_query_callback` run the raw dict through a Pydantic schema (`StkPushSimulateCallback` / `StkPushQueryResponse`). This catches malformed or unexpected payloads early, gives you typed attribute access instead of nested dict lookups, and is available on both `MpesaClient` and `AsyncMpesaClient` since it's plain validation logic with no I/O.
+</Alert>
+
+
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-  After initiating STK Push, you'll need to handle the callback response. Learn how to set up webhook endpoints and process payment confirmations.
+  Now that you can initiate STK Push and process both the callback and query responses, harden your webhook endpoint and prepare for production traffic.
 </Alert>
 
 ## Related Documentation

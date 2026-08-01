@@ -118,8 +118,9 @@ parameters={[
 </p>
 
 <Alert type="info" title="Implementation Options">
-    - Use the `MpesaClient` facade for simple integration (handles tokens, headers and returns typed models).  
+    - Use the `MpesaClient` facade for simple integration (handles tokens, headers and returns typed models).
     - Use the lower-level TransactionStatus service with `TokenManager` and `HttpClient` if you need direct control over requests, headers or middleware.
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `TransactionStatus`/`AsyncTransactionStatus`) — reach for async when querying from inside an async web framework, or when checking the status of many transactions during a reconciliation run.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -128,7 +129,7 @@ parameters={[
             The facade abstracts authentication, header injection and returns Pydantic models so you can call query operations with minimal boilerplate.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -158,8 +159,66 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed response models with helpers (e.g., is_successful()).  
+            - The facade returns typed response models with helpers (e.g., is_successful()).
             - Use the facade unless you require custom HTTP handling.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+from mpesakit.transaction_status import TransactionStatusIdentifierType
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp = await client.transactions.query_status(
+            initiator="api_user",
+            security_credential="ENCRYPTED_CREDENTIAL",
+            transaction_id="LK12345",
+            party_a=600000,
+            identifier_type=TransactionStatusIdentifierType.SHORT_CODE.value,
+            result_url="https://your.example/result",
+            queue_timeout_url="https://your.example/timeout",
+            remarks="Check status"
+        )
+
+        if resp.is_successful():
+            print("Request accepted:", resp.ResponseDescription)
+        else:
+            print("Request failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Reconciliation runs: checking many transactions at once">
+            For a nightly reconciliation job checking the status of a batch of transaction IDs, gather the coroutines instead of querying one at a time — chunk large batches to respect rate limits:
+
+```python
+transaction_ids = ["LK12345", "LK12346", "LK12347"]
+
+responses = await asyncio.gather(*(
+    client.transactions.query_status(
+        initiator="api_user",
+        security_credential="ENCRYPTED_CREDENTIAL",
+        transaction_id=tid,
+        party_a=600000,
+        identifier_type=TransactionStatusIdentifierType.SHORT_CODE.value,
+        result_url="https://your.example/result",
+        queue_timeout_url="https://your.example/timeout",
+        remarks="Nightly reconciliation",
+    )
+    for tid in transaction_ids
+))
+```
+        </Alert>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
@@ -168,7 +227,7 @@ else:
             Use the TransactionStatus service directly when you need to control raw payloads, headers or implement custom retry/middleware behavior.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -199,19 +258,55 @@ print(response.ResponseDescription)
         </CodeBlock>
 
         <Alert type="info" title="Direct API Details">
-            - The service attaches Authorization headers using the TokenManager.  
+            - The service attaches Authorization headers using the TokenManager.
             - Expect the HTTP client to return raw JSON that the SDK converts to typed models.
         </Alert>
+
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.transaction_status import AsyncTransactionStatus, TransactionStatusRequest, TransactionStatusIdentifierType
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http:
+        tokens = AsyncTokenManager(consumer_key="...", consumer_secret="...", http_client=http)
+        ts = AsyncTransactionStatus(http_client=http, token_manager=tokens)
+
+        req = TransactionStatusRequest(
+            Initiator="api_user",
+            SecurityCredential="ENCRYPTED_CREDENTIAL",
+            TransactionID="LK12345",
+            PartyA=600000,
+            IdentifierType=TransactionStatusIdentifierType.SHORT_CODE.value,
+            ResultURL="https://your.example/result",
+            QueueTimeOutURL="https://your.example/timeout",
+            Remarks="Status check"
+        )
+
+        response = await ts.query(req)
+        print(response.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
     </Tabs.TabPane>
 </Tabs>
 
 <SectionHeader title="Result & Timeout Callbacks (webhooks)" size="small" />
 
+<p>
+    The callback is an inbound HTTP POST from Safaricom to your `ResultURL`/`QueueTimeOutURL` — independent of whether the original query was sent via `MpesaClient` or `AsyncMpesaClient`. For the result payload, both clients expose `process_transactions_callback`, a one-call shorthand for `TransactionStatusResultCallback.model_validate(payload)`; it's plain validation with no I/O, so it's never awaited even on the async client. There's no equivalent helper for the timeout payload, so that one is still validated directly against `TransactionStatusTimeoutCallback`, as in the full example below.
+</p>
+
 <CodeBlock language="python" title="Python">
 {`
 # Minimal FastAPI webhook receivers for Transaction Status Result & Timeout callbacks.
 # - Validates caller IP using is_mpesa_ip_allowed
-# - Parses payload into SDK schemas (TransactionStatusResultCallback / TransactionStatusTimeoutCallback)
+# - Parses the result payload via client.process_transactions_callback (or TransactionStatusTimeoutCallback directly for timeouts)
 # - Persists/queues the payload for downstream processing (TODO)
 # - Returns the acknowledgement JSON expected by M-Pesa Daraja API
 
@@ -219,10 +314,9 @@ from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 import logging
 
+from mpesakit import MpesaClient  # or AsyncMpesaClient — process_transactions_callback is identical on both
 from mpesakit.security import is_mpesa_ip_allowed
-from mpesakit.http_client import MpesaHttpClient
 from mpesakit.transaction_status import (
-    TransactionStatusResultCallback,
     TransactionStatusTimeoutCallback,
     TransactionStatusResultCallbackResponse,
     TransactionStatusTimeoutCallbackResponse,
@@ -231,8 +325,7 @@ from mpesakit.transaction_status import (
 log = logging.getLogger(__name__)
 app = FastAPI()
 
-# Optional HTTP client for any outgoing calls to MPesa (not required to accept callbacks)
-mpesa_http = MpesaHttpClient(environment="sandbox")  # or "production"
+client = MpesaClient(consumer_key="...", consumer_secret="...", environment="sandbox")
 
 
 def _get_remote_ip(request: Request) -> str:
@@ -261,7 +354,8 @@ async def transaction_status_result(request: Request):
         )
 
     try:
-        callback = TransactionStatusResultCallback.model_validate(payload)
+        # Equivalent to TransactionStatusResultCallback.model_validate(payload)
+        callback = client.process_transactions_callback(payload)
     except Exception as exc:
         log.exception("TransactionStatus result callback validation error: %s", exc)
         return JSONResponse(
@@ -328,11 +422,12 @@ async def transaction_status_timeout(request: Request):
 
 <Alert type="info" title="Important behavior">
     - TransactionStatusRequest validation enforces:
-        - `IdentifierType` must be one of [1, 2, 4].  
-        - When `IdentifierType` == 1 (`MSISDN`) the `PartyA` value is normalized to a Kenyan MSISDN; invalid numbers raise validation errors.  
-        - At least one of `TransactionID` or `OriginalConversationID` must be provided.  
+        - `IdentifierType` must be one of [1, 2, 4].
+        - When `IdentifierType` == 1 (`MSISDN`) the `PartyA` value is normalized to a Kenyan MSISDN; invalid numbers raise validation errors.
+        - At least one of `TransactionID` or `OriginalConversationID` must be provided.
         - `Remarks` and `Occasion` must not exceed 100 characters.
-    - TransactionStatusResponse provides `is_successful()` to check if the request was accepted.
+    - These validations happen at request-model construction time and are identical whether you use the sync or async service.
+    - TransactionStatusResponse provides `is_successful()` to check if the request was accepted — available the same way on both client variants' responses.
 </Alert>
 
 <SectionHeader title="Result Payload (ResultParameters)" size="small" />
@@ -360,9 +455,9 @@ async def transaction_status_timeout(request: Request):
 
 <Alert type="info" title="Helper properties">
     The result metadata exposes convenience accessors:
-    - transaction_amount — numeric amount (if present).  
-    - transaction_receipt — transaction receipt string.  
-    - transaction_status — status string (e.g., "Completed", "Failed").  
+    - transaction_amount — numeric amount (if present).
+    - transaction_receipt — transaction receipt string.
+    - transaction_status — status string (e.g., "Completed", "Failed").
     - transaction_reason — optional reason for failure.
 </Alert>
 
@@ -376,6 +471,30 @@ async def transaction_status_timeout(request: Request):
         - invalid MSISDN normalization when IdentifierType == 1.
 </Alert>
 
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
+{`
+try:
+    resp = client.transactions.query_status(...)
+except Exception as exc:
+    print("Transaction status query failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+try:
+    resp = await client.transactions.query_status(...)
+except Exception as exc:
+    print("Transaction status query failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
+
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
@@ -384,22 +503,22 @@ async def transaction_status_timeout(request: Request):
     - At least one of TransactionID or OriginalConversationID must be present.
 
 - HTTP interactions:
-    - The TransactionStatus service posts to /mpesa/transactionstatus/v1/query with Authorization header from TokenManager.
-    - On successful acceptance the service returns a TransactionStatusResponse; use is_successful() to determine accepted requests.
+    - The TransactionStatus service posts to /mpesa/transactionstatus/v1/query with Authorization header from TokenManager (or AsyncTokenManager).
+    - On successful acceptance the service returns a TransactionStatusResponse; use is_successful() to determine accepted requests. This holds whether the response was awaited (async) or returned directly (sync).
 
 - Callbacks:
-    - ResultURL receives TransactionStatusResultCallback with Result metadata; reply with ResultCode 0 to acknowledge receipt.
+    - ResultURL receives TransactionStatusResultCallback with Result metadata — parse it directly or via `process_transactions_callback`; reply with ResultCode 0 to acknowledge receipt.
     - QueueTimeOutURL receives a timeout notification; handle and reconcile as needed.
 
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement secure webhook endpoints (validate source IPs or signatures), persist callbacks for reconciliation, and build compensation/retry flows for timeouts.  
+    - Implement secure webhook endpoints (validate source IPs or signatures), persist callbacks for reconciliation, and build compensation/retry flows for timeouts.
     - Add observability around transaction queries and callbacks to surface failed or delayed operations.
 </Alert>
 
 ## Related Documentation
 
-- [📡 Webhook Setup Guide](/webhooks-best-practices) - tips for resilient webhook processing  
-- [🔐 Authentication & Token Management](/auth) - how TokenManager works with services  
+- [📡 Webhook Setup Guide](/webhooks-best-practices) - tips for resilient webhook processing
+- [🔐 Authentication & Token Management](/auth) - how TokenManager works with services
 - [🏗️ Production Setup](/production) - go-live checklist, security and monitoring

@@ -148,8 +148,9 @@ parameters={[
 />
 
 <Alert type="info" title="Implementation Options">
-    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.  
+    - Use the `MpesaClient` facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.
     - Use the Direct API (`TaxRemittance` service + `TokenManager` + `HttpClient`) if you need full control over request/response handling, middleware, or custom error behaviors.
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `TaxRemittance`/`AsyncTaxRemittance`) — reach for async when remitting taxes from inside an async web framework, or when filing several PRNs concurrently at the end of a reporting period.
 </Alert>
 
 <Tabs defaultValue={0}>
@@ -158,7 +159,7 @@ parameters={[
             The facade handles token retrieval and attaches Authorization headers so you can call high-level operations like initiating tax remittance with minimal boilerplate.
         </Alert>
 
-        <SectionHeader title="Quick Setup" size="small" />
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -186,8 +187,69 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., TaxRemittanceResponse) for ergonomic access to fields and helpers like is_successful().  
+            - The facade returns typed Pydantic models (e.g., TaxRemittanceResponse) for ergonomic access to fields and helpers like is_successful().
             - Authentication tokens are handled transparently by the client.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        resp = await client.tax.remittance(
+            initiator="TaxPayer",
+            security_credential="encrypted_credential",
+            amount=239,
+            party_a=888880,
+            account_reference="353353",
+            remarks="Tax payment for Q1",
+            result_url="https://your.example/result",
+            queue_timeout_url="https://your.example/timeout"
+        )
+
+        if resp.is_successful():
+            print("Tax remittance initiated successfully")
+        else:
+            print("Tax remittance failed:", resp.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Filing several PRNs at once">
+            If you're remitting taxes for multiple Payment Registration Numbers in one run, gather the coroutines rather than awaiting sequentially — but check Safaricom's rate limits and chunk large batches:
+
+```python
+prns = [
+    dict(account_reference="PRN-001", amount=15000),
+    dict(account_reference="PRN-002", amount=8200),
+    # ...
+]
+
+responses = await asyncio.gather(*(
+    client.tax.remittance(
+        initiator="TaxPayer",
+        security_credential="encrypted_credential",
+        amount=p["amount"],
+        party_a=888880,
+        account_reference=p["account_reference"],
+        remarks="Tax payment for Q1",
+        result_url="https://your.example/result",
+        queue_timeout_url="https://your.example/timeout",
+    )
+    for p in prns
+))
+```
+        </Alert>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
         </Alert>
     </Tabs.TabPane>
 
@@ -196,7 +258,7 @@ else:
             Use the lower-level TaxRemittance service when you must manipulate raw requests/responses or plug custom middleware.
         </Alert>
 
-        <SectionHeader title="Direct Implementation" size="small" />
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
 
         <CodeBlock language="python" title="Python">
 {`
@@ -225,8 +287,43 @@ print(response.ResponseDescription)
 `}
         </CodeBlock>
 
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.tax_remittance import AsyncTaxRemittance, TaxRemittanceRequest
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        tax_remittance = AsyncTaxRemittance(http_client=http_client, token_manager=token_manager)
+
+        request = TaxRemittanceRequest(
+            Initiator="TaxPayer",
+            SecurityCredential="encrypted_credential",
+            Amount=239,
+            PartyA=888880,
+            AccountReference="353353",
+            Remarks="Tax payment for Q1",
+            ResultURL="https://your.example/result",
+            QueueTimeOutURL="https://your.example/timeout"
+        )
+
+        response = await tax_remittance.remittance(request)
+        print(response.ResponseDescription)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
         <Alert type="info" title="Direct API Details">
-            - The TaxRemittance service attaches the Authorization header using the provided TokenManager.  
+            - The TaxRemittance service attaches the Authorization header using the provided TokenManager (sync or async, matching the client you chose).
             - Implementations handle small inconsistencies in upstream responses (e.g., a common typo like 'OriginatorCoversationID' is normalized).
         </Alert>
     </Tabs.TabPane>
@@ -234,14 +331,20 @@ print(response.ResponseDescription)
 
 <SectionHeader title="Webhook Handling (Result & Timeout)" size="small" />
 
+<p>
+    The callback is an inbound HTTP POST from Safaricom/Daraja — independent of whether the remittance was filed via `MpesaClient` or `AsyncMpesaClient`. For the result payload, both clients expose `process_tax_remittance_callback`, a one-call shorthand for `TaxRemittanceResultCallback.model_validate(payload)`; it's plain validation with no I/O, so it's never awaited even on the async client. There's no equivalent helper for the timeout payload, so that one is still validated directly against `TaxRemittanceTimeoutCallback`.
+</p>
+
 <CodeBlock language="python" title="Python">
 {`
 # Example: simple FastAPI endpoints for Tax Remittance Result and Timeout
 from fastapi import FastAPI, Request, HTTPException
-from mpesakit.tax_remittance import TaxRemittanceResultCallback, TaxRemittanceResultCallbackResponse, TaxRemittanceTimeoutCallback, TaxRemittanceTimeoutCallbackResponse
+from mpesakit import MpesaClient  # or AsyncMpesaClient — process_tax_remittance_callback is identical on both
+from mpesakit.tax_remittance import TaxRemittanceResultCallbackResponse, TaxRemittanceTimeoutCallback, TaxRemittanceTimeoutCallbackResponse
 from mpesakit.security.ip_whitelist import is_mpesa_ip_allowed
 
 app = FastAPI()
+client = MpesaClient(consumer_key="...", consumer_secret="...", environment="sandbox")
 
 @app.post("/tax/result")
 async def tax_result(request: Request):
@@ -250,7 +353,8 @@ async def tax_result(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
-    data = TaxRemittanceResultCallback(**payload)  # will validate incoming fields
+    # Equivalent to TaxRemittanceResultCallback.model_validate(payload)
+    data = client.process_tax_remittance_callback(payload)
     # process the result (update database, notify user, etc.)
     ack = TaxRemittanceResultCallbackResponse()
     return ack.model_dump(mode="json")
@@ -263,6 +367,7 @@ async def tax_timeout(request: Request):
     if not is_mpesa_ip_allowed(caller_ip):
         raise HTTPException(status_code=403, detail="forbidden")
 
+    data = TaxRemittanceTimeoutCallback(**payload)  # will validate incoming fields
     # process timeout notification (log, retry logic, etc.)
     ack = TaxRemittanceTimeoutCallbackResponse()
     return ack.model_dump(mode="json")
@@ -270,7 +375,7 @@ async def tax_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Important behavior">
-    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Mpesa Daraja API.  
+    - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Mpesa Daraja API.
     - Process the actual tax remittance result asynchronously based on the data in the result callback.
 </Alert>
 
@@ -288,13 +393,15 @@ async def tax_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - TaxRemittanceResponse provides is_successful() which treats any all-zero string (e.g., "0" or "00000000") as success.  
+    - TaxRemittanceResponse provides is_successful() which treats any all-zero string (e.g., "0" or "00000000") as success. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 
 <SectionHeader title="Error Handling" size="small" />
 
-<CodeBlock language="python" title="Python">
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
 {`
 # Handle errors when calling the service
 try:
@@ -303,28 +410,43 @@ except Exception as exc:
     # The underlying HTTP client may raise exceptions on network errors; log and retry as appropriate
     print("Tax remittance failed:", exc)
 `}
-</CodeBlock>
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+    resp = await client.tax.remittance(...)
+except Exception as exc:
+    # The underlying async HTTP client may raise exceptions on network errors; log and retry as appropriate
+    print("Tax remittance failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
 
 <Alert type="info" title="Notes">
-    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except for robust production behavior.  
-    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails.
+    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except (sync) or around the awaited call (async) for robust production behavior.
+    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails, for both client variants.
 </Alert>
 
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - Tax Remittance:
-    - The service posts to `/mpesa/b2bpayment/v1/remittax` with `Authorization` header set via `TokenManager`.
-    - Responses are returned as `TaxRemittanceResponse` instances.
+    - The service posts to `/mpesa/b2bpayment/v1/remittax` with `Authorization` header set via `TokenManager` (or `AsyncTokenManager`).
+    - Responses are returned as `TaxRemittanceResponse` instances, whether awaited from the async client or returned directly from the sync client.
     - The implementation tolerates a common provider typo ("OriginatorCoversationID") and maps it to `OriginatorConversationID`.
 
 - Validation:
-    - Incoming payloads are validated against `TaxRemittanceResultCallback` and `TaxRemittanceTimeoutCallback`. Missing required fields or invalid formats will raise validation errors.
+    - Incoming payloads are validated against `TaxRemittanceResultCallback` (directly, or via `process_tax_remittance_callback`) and `TaxRemittanceTimeoutCallback`. Missing required fields or invalid formats will raise validation errors.
     - Use the provided response schemas for acknowledgements; invalid codes are rejected by the model validator.
 
 <SectionHeader title="Next Steps" size="small" />
 
 <Alert type="info" title="What's Next?">
-    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.  
+    - Implement robust webhook handlers for result and timeout notifications. Log and persist notifications to support reconciliation.
     - Add observability and retry strategies around tax remittance calls and webhook processing to handle transient failures.
 </Alert>
 

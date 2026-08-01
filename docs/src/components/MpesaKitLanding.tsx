@@ -83,8 +83,8 @@ export const MpesaKitLanding: React.FC = () => {
   // Data for components
   const heroData = {
     title: "MpesaKit",
-    description: "Open-source Python M-Pesa SDK built by the community, for the community. A reliable third-party library that simplifies M-Pesa integration with comprehensive validation and developer-friendly design.",
-    badges: ["Open Source", "99%+ Test Coverage", "300+ Test Cases", "Community Driven"],
+    description: "Open-source Python M-Pesa SDK built by the community, for the community. A reliable third-party library that simplifies M-Pesa integration with comprehensive validation, full sync/async support, and developer-friendly design.",
+    badges: ["Open Source", "99%+ Test Coverage", "500+ Test Cases", "Sync & Async", "10,000+ Downloads"],
     primaryCTA: {
       text: "🚀 Get Started",
       href: "/intro"
@@ -97,8 +97,9 @@ export const MpesaKitLanding: React.FC = () => {
 
   const statsData = [
     { number: "99%+", label: "Test Coverage" },
-    { number: "300+", label: "Test Cases" },
+    { number: "500+", label: "Test Cases" },
     { number: "100%", label: "Type Hints" },
+    { number: "10,000+", label: "PyPI Downloads" },
     { number: "24/7", label: "API Monitoring" }
   ];
 
@@ -141,19 +142,30 @@ export const MpesaKitLanding: React.FC = () => {
       },
       {
         icon: "⚡",
-        title: "High Customization",
-        description: "Extensively configurable to meet any business requirement with flexible integration options.",
+        title: "Full Async Support",
+        description: "Every service ships with an async counterpart built on an async HTTP client, so you're never blocking your event loop.",
         features: [
-          "Custom callback handlers",
-          "Pluggable authentication",
-          "Middleware support",
-          "Flexible configuration"
+          "AsyncMpesaClient mirrors the sync client 1:1",
+          "Drop-in async services (AsyncStkPush, AsyncB2C, etc.)",
+          "Built for FastAPI, Starlette, and asyncio apps",
+          "asyncio.gather-friendly for batch requests"
+        ]
+      },
+      {
+        icon: "🔔",
+        title: "Built-in Callback Processing",
+        description: "Stop hand-parsing webhook payloads — validate and parse callbacks with one call, on either client.",
+        features: [
+          "client.process_stk_callback() for STK Push results",
+          "Dedicated helpers for B2C, Reversal, Tax and more",
+          "Typed Pydantic objects, not raw dicts",
+          "Identical on MpesaClient and AsyncMpesaClient"
         ]
       },
       {
         icon: "📊",
         title: "Complete API Coverage",
-        description: "Full support for all M-Pesa Daraja APIs with real-time status monitoring.",
+        description: "Full support for all M-Pesa Daraja APIs, in both sync and async, with real-time status monitoring.",
         features: [
           "STK Push (Lipa Na M-Pesa)",
           "C2B, B2C, B2B transactions",
@@ -166,7 +178,7 @@ export const MpesaKitLanding: React.FC = () => {
         title: "Battle-Tested Quality",
         description: "Extensive testing ensures reliability in production environments.",
         features: [
-          "300+ comprehensive test cases",
+          "500+ comprehensive test cases",
           "99%+ code coverage",
           "Integration test suite",
           "Performance benchmarks"
@@ -192,7 +204,7 @@ export const MpesaKitLanding: React.FC = () => {
       {
         icon: "🔑",
         title: "Token Management",
-        description: "Secure token storage and automatic refresh"
+        description: "Secure token storage and automatic refresh, for both sync and async clients"
       },
       {
         icon: "📝",
@@ -209,7 +221,7 @@ export const MpesaKitLanding: React.FC = () => {
       {
         name: "Authorization",
         status: "working" as "working" | "down" | "maintenance",
-        note: "OAuth token issuance and refresh endpoints operational",
+        note: "OAuth token issuance and refresh endpoints operational (sync & async)",
         link: { text: "Authorization Docs", href: "/auth" }
       },
       {
@@ -221,7 +233,7 @@ export const MpesaKitLanding: React.FC = () => {
       {
         name: "M-Pesa Express",
         status: "working" as "working" | "down" | "maintenance",
-        note: "STK Push / Lipa Na M-Pesa flow operational",
+        note: "STK Push / Lipa Na M-Pesa flow operational, including callback processing",
         link: { text: "M-Pesa Express Docs", href: "/mpesa-express/stk-push" }
       },
       {
@@ -326,7 +338,7 @@ export const MpesaKitLanding: React.FC = () => {
 
   const ctaData = {
     title: "Ready to Build?",
-    description: "Join hundreds of developers who trust MpesaKit for their M-Pesa integrations. Start building secure, reliable payment solutions today.",
+    description: "Join thousands of developers who trust MpesaKit for their M-Pesa integrations. Start building secure, reliable payment solutions today — sync or async.",
     primaryCTA: {
       text: "🚀 Get Started Now",
       href: "/installation"
@@ -356,7 +368,8 @@ export const MpesaKitLanding: React.FC = () => {
           { text: "Issues", href: "https://github.com/rafaeljohn9/mpesakit/issues" },
           { text: "Discussions", href: "https://github.com/rafaeljohn9/mpesakit/discussions" },
           { text: "Discord", href: "https://discord.gg/vzGBh5Qu" },
-          { text: "PyPI", href: "https://pypi.org/project/mpesakit/" }
+          { text: "PyPI", href: "https://pypi.org/project/mpesakit/" },
+          { text: "Download Stats", href: "https://pepy.tech/project/mpesakit" }
         ]
       },
       {
@@ -372,8 +385,8 @@ export const MpesaKitLanding: React.FC = () => {
       { text: "📦", href: "https://pypi.org/project/mpesakit/" },
       { text: "📚", href: "/intro" }
     ],
-    copyright: "© 2025 MpesaKit. Open source project by John Kagunda",
-    tagline: "Built with ❤️ for the community."
+    copyright: `© ${new Date().getFullYear()} MpesaKit. Open source project by ByteBarn.`,
+    tagline: "Built with ❤️ for the community. 10,000+ downloads and counting."
   };
 
   return (
