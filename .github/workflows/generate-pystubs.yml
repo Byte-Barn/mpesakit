@@ -1,0 +1,41 @@
+name: Generate PyStubs on Merge
+
+on:
+  push:
+    branches:
+      - master   # or 'main' if that’s your default branch
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  generate-stubs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for committing changes later
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install mypy
+
+      - name: Generate type stubs
+        run: |
+          # Adjust 'src' to your code folder
+          mkdir -p stubs
+          stubgen -p your_package_name -o stubs
+
+      - name: Commit and push generated stubs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stubs/
+          git commit -m "Auto-generate PyStubs on merge to master" || echo "No changes to commit"
+          git push
