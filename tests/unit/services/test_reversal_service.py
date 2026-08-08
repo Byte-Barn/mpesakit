@@ -45,7 +45,7 @@ def test_reverse_calls_reversal(reversal_service, mock_http_client):
         occasion="work",
     )
     assert isinstance(resp, ReversalResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -72,7 +72,7 @@ def test_reverse_filters_kwargs(reversal_service, mock_http_client):
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, ReversalResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
     # unexpected_field should not be present
     assert not hasattr(resp, "unexpected_field")
@@ -119,7 +119,7 @@ async def test_async_reverse_calls_reversal(
         occasion="work",
     )
     assert isinstance(resp, ReversalResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -149,7 +149,7 @@ async def test_async_reverse_filters_kwargs(
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, ReversalResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert not hasattr(resp, "unexpected_field")
 
 

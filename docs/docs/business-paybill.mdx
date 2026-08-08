@@ -116,34 +116,41 @@ parameters={[
         dataType: "Integer",
         required: false,
         description: "Identifier type for receiver (default: 4 for shortcode)."
-    },
+    }
+]}
+/>
+
+<SectionHeader title="Response Schema" size="small" subtitle="BusinessPayBillResponse — the synchronous acknowledgement returned by client.b2b.paybill(...)" />
+
+<ParametersTable
+parameters={[
     {
         name: "OriginatorConversationID",
-        type: "str",
+        type: "str | null",
         dataType: "String",
-        required: false,
-        description: "Unique ID for the request message (returned in response)."
+        required: true,
+        description: "Unique ID for the request message."
     },
     {
         name: "ConversationID",
-        type: "str",
+        type: "str | null",
         dataType: "String",
-        required: false,
-        description: "Unique ID for the transaction (returned in response)."
+        required: true,
+        description: "Unique ID for the transaction."
     },
     {
         name: "ResponseCode",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Status code of the request (0 means success, returned in response)."
+        required: true,
+        description: "Status code of the request. 0 means success."
     },
     {
         name: "ResponseDescription",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Status message describing the request outcome (returned in response)."
+        required: true,
+        description: "Status message describing the request outcome."
     }
 ]}
 />
@@ -188,7 +195,7 @@ resp = client.b2b.paybill(
     queue_timeout_url="https://your.example/timeout"
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("Business PayBill payment initiated successfully")
 else:
     print("Business PayBill payment failed:", resp.ResponseDescription)
@@ -196,7 +203,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., `BusinessPayBillResponse`) for ergonomic access to fields and helpers like is_successful().
+            - The facade returns typed Pydantic models (e.g., `BusinessPayBillResponse`) for ergonomic access to fields and helpers like is_successful.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -224,7 +231,7 @@ async def main():
             queue_timeout_url="https://your.example/timeout"
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Business PayBill payment initiated successfully")
         else:
             print("Business PayBill payment failed:", resp.ResponseDescription)
@@ -365,6 +372,94 @@ async def paybill_timeout(request: Request):
     - Process the actual Business PayBill result asynchronously based on the data in the result callback.
 </Alert>
 
+<SectionHeader title="Result Callback Schema" size="small" subtitle="BusinessPayBillResultCallback — posted to ResultURL once the payment completes" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Result.ResultType",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "0 = success, 1 = failure."
+    },
+    {
+        name: "Result.ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "0 indicates the payment succeeded; any other value is a failure code."
+    },
+    {
+        name: "Result.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Human readable result description."
+    },
+    {
+        name: "Result.OriginatorConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the OriginatorConversationID from the initial request."
+    },
+    {
+        name: "Result.ConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the ConversationID from the initial acknowledgement."
+    },
+    {
+        name: "Result.TransactionID",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "M-Pesa transaction ID for the payment, when successful."
+    },
+    {
+        name: "Result.ResultParameters.ResultParameter",
+        type: "list[{Key, Value}]",
+        dataType: "Array",
+        required: false,
+        description: "Transaction details, e.g. DebitAccountBalance, Amount, DebitPartyAffectedAccountBalance, TransCompletedTime, DebitPartyCharges, ReceiverPartyPublicName, Currency, InitiatorAccountCurrentBalance."
+    },
+    {
+        name: "Result.ReferenceData.ReferenceItem",
+        type: "list[{Key, Value}]",
+        dataType: "Array",
+        required: false,
+        description: "Reference items, e.g. BillReferenceNumber, QueueTimeoutURL."
+    }
+]}
+/>
+
+<SectionHeader title="Timeout Callback Schema" size="small" subtitle="BusinessPayBillTimeoutCallback — posted to QueueTimeOutURL if the payment doesn't complete in time" />
+
+<p>Uses the same <code>Result</code> shape as the Result Callback Schema above (it's the same <code>BusinessPayBillResultMetadata</code> model), just delivered to <code>QueueTimeOutURL</code> instead of <code>ResultURL</code>, typically with a non-zero <code>ResultCode</code> and without <code>TransactionID</code>/<code>ResultParameters</code>.</p>
+
+<SectionHeader title="Callback Acknowledgement Schemas" size="small" subtitle="What your webhook handler should return to Safaricom" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: false,
+        description: "Defaults to 0. Used by BusinessPayBillResultCallbackResponse and BusinessPayBillTimeoutCallbackResponse — the typed models to return from your /result and /timeout handlers respectively."
+    },
+    {
+        name: "ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: false,
+        description: "Defaults to 'Callback received successfully.' (result) or 'Timeout notification received successfully.' (timeout)."
+    }
+]}
+/>
+
 <SectionHeader title="Responses & Helpers" size="small" />
 
 <CodeBlock language="json" title="Example Business PayBill Success Response">
@@ -379,7 +474,7 @@ async def paybill_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - BusinessPayBillResponse provides is_successful() which normalizes success checks. Available identically on responses from the sync and async clients.
+    - BusinessPayBillResponse provides is_successful which normalizes success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

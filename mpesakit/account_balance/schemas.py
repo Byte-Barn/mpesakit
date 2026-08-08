@@ -96,6 +96,7 @@ class AccountBalanceResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the response indicates success."""
         code = str(self.ResponseCode)

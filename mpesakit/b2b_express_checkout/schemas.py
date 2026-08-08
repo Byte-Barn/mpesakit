@@ -56,6 +56,7 @@ class B2BExpressCheckoutResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Return True if code indicates success (e.g., '0', '00000000')."""
         code = str(self.code)
@@ -102,6 +103,7 @@ class B2BExpressCheckoutCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Return True if resultCode indicates success (e.g., '0', '00000000')."""
         code = str(self.resultCode)

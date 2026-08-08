@@ -63,7 +63,7 @@ def test_paybill_calls_paybill(b2b_service, mock_http_client):
         result_url="http://result.url",
     )
     assert isinstance(resp, BusinessPayBillResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 def test_buygoods_calls_buy_goods(b2b_service, mock_http_client):
@@ -90,7 +90,7 @@ def test_buygoods_calls_buy_goods(b2b_service, mock_http_client):
         occassion="Occasion",
     )
     assert isinstance(resp, BusinessBuyGoodsResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 def test_express_checkout_filters_kwargs(b2b_service, mock_http_client):
@@ -110,7 +110,7 @@ def test_express_checkout_filters_kwargs(b2b_service, mock_http_client):
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, B2BExpressCheckoutResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.status == "USSD Initiated Successfully"
 
 def test_b2b_service_initializes_services_correctly(
@@ -189,7 +189,7 @@ async def test_async_paybill_calls_paybill(async_b2b_service, mock_async_http_cl
     )
 
     assert isinstance(resp, BusinessPayBillResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 @pytest.mark.asyncio
@@ -220,7 +220,7 @@ async def test_async_buygoods_calls_buy_goods(
     )
 
     assert isinstance(resp, BusinessBuyGoodsResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 @pytest.mark.asyncio
@@ -243,7 +243,7 @@ async def test_async_express_checkout_filters_kwargs(
     )
 
     assert isinstance(resp, B2BExpressCheckoutResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.status == "USSD Initiated Successfully"
 
 def test_async_b2b_service_initializes_services_correctly(

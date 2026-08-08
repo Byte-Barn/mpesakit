@@ -47,7 +47,7 @@ def test_push_success(stk_push, mock_http_client):
 
     assert isinstance(response, StkPushSimulateResponse)
     assert response.MerchantRequestID == "12345"
-    assert response.is_successful() is True
+    assert response.is_successful is True
     mock_http_client.post.assert_called_once()
     args, kwargs = mock_http_client.post.call_args
     assert args[0] == "/mpesa/stkpush/v1/processrequest"
@@ -74,7 +74,7 @@ def test_query_success(stk_push, mock_http_client):
     response = stk_push.query(request)
 
     assert isinstance(response, StkPushQueryResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.CheckoutRequestID == "ws_CO_260520211133524545"
     mock_http_client.post.assert_called_once()
     args, kwargs = mock_http_client.post.call_args
@@ -174,7 +174,7 @@ async def test_async_push_success(
 
     assert isinstance(response, StkPushSimulateResponse)
     assert response.MerchantRequestID == "12345"
-    assert response.is_successful() is True
+    assert response.is_successful is True
     mock_async_http_client.post.assert_awaited_once()
     args, kwargs = mock_async_http_client.post.call_args
     assert args[0] == "/mpesa/stkpush/v1/processrequest"
@@ -204,7 +204,7 @@ async def test_async_query_success(
     response = await async_stk_push.query(request)
 
     assert isinstance(response, StkPushQueryResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.CheckoutRequestID == "ws_CO_260520211133524545"
     mock_async_http_client.post.assert_awaited_once()
     args, kwargs = mock_async_http_client.post.call_args

@@ -3,7 +3,12 @@
 import ipaddress
 from typing import List, Optional
 
-# M-Pesa IP addresses (individual IPs)
+# M-Pesa IP addresses (individual IPs).
+#
+# Source: Safaricom's official "Callback and IP Whitelisting" list at
+# https://developer.safaricom.co.ke/apis/GettingStarted (verified 2026-08-08).
+# 196.201.212.128 and 196.201.212.132 are not on that published list but are
+# kept here as a superset for backward compatibility.
 MPESA_IP_ADDRESSES = {
     ipaddress.ip_address("196.201.214.200"),
     ipaddress.ip_address("196.201.214.206"),

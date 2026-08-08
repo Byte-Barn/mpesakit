@@ -52,7 +52,7 @@ def test_paybill_request_acknowledged(business_paybill, mock_http_client):
     response = business_paybill.paybill(request)
 
     assert isinstance(response, BusinessPayBillResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ConversationID == response_data["ConversationID"]
     assert (
         response.OriginatorConversationID == response_data["OriginatorConversationID"]
@@ -92,7 +92,7 @@ def test_business_paybill_result_callback_success():
         }
     }
     callback = BusinessPayBillResultCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultParameters.ResultParameter[0].Key == "Amount"
 
@@ -145,7 +145,7 @@ def test_business_paybill_result_callback_with_string_result_code():
 
     # This should not raise a TypeError when comparing string to int inside is_successful
     callback = BusinessPayBillResultCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
     assert callback.Result.TransactionID == "QKA81LK5CY"
 
 @pytest.fixture
@@ -172,7 +172,7 @@ async def test_async_paybill_request_acknowledged(
     response = await async_business_paybill.paybill(request)
 
     assert isinstance(response, BusinessPayBillResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ConversationID == response_data["ConversationID"]
     assert (
         response.OriginatorConversationID == response_data["OriginatorConversationID"]

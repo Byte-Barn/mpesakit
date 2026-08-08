@@ -150,7 +150,7 @@ def test_stk_push_full_e2e_with_query(stk_service, fastapi_server, ngrok_tunnel)
 
                 print(f"📊 Query result: Code={result_code}, Desc='{result_desc}'")
 
-                if query_response.is_successful():
+                if query_response.is_successful:
                     final_result = query_response
                     print("✅ Query returned a valid result.")
                     break

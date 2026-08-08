@@ -60,7 +60,7 @@ def test_create_standing_order_success(mpesa_ratiba, mock_http_client):
     response = mpesa_ratiba.create_standing_order(request)
 
     assert isinstance(response, StandingOrderResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert (
         response.ResponseHeader.responseCode
         == response_data["ResponseHeader"]["responseCode"]
@@ -97,7 +97,7 @@ def test_standing_order_success_callback():
         },
     }
     callback = StandingOrderCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
     assert callback.ResponseHeader.responseCode == "0"
     assert any(
         item.Name == "TransactionID" and item.Value == "SC8F2IQMH5"
@@ -126,7 +126,7 @@ def test_standing_order_fail_callback():
         },
     }
     callback = StandingOrderCallback(**payload)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
     assert callback.ResponseHeader.responseCode == "1"
     assert any(
         item.Name == "Status" and "CANCELLED" in item.Value
@@ -219,7 +219,7 @@ def test_invalid_phone_number():
     assert "Invalid PartyA phone number" in str(excinfo.value)
 
 def test_callback_resultcode_as_string_handled_gracefully():
-    """Ensure StandingOrderCallback.is_successful() handles responseCode as a string without TypeError."""
+    """Ensure StandingOrderCallback.is_successful handles responseCode as a string without TypeError."""
     payload = {
         "ResponseHeader": {
             "responseRefID": "0acc0239-20fa-4a52-8b9d-9bd64c0465c3",
@@ -238,7 +238,7 @@ def test_callback_resultcode_as_string_handled_gracefully():
     }
     callback = StandingOrderCallback(**payload)
     try:
-        result = callback.is_successful()
+        result = callback.is_successful
     except TypeError as exc:
         pytest.fail(
             f"is_successful raised TypeError when responseCode is a string: {exc}"
@@ -275,7 +275,7 @@ async def test_create_standing_order_success_async(
     response = await async_mpesa_ratiba.create_standing_order(request)
 
     assert isinstance(response, StandingOrderResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert (
         response.ResponseHeader.responseCode
         == response_data["ResponseHeader"]["responseCode"]

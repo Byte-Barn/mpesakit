@@ -126,7 +126,7 @@ def test_send_single_invoice_success(bill_manager, mock_http_client):
     mock_http_client.post.return_value = response_data
     response = bill_manager.send_single_invoice(request)
     assert isinstance(response, BillManagerSingleInvoiceResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
 def test_send_bulk_invoice_success(bill_manager, mock_http_client):
@@ -154,7 +154,7 @@ def test_cancel_single_invoice_success(bill_manager, mock_http_client):
     mock_http_client.post.return_value = response_data
     response = bill_manager.cancel_single_invoice(request)
     assert isinstance(response, BillManagerCancelInvoiceResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
 def test_cancel_bulk_invoice_success(bill_manager, mock_http_client):
@@ -322,9 +322,9 @@ def test_result_code_as_string_does_not_raise(bill_manager, mock_http_client):
 
     response = bill_manager.send_single_invoice(request)
 
-    # Calling is_successful() should not raise a TypeError from comparing str and int;
+    # Calling is_successful should not raise a TypeError from comparing str and int;
     # it should return a boolean result.
-    is_success = response.is_successful()
+    is_success = response.is_successful
     assert isinstance(is_success, bool)
 
 @pytest.fixture
@@ -378,7 +378,7 @@ async def test_async_send_single_invoice_success(
     mock_async_http_client.post.return_value = response_data
     response = await async_bill_manager.send_single_invoice(request)
     assert isinstance(response, BillManagerSingleInvoiceResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
 @pytest.mark.asyncio
@@ -412,7 +412,7 @@ async def test_async_cancel_single_invoice_success(
     mock_async_http_client.post.return_value = response_data
     response = await async_bill_manager.cancel_single_invoice(request)
     assert isinstance(response, BillManagerCancelInvoiceResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
 @pytest.mark.asyncio

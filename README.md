@@ -65,10 +65,10 @@ response = client.stk_push(
     transaction_desc="Payment for order",
 )
 
-if response.is_successful():
+if response.is_successful:
     print("Request accepted:", response.CheckoutRequestID)
 else:
-    print("Error:", response.error_message())
+    print("Error:", response.ResponseDescription)
 ```
 
 Prefer async? Swap in `AsyncMpesaClient` and `await` the call — see [Async Support](#async-support) below.
@@ -91,7 +91,7 @@ async def mpesa_callback(request: Request):
     # Validates the payload and returns a typed StkPushSimulateCallback object
     callback = client.process_stk_callback(payload)
 
-    if callback.is_successful()
+    if callback.is_successful:
         metadata = callback.Body.stkCallback.CallbackMetadata
         print(f"Payment confirmed — Receipt: {metadata}")
     else:
@@ -171,10 +171,10 @@ async def main():
             transaction_desc="Payment for order",
         )
 
-        if response.is_successful():
+        if response.is_successful:
             print("Request accepted:", response.CheckoutRequestID)
         else:
-            print("Error:", response.error_message())
+            print("Error:", response.ResponseDescription)
 
 asyncio.run(main())
 ```
@@ -238,7 +238,7 @@ response = client.b2c.send_payment(
     result_url="https://yourdomain.com/mpesa/result",
 )
 
-if response.is_successful():
+if response.is_successful:
     print("Payout sent:", response.ResponseDescription)
 ```
 
@@ -261,6 +261,19 @@ client = MpesaClient(
     consumer_key="...",
     consumer_secret="...",
     environment="production",  # That's all it takes
+)
+```
+
+### Configuring retries
+
+`MpesaClient` and `AsyncMpesaClient` retry transient network errors (timeouts, connection errors) up to `max_retries` times before raising `MpesaApiException`. It defaults to 3 and can be tuned per client:
+
+```python
+client = MpesaClient(
+    consumer_key="...",
+    consumer_secret="...",
+    environment="sandbox",
+    max_retries=5,  # default is 3
 )
 ```
 

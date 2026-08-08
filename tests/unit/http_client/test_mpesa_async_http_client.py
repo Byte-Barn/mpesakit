@@ -114,6 +114,59 @@ async def test_post_connection_error(async_client):
 
 
 @pytest.mark.asyncio
+async def test_post_retries_and_succeeds(async_client):
+    """Test that a POST request succeeds after transient failures.
+
+    This test ensures the async retry mechanism works as intended.
+    """
+    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
+        mock_response = Mock(status_code=200, is_success=True)
+        mock_response.json.return_value = {"ResultCode": 0}
+        mock_post.side_effect = [
+            httpx.TimeoutException("Read timed out."),
+            httpx.TimeoutException("Read timed out."),
+            mock_response,
+        ]
+
+        result = await async_client.post("/test", json={"a": 1}, headers={"h": "v"})
+
+        assert mock_post.call_count == 3
+        assert result == {"ResultCode": 0}
+
+
+@pytest.mark.asyncio
+async def test_post_fails_after_max_retries(async_client):
+    """Test that a POST request raises an exception after all retries fail.
+
+    This test ensures the async retry mechanism eventually gives up.
+    """
+    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
+        mock_post.side_effect = httpx.ConnectError("Connection failed.", request=Mock())
+
+        with pytest.raises(MpesaApiException) as exc:
+            await async_client.post("/test", json={"a": 1}, headers={"h": "v"})
+
+        assert mock_post.call_count == 3
+        assert exc.value.error.error_code == "CONNECTION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_post_respects_custom_max_retries():
+    """Test that a custom max_retries value controls the number of attempts."""
+    with patch("mpesakit.http_client.mpesa_async_http_client.httpx.AsyncClient"):
+        client = MpesaAsyncHttpClient(env="sandbox", max_retries=5)
+
+    with patch.object(client._client, "post", new_callable=AsyncMock) as mock_post:
+        mock_post.side_effect = httpx.ConnectError("Connection failed.", request=Mock())
+
+        with pytest.raises(MpesaApiException) as exc:
+            await client.post("/test", json={"a": 1}, headers={"h": "v"})
+
+        assert mock_post.call_count == 5
+        assert exc.value.error.error_code == "CONNECTION_ERROR"
+
+
+@pytest.mark.asyncio
 async def test_post_generic_httpx_error(async_client):
     """Test ASYNC POST request raises MpesaApiException on generic httpx error."""
     with patch.object(
@@ -171,7 +224,7 @@ async def test_get_timeout(async_client):
             await async_client.get("/timeout")
 
         assert exc.value.error.error_code == "REQUEST_TIMEOUT"
-        assert "timed out" in exc.value.error.error_message
+        assert "Test Timeout" in exc.value.error.error_message
 
 
 @pytest.mark.asyncio
@@ -187,7 +240,38 @@ async def test_get_connection_error(async_client):
             await async_client.get("/conn")
 
         assert exc.value.error.error_code == "CONNECTION_ERROR"
-        assert "Failed to connect" in exc.value.error.error_message
+        assert "conn error" in exc.value.error.error_message
+
+
+@pytest.mark.asyncio
+async def test_get_retries_and_succeeds(async_client):
+    """Test that a GET request succeeds after transient failures."""
+    with patch.object(async_client._client, "get", new_callable=AsyncMock) as mock_get:
+        mock_response = Mock(status_code=200, is_success=True)
+        mock_response.json.return_value = {"ResultCode": 0}
+        mock_get.side_effect = [
+            httpx.TimeoutException("Read timed out."),
+            httpx.TimeoutException("Read timed out."),
+            mock_response,
+        ]
+
+        result = await async_client.get("/test")
+
+        assert mock_get.call_count == 3
+        assert result == {"ResultCode": 0}
+
+
+@pytest.mark.asyncio
+async def test_get_fails_after_max_retries(async_client):
+    """Test that a GET request raises an exception after all retries fail."""
+    with patch.object(async_client._client, "get", new_callable=AsyncMock) as mock_get:
+        mock_get.side_effect = httpx.TimeoutException("Read timed out.")
+
+        with pytest.raises(MpesaApiException) as exc:
+            await async_client.get("/test")
+
+        assert mock_get.call_count == 3
+        assert exc.value.error.error_code == "REQUEST_TIMEOUT"
 
 
 @pytest.mark.asyncio

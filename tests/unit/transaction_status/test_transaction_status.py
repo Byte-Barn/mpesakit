@@ -80,7 +80,7 @@ def test_transaction_status_response_is_successful_zero_code():
         ResponseCode="0",
         ResponseDescription="Accept the service request successfully.",
     )
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_transaction_status_response_is_successful_all_zeros():
     """Test is_successful method with all zeros response code."""
@@ -90,7 +90,7 @@ def test_transaction_status_response_is_successful_all_zeros():
         ResponseCode="00000000",
         ResponseDescription="Accept the service request successfully.",
     )
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_transaction_status_response_is_successful_non_zero_code():
     """Test is_successful method with a non-zero response code."""
@@ -100,7 +100,7 @@ def test_transaction_status_response_is_successful_non_zero_code():
         ResponseCode="1",
         ResponseDescription="Failed.",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_transaction_status_response_is_successful_mixed_code():
     """Test is_successful method with a mixed response code."""
@@ -110,7 +110,7 @@ def test_transaction_status_response_is_successful_mixed_code():
         ResponseCode="00001",
         ResponseDescription="Failed.",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_transaction_status_response_is_successful_empty_code():
     """Test is_successful method with an empty response code."""
@@ -120,7 +120,7 @@ def test_transaction_status_response_is_successful_empty_code():
         ResponseCode="",
         ResponseDescription="Failed.",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 @pytest.mark.parametrize("invalid_identifier_type", [0, 3, 5, "invalid"])
 def test_transaction_status_request_invalid_identifier_type_raises(
@@ -342,7 +342,7 @@ def test_query_response_code_type_variations(transaction_status, mock_http_clien
         # Should not raise due to type differences and should return expected boolean
         resp = transaction_status.query(request)
         assert isinstance(resp, TransactionStatusResponse)
-        assert resp.is_successful() is expected_success
+        assert resp.is_successful is expected_success
 
 def test_transaction_status_result_callback_is_successful_zero_code():
     """Test is_successful method with ResultCode as '0'."""
@@ -356,7 +356,7 @@ def test_transaction_status_result_callback_is_successful_zero_code():
         ResultParameters=[],
     )
     callback = TransactionStatusResultCallback(Result=result)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 def test_transaction_status_result_callback_is_successful_all_zeros():
     """Test is_successful method with ResultCode as '00000000'."""
@@ -370,7 +370,7 @@ def test_transaction_status_result_callback_is_successful_all_zeros():
         ResultParameters=[],
     )
     callback = TransactionStatusResultCallback(Result=result)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 def test_transaction_status_result_callback_is_successful_non_zero_code():
     """Test is_successful method with ResultCode as '1'."""
@@ -384,7 +384,7 @@ def test_transaction_status_result_callback_is_successful_non_zero_code():
         ResultParameters=[],
     )
     callback = TransactionStatusResultCallback(Result=result)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 def test_transaction_status_result_callback_is_successful_mixed_code():
     """Test is_successful method with ResultCode as '00001'."""
@@ -398,7 +398,7 @@ def test_transaction_status_result_callback_is_successful_mixed_code():
         ResultParameters=[],
     )
     callback = TransactionStatusResultCallback(Result=result)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 def test_transaction_status_result_callback_is_successful_empty_code():
     """Test is_successful method with an empty ResultCode."""
@@ -412,7 +412,7 @@ def test_transaction_status_result_callback_is_successful_empty_code():
         ResultParameters=[],
     )
     callback = TransactionStatusResultCallback(Result=result)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 @pytest.mark.asyncio
 async def test_async_query_success(mock_async_http_client, mock_async_token_manager):

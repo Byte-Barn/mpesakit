@@ -47,6 +47,13 @@ parameters={[
             required: false,
             description: "When True, forces the TokenManager to bypass cache and request a new token."
         },
+        {
+            name: "max_retries",
+            type: "int",
+            dataType: "Integer",
+            required: false,
+            description: "Number of attempts (including the first try) MpesaHttpClient/MpesaAsyncHttpClient makes for a request before giving up on transient network errors (timeouts, connection errors). Defaults to 3. Configurable on MpesaClient, AsyncMpesaClient, MpesaHttpClient and MpesaAsyncHttpClient."
+        },
 ]}
 />
 
@@ -153,6 +160,7 @@ client = MpesaClient(
         consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
         consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
         environment="sandbox",
+        max_retries=3,  # optional, defaults to 3
 )
 
 # No token handling required — MpesaClient does it
@@ -174,6 +182,7 @@ response = client.account_balance(
 - `Invalid credentials`: TokenManager surfaces a MpesaApiException with error code AUTH_INVALID_CREDENTIALS. Check your consumer key/secret and environment.
 - `Single in-memory cache`: TokenManager caches token in-memory. For multi-process deployments, ensure each process has its own TokenManager or implement a shared token store.
 - `Reuse TokenManager`: Instantiate one TokenManager and pass it to multiple service classes (AccountBalance, StkPush, etc.) to avoid duplicate token requests.
+- `Transient network errors`: MpesaHttpClient/MpesaAsyncHttpClient automatically retry timeouts and connection errors up to `max_retries` times (default 3) before raising MpesaApiException with error code REQUEST_TIMEOUT or CONNECTION_ERROR. Tune this via `max_retries` on MpesaClient/AsyncMpesaClient or the HTTP client directly. This is separate from the 401 retry pattern above, which is about expired tokens, not network failures.
 
 <Alert type="info" title="Best practices">
     - Share a single TokenManager instance per process.

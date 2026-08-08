@@ -73,6 +73,7 @@ class BusinessPayBillResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the response indicates success."""
         return self.ResponseCode == "0"
@@ -228,6 +229,7 @@ class BusinessPayBillResultCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Return True if ResultCode indicates success (e.g., '0', '00000000')."""
         code = str(self.Result.ResultCode)

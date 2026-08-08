@@ -67,4 +67,4 @@ def test_b2c_send_payment_e2e(b2c_service):
 
     assert response.ResponseDescription is not None
     assert response.OriginatorConversationID == originator_conversation_id
-    assert response.is_successful() is True, "B2C payment request failed"
+    assert response.is_successful is True, "B2C payment request failed"

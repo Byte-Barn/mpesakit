@@ -68,7 +68,7 @@ def test_transaction_status_query_e2e(transaction_status_service):
     response = transaction_status_service.query(request=request)
     print(f"✅ Transaction Status response: {response}")
 
-    assert response.is_successful() is True, "Transaction status query failed"
+    assert response.is_successful is True, "Transaction status query failed"
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
 
@@ -91,6 +91,6 @@ def test_transaction_status_query_e2e(transaction_status_service):
 
     assert response_with_original_conversation_id.ResponseDescription is not None
     assert response_with_original_conversation_id.ConversationID is not None
-    assert response_with_original_conversation_id.is_successful() is True, (
+    assert response_with_original_conversation_id.is_successful is True, (
         "Transaction status query with OriginalConversationID failed"
     )

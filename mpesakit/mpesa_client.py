@@ -2,6 +2,7 @@
 
 from mpesakit.auth import TokenManager, AsyncTokenManager
 from mpesakit.http_client import MpesaHttpClient, MpesaAsyncHttpClient
+from mpesakit.http_client._retry import DEFAULT_MAX_RETRIES
 from mpesakit.services import (
     B2BService,
     AsyncB2BService,
@@ -152,9 +153,12 @@ class MpesaClient(MpesaCallbackMixin):
         consumer_secret: str,
         environment: str = "sandbox",
         use_session: bool = False,
+        max_retries: int = DEFAULT_MAX_RETRIES,
     ) -> None:
         """Initialize the MpesaClient with all service facades."""
-        self.http_client = MpesaHttpClient(env=environment, use_session=use_session)
+        self.http_client = MpesaHttpClient(
+            env=environment, use_session=use_session, max_retries=max_retries
+        )
         self.token_manager = TokenManager(
             http_client=self.http_client,
             consumer_key=consumer_key,
@@ -227,9 +231,10 @@ class AsyncMpesaClient(MpesaCallbackMixin):
         consumer_key: str,
         consumer_secret: str,
         environment: str = "sandbox",
+        max_retries: int = DEFAULT_MAX_RETRIES,
     ) -> None:
         """Initialize the AsyncMpesaClient with all service facades."""
-        self.http_client = MpesaAsyncHttpClient(env=environment)
+        self.http_client = MpesaAsyncHttpClient(env=environment, max_retries=max_retries)
         self.token_manager = AsyncTokenManager(
             http_client=self.http_client,
             consumer_key=consumer_key,

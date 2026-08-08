@@ -121,6 +121,7 @@ class C2BRegisterUrlResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Return True if ResponseCode indicates success (e.g., '0', '00000000')."""
         code = str(self.ResponseCode)

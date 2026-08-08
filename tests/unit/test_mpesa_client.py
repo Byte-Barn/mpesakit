@@ -36,6 +36,24 @@ def test_http_client_instance(client):
     assert isinstance(client.http_client, MpesaHttpClient)
 
 
+def test_default_max_retries_is_three(client):
+    """Test that the default max_retries is passed through to the http_client."""
+    assert client.http_client.max_retries == 3
+
+
+def test_custom_max_retries_is_passed_through():
+    """Test that a custom max_retries is passed through to the http_client."""
+    client = MpesaClient("dummy_key", "dummy_secret", max_retries=5)
+    assert client.http_client.max_retries == 5
+
+
+def test_use_session_is_passed_through():
+    """Test that use_session is passed through and creates a persistent client."""
+    client = MpesaClient("dummy_key", "dummy_secret", use_session=True)
+    assert client.http_client._client is not None
+    client.http_client.close()
+
+
 def test_token_manager_instance(client):
     """Test that the token_manager is an instance of TokenManager."""
     assert isinstance(client.token_manager, TokenManager)
@@ -206,7 +224,7 @@ class TestCallbackProcessing:
                         {"Key": "TransactionCompletedDateTime", "Value": "31.12.2021 23:59:59"},
                         {"Key": "B2CRecipientPhoneNumber", "Value": "254712345678"},
                     ],
-                
+
             }
         }
         result = client.process_b2c_callback(payload)
@@ -245,7 +263,7 @@ class TestCallbackProcessing:
                         {"Key": "TransactionDate", "Value": "31.12.2021 23:59:59"},
                         {"Key": "ReceiptNo", "Value": "LHG31AA5TX"},
                     ],
-                
+
             }
         }
         result = client.process_transactions_callback(payload)
@@ -318,7 +336,7 @@ class TestCallbackProcessing:
                     ]
                 },
             }
-        
+
         result = client.process_ratiba_service_callback(payload)
         assert result.ResponseHeader.requestRefID == "0acc0239-20fa-4a52-8b9d-9bd64c0465c3"
         assert any(
@@ -326,7 +344,7 @@ class TestCallbackProcessing:
         for item in result.ResponseBody.ResponseData
     )
 
-        
+
     def test_process_reversal_callback(self, client):
         """Test processing reversal callback payload."""
         payload = {

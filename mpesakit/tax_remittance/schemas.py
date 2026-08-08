@@ -68,6 +68,7 @@ class TaxRemittanceResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the response indicates success."""
         code = str(self.ResponseCode)
@@ -190,6 +191,7 @@ class TaxRemittanceResultCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the result indicates success."""
         code = str(self.Result.ResultCode)

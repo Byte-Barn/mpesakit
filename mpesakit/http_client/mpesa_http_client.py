@@ -8,17 +8,16 @@ from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 import httpx
-from tenacity import (
-    RetryCallState,
-    before_sleep_log,
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_random_exponential,
-)
+from tenacity import before_sleep_log, retry, wait_random_exponential
 
 from mpesakit.errors import MpesaApiException, MpesaError
 
+from ._retry import (
+    DEFAULT_MAX_RETRIES,
+    handle_retry_exception,
+    retry_enabled,
+    stop_after_instance_max_retries,
+)
 from .http_client import HttpClient
 
 logger = logging.getLogger(__name__)
@@ -48,64 +47,19 @@ def handle_request_error(response: httpx.Response):
     )
 
 
-def handle_retry_exception(retry_state: RetryCallState):
-    """Custom hook to handle exceptions after all retries fail.
-
-    It raises a custom MpesaApiException with the appropriate error code.
-    """
-    if retry_state.outcome:
-        exception = retry_state.outcome.exception()
-
-        if isinstance(exception, httpx.TimeoutException):
-            raise MpesaApiException(
-                MpesaError(error_code="REQUEST_TIMEOUT", error_message=str(exception))
-            ) from exception
-        elif isinstance(exception, httpx.ConnectError):
-            raise MpesaApiException(
-                MpesaError(error_code="CONNECTION_ERROR", error_message=str(exception))
-            ) from exception
-
-        raise MpesaApiException(
-            MpesaError(error_code="REQUEST_FAILED", error_message=str(exception))
-        ) from exception
-
-    raise MpesaApiException(
-        MpesaError(
-            error_code="REQUEST_FAILED",
-            error_message="An unknown retry error occurred.",
-        )
-    )
-
-
-def retry_enabled(enabled: bool):
-    """Factory function to conditionally enable retries.
-
-    Args:
-        enabled (bool): Whether to enable retry logic.
-
-    Returns:
-        A retry condition function.
-    """
-    base_retry = retry_if_exception_type(
-        httpx.TimeoutException
-    ) | retry_if_exception_type(httpx.ConnectError)
-
-    def _retry(retry_state):
-        if not enabled:
-            return False
-        return base_retry(retry_state)
-
-    return _retry
-
-
 class MpesaHttpClient(HttpClient):
     """A client for making HTTP requests to the M-Pesa API."""
 
     base_url: str
+    max_retries: int
     _client: Optional[httpx.Client] = None
 
     def __init__(
-        self, env: str = "sandbox", use_session: bool = False, trust_env: bool = True
+        self,
+        env: str = "sandbox",
+        use_session: bool = False,
+        trust_env: bool = True,
+        max_retries: int = DEFAULT_MAX_RETRIES,
     ):
         """Initializes the MpesaHttpClient instance.
 
@@ -113,8 +67,11 @@ class MpesaHttpClient(HttpClient):
             env (str): The environment to connect to ('sandbox' or 'production').
             use_session (bool): Whether to use a persistent client.
             trust_env (bool): Whether to trust environment proxy/CA settings.
+            max_retries (int): Number of attempts made for a request (including
+                the first try) before giving up on transient network errors.
         """
         self.base_url = self._resolve_base_url(env)
+        self.max_retries = max_retries
         if use_session:
             self._client = httpx.Client(trust_env=trust_env)
 
@@ -126,7 +83,7 @@ class MpesaHttpClient(HttpClient):
     @retry(
         retry=retry_enabled(enabled=True),
         wait=wait_random_exponential(multiplier=5, max=8),
-        stop=stop_after_attempt(3),
+        stop=stop_after_instance_max_retries,
         retry_error_callback=handle_retry_exception,
         before_sleep=before_sleep_log(logger, logging.WARNING),
     )
@@ -177,7 +134,7 @@ class MpesaHttpClient(HttpClient):
     @retry(
         retry=retry_enabled(enabled=True),
         wait=wait_random_exponential(multiplier=5, max=8),
-        stop=stop_after_attempt(3),
+        stop=stop_after_instance_max_retries,
         retry_error_callback=handle_retry_exception,
         before_sleep=before_sleep_log(logger, logging.WARNING),
     )

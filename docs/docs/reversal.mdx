@@ -88,34 +88,41 @@ parameters={[
         dataType: "String",
         required: false,
         description: "Optional additional information (<= 100 characters)."
-    },
+    }
+]}
+/>
+
+<SectionHeader title="Response Schema" size="small" subtitle="ReversalResponse — the synchronous acknowledgement returned by client.reversal.reverse(...)" />
+
+<ParametersTable
+parameters={[
     {
         name: "OriginatorConversationID",
-        type: "str",
+        type: "str | null",
         dataType: "String",
-        required: false,
-        description: "Unique identifier for the conversation (returned in response)."
+        required: true,
+        description: "Unique ID for the request message."
     },
     {
         name: "ConversationID",
-        type: "str",
+        type: "str | null",
         dataType: "String",
-        required: false,
-        description: "Unique conversation ID assigned by M-Pesa (returned in response)."
+        required: true,
+        description: "Unique ID for the transaction."
     },
     {
         name: "ResponseCode",
-        type: "str",
-        dataType: "String",
-        required: false,
-        description: "Status code of the reversal request (returned in response)."
+        type: "str | int",
+        dataType: "String/Integer",
+        required: true,
+        description: "Status code of the reversal request. 0 means success."
     },
     {
         name: "ResponseDescription",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Description of the reversal request status (returned in response)."
+        required: true,
+        description: "Description of the reversal request status."
     }
 ]}
 />
@@ -159,7 +166,7 @@ resp = client.reversal.reverse(
     occasion="Refund"
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("Reversal initiated successfully")
 else:
     print("Reversal failed:", resp.ResponseDescription)
@@ -167,7 +174,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., ReversalResponse) for ergonomic access to fields and helpers like is_successful().
+            - The facade returns typed Pydantic models (e.g., ReversalResponse) for ergonomic access to fields and helpers like is_successful.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -194,7 +201,7 @@ async def main():
             occasion="Refund"
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Reversal initiated successfully")
         else:
             print("Reversal failed:", resp.ResponseDescription)
@@ -336,6 +343,132 @@ async def reversal_timeout(request: Request):
     - Process the actual reversal result asynchronously based on the data in the result callback.
 </Alert>
 
+<SectionHeader title="Result Callback Schema" size="small" subtitle="ReversalResultCallback — posted to ResultURL once the reversal completes" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Result.ResultType",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "0 = success, 1 = waiting/other."
+    },
+    {
+        name: "Result.ResultCode",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Result code for the reversal. Check alongside ResultDesc — Safaricom's sandbox has been observed returning non-zero codes on otherwise-successful reversals."
+    },
+    {
+        name: "Result.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Human readable result description."
+    },
+    {
+        name: "Result.OriginatorConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the OriginatorConversationID from the initial request."
+    },
+    {
+        name: "Result.ConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the ConversationID from the initial acknowledgement."
+    },
+    {
+        name: "Result.TransactionID",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "M-Pesa transaction ID for the reversal, when available."
+    },
+    {
+        name: "Result.ResultParameters.ResultParameter",
+        type: "list[{Key, Value}]",
+        dataType: "Array",
+        required: false,
+        description: "Transaction details, e.g. DebitAccountBalance, Amount, TransCompletedTime, OriginalTransactionID, Charge, CreditPartyPublicName, DebitPartyPublicName."
+    },
+    {
+        name: "Result.ReferenceData.ReferenceItem",
+        type: "{Key, Value}",
+        dataType: "Object",
+        required: false,
+        description: "Reference item, e.g. QueueTimeoutURL."
+    }
+]}
+/>
+
+<SectionHeader title="Timeout Callback Schema" size="small" subtitle="ReversalTimeoutCallback — posted to QueueTimeOutURL if the reversal doesn't complete in time" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Result.ResultType",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "Result type for the timeout notification."
+    },
+    {
+        name: "Result.ResultCode",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Code identifying the timeout, e.g. '1'."
+    },
+    {
+        name: "Result.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "e.g. 'The service request timed out.'"
+    },
+    {
+        name: "Result.OriginatorConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the OriginatorConversationID from the initial request."
+    },
+    {
+        name: "Result.ConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the ConversationID from the initial acknowledgement."
+    }
+]}
+/>
+
+<SectionHeader title="Callback Acknowledgement Schemas" size="small" subtitle="What your webhook handler should return to Safaricom" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: false,
+        description: "Defaults to 0. Used by ReversalResultCallbackResponse and ReversalTimeoutCallbackResponse — the typed models to return from your /result and /timeout handlers respectively."
+    },
+    {
+        name: "ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: false,
+        description: "Defaults to 'Result received and processed successfully.' (result) or 'Timeout notification received and processed successfully.' (timeout)."
+    }
+]}
+/>
+
 <SectionHeader title="Responses & Helpers" size="small" />
 
 <CodeBlock language="json" title="Example Reversal Success Response">
@@ -350,7 +483,7 @@ async def reversal_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - ReversalResponse provides is_successful() which validates the ResponseCode for easy success checks. Available identically on responses from the sync and async clients.
+    - ReversalResponse provides is_successful which validates the ResponseCode for easy success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

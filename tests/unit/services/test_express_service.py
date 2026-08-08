@@ -54,7 +54,7 @@ def test_push_success(stk_push_service, mock_http_client):
     )
 
     assert isinstance(resp, StkPushSimulateResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_push_filters_kwargs(stk_push_service, mock_http_client):
@@ -104,7 +104,7 @@ def test_query_success(stk_push_service, mock_http_client):
         checkout_request_id="ws_CO_13012021093521236557",
     )
     assert isinstance(resp, StkPushQueryResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_query_filters_kwargs(stk_push_service, mock_http_client):
@@ -126,7 +126,7 @@ def test_query_filters_kwargs(stk_push_service, mock_http_client):
         ExtraField="should_be_filtered",
     )
     assert isinstance(resp, StkPushQueryResponse)
-    resp.is_successful() is True
+    resp.is_successful is True
     assert not hasattr(resp, "ExtraField")
 
 
@@ -170,7 +170,7 @@ async def test_async_push_success(async_stk_push_service, mock_async_http_client
     )
 
     assert isinstance(resp, StkPushSimulateResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -223,7 +223,7 @@ async def test_async_query_success(async_stk_push_service, mock_async_http_clien
         checkout_request_id="ws_CO_13012021093521236557",
     )
     assert isinstance(resp, StkPushQueryResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -248,7 +248,7 @@ async def test_async_query_filters_kwargs(
         ExtraField="should_be_filtered",
     )
     assert isinstance(resp, StkPushQueryResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert not hasattr(resp, "ExtraField")
 
 

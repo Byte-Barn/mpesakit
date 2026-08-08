@@ -50,7 +50,7 @@ def test_reverse_request_acknowledged(reversal, mock_http_client):
 
     assert isinstance(response, ReversalResponse)
 
-    assert response.is_successful() is True
+    assert response.is_successful is True
 
     assert response.ConversationID == response_data["ConversationID"]
     assert (
@@ -188,7 +188,7 @@ def test_reverse_responsecode_string_no_type_error(reversal, mock_http_client):
 
     assert isinstance(response, ReversalResponse)
     # Calling is_successful should not raise a TypeError when comparing str to int
-    assert response.is_successful() is True
+    assert response.is_successful is True
 
 def test_reversal_result_callback_success_is_successful():
     """Test is_successful method for a successful reversal result callback."""
@@ -214,7 +214,7 @@ def test_reversal_result_callback_success_is_successful():
         }
     }
     callback = ReversalResultCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 def test_reversal_result_callback_failure_is_successful():
     """Test is_successful method for a failure reversal result callback."""
@@ -240,7 +240,7 @@ def test_reversal_result_callback_failure_is_successful():
         }
     }
     callback = ReversalResultCallback(**payload)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 def test_reversal_result_callback_success_code_is_successful():
     """Test is_successful method with a success code as a string."""
@@ -255,7 +255,7 @@ def test_reversal_result_callback_success_code_is_successful():
         }
     }
     callback = ReversalResultCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 def test_reversal_result_callback_failure_code_is_successful():
     """Test is_successful method with a failure code."""
@@ -270,7 +270,7 @@ def test_reversal_result_callback_failure_code_is_successful():
         }
     }
     callback = ReversalResultCallback(**payload)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 @pytest.fixture
 def async_reversal(mock_async_http_client, mock_async_token_manager):
@@ -296,7 +296,7 @@ async def test_async_reverse_request_acknowledged(
     response = await async_reversal.reverse(request)
 
     assert isinstance(response, ReversalResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ConversationID == response_data["ConversationID"]
 
 @pytest.mark.asyncio
@@ -366,4 +366,4 @@ async def test_async_reverse_responsecode_string_no_type_error(
     response = await async_reversal.reverse(request)
 
     assert isinstance(response, ReversalResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True

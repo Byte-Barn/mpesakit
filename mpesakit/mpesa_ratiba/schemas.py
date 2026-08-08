@@ -214,6 +214,7 @@ class StandingOrderResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the response indicates a successful transaction."""
         return self.ResponseHeader.responseCode == "200"
@@ -290,6 +291,7 @@ class StandingOrderCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the callback indicates a successful transaction."""
         for item in self.ResponseBody.ResponseData:

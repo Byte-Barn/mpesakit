@@ -116,34 +116,41 @@ parameters={[
         dataType: "Integer",
         required: false,
         description: "Identifier type for receiver (default: 4 for shortcode)."
-    },
+    }
+]}
+/>
+
+<SectionHeader title="Response Schema" size="small" subtitle="B2CAccountTopUpResponse — the synchronous acknowledgement returned by client.b2c.account_topup(...)" />
+
+<ParametersTable
+parameters={[
     {
         name: "OriginatorConversationID",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Unique request identifier assigned by Daraja (returned in response)."
+        required: true,
+        description: "Unique request identifier assigned by Daraja."
     },
     {
         name: "ConversationID",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Unique request identifier assigned by M-Pesa (returned in response)."
+        required: true,
+        description: "Unique request identifier assigned by M-Pesa."
     },
     {
         name: "ResponseCode",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Status code for request submission. 0 indicates success (returned in response)."
+        required: true,
+        description: "Status code for request submission. 0 indicates success."
     },
     {
         name: "ResponseDescription",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Descriptive message of the request submission status (returned in response)."
+        required: true,
+        description: "Descriptive message of the request submission status."
     }
 ]}
 />
@@ -188,7 +195,7 @@ resp = client.b2c.account_topup(
     queue_timeout_url="https://your.example/timeout"
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("B2C Account TopUp initiated successfully")
 else:
     print("B2C Account TopUp failed:", resp.ResponseDescription)
@@ -196,7 +203,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed `Pydantic models` (e.g., `B2CAccountTopUpResponse`) for ergonomic access to fields and helpers like `is_successful()`.
+            - The facade returns typed `Pydantic models` (e.g., `B2CAccountTopUpResponse`) for ergonomic access to fields and helpers like `is_successful`.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -224,7 +231,7 @@ async def main():
             queue_timeout_url="https://your.example/timeout"
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("B2C Account TopUp initiated successfully")
         else:
             print("B2C Account TopUp failed:", resp.ResponseDescription)
@@ -369,6 +376,132 @@ async def account_topup_timeout(request: Request):
     - Regardless of whether the original request was sent via `MpesaClient` or `AsyncMpesaClient`, the callback payload and validation shown above are identical — the callback is just an inbound HTTP POST from Safaricom, not part of the client that sent the request.
 </Alert>
 
+<SectionHeader title="Result Callback Schema" size="small" subtitle="B2CAccountTopUpCallback — posted to ResultURL once the top-up completes" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Result.ResultType",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "Status code for the transaction sent to the listener."
+    },
+    {
+        name: "Result.ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "Transaction result status code. 0 means success."
+    },
+    {
+        name: "Result.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Descriptive message for the transaction result."
+    },
+    {
+        name: "Result.OriginatorConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique request identifier assigned by the API gateway."
+    },
+    {
+        name: "Result.ConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique request identifier assigned by M-Pesa."
+    },
+    {
+        name: "Result.TransactionID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique M-Pesa transaction ID for the payment request."
+    },
+    {
+        name: "Result.ResultParameters.ResultParameter",
+        type: "list[{Key, Value}]",
+        dataType: "Array",
+        required: false,
+        description: "Transaction details, e.g. DebitAccountBalance, Amount, DebitPartyAffectedAccountBalance, TransCompletedTime, DebitPartyCharges, ReceiverPartyPublicName, Currency, InitiatorAccountCurrentBalance."
+    },
+    {
+        name: "Result.ReferenceData.ReferenceItem",
+        type: "list[{Key, Value}]",
+        dataType: "Array",
+        required: false,
+        description: "Reference items, e.g. BillReferenceNumber, QueueTimeoutURL."
+    }
+]}
+/>
+
+<SectionHeader title="Timeout Callback Schema" size="small" subtitle="B2CAccountTopUpTimeoutCallback — posted to QueueTimeOutURL if the top-up doesn't complete in time" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Result.ResultType",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "1 indicates a timeout."
+    },
+    {
+        name: "Result.ResultCode",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "'1' indicates a timeout."
+    },
+    {
+        name: "Result.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Description of the timeout event, e.g. 'The service request timed out.'"
+    },
+    {
+        name: "Result.OriginatorConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique request identifier assigned by Daraja."
+    },
+    {
+        name: "Result.ConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique request identifier assigned by M-Pesa."
+    }
+]}
+/>
+
+<SectionHeader title="Callback Acknowledgement Schemas" size="small" subtitle="What your webhook handler should return to Safaricom" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: false,
+        description: "Defaults to 0. Used by B2CAccountTopUpCallbackResponse and B2CAccountTopUpTimeoutCallbackResponse — the typed models to return from your /result and /timeout handlers respectively."
+    },
+    {
+        name: "ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: false,
+        description: "Defaults to 'Callback processed successfully' (result) or 'Timeout notification received and processed successfully.' (timeout)."
+    }
+]}
+/>
+
 <SectionHeader title="Responses & Helpers" size="small" />
 
 <CodeBlock language="json" title="Example B2C Account TopUp Success Response">
@@ -383,7 +516,7 @@ async def account_topup_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - B2CAccountTopUpResponse provides is_successful() which normalizes success checks. This is available identically on the response returned by the sync and async clients.
+    - B2CAccountTopUpResponse provides is_successful which normalizes success checks. This is available identically on the response returned by the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

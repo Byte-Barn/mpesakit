@@ -36,6 +36,17 @@ def test_http_client_instance(client):
     assert isinstance(client.http_client, MpesaAsyncHttpClient)
 
 
+def test_default_max_retries_is_three(client):
+    """Test that the default max_retries is passed through to the http_client."""
+    assert client.http_client.max_retries == 3
+
+
+def test_custom_max_retries_is_passed_through():
+    """Test that a custom max_retries is passed through to the http_client."""
+    client = AsyncMpesaClient("dummy_key", "dummy_secret", max_retries=5)
+    assert client.http_client.max_retries == 5
+
+
 def test_token_manager_instance(client):
     """Test that the token_manager is an instance of AsyncTokenManager."""
     assert isinstance(client.token_manager, AsyncTokenManager)
