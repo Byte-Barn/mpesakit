@@ -71,6 +71,7 @@ const SecurityVisual: React.FC = () => {
     <div className={styles.securityVisual}>
       <div style={{
         background: 'var(--gradient-dark)',
+        color: 'var(--terminal-text)',
         borderRadius: '20px',
         padding: '2rem',
         border: '1px solid rgba(59, 130, 246, 0.2)'
@@ -90,7 +91,7 @@ const SecurityVisual: React.FC = () => {
               }}
             >
               <strong>{layer.title}</strong><br />
-              <small style={{ color: 'var(--text-secondary)' }}>{layer.description}</small>
+              <small style={{ color: 'var(--terminal-text-secondary)' }}>{layer.description}</small>
             </div>
           ))}
         </div>
