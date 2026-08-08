@@ -7,6 +7,7 @@ from fastmcp import FastMCP
 
 from mpesakit import MpesaClient
 from mpesakit.errors import MpesaApiException
+from mpesakit.b2c.schemas import B2CCommandIDType
 
 # Initialize FastMCP with descriptive metadata
 mcp = FastMCP(
@@ -207,7 +208,7 @@ def c2b_register_url(response_type: str = "Completed") -> dict:
 
 @mcp.tool()
 def b2c_send_payment(
-    phone_number: str, amount: int, command_id: str, remarks: str, occasion: str = ""
+    phone_number: str, amount: int, command_id: B2CCommandIDType, remarks: str, occasion: str = ""
 ) -> dict:
     """Send money from the Business to a Customer (B2C).
 
