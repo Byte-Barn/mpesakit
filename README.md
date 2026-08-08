@@ -68,7 +68,7 @@ response = client.stk_push(
 if response.is_successful:
     print("Request accepted:", response.CheckoutRequestID)
 else:
-    print("Error:", response.error_message())
+    print("Error:", response.ResponseDescription)
 ```
 
 Prefer async? Swap in `AsyncMpesaClient` and `await` the call — see [Async Support](#async-support) below.
@@ -174,7 +174,7 @@ async def main():
         if response.is_successful:
             print("Request accepted:", response.CheckoutRequestID)
         else:
-            print("Error:", response.error_message())
+            print("Error:", response.ResponseDescription)
 
 asyncio.run(main())
 ```

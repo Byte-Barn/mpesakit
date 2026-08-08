@@ -123,34 +123,41 @@ parameters={[
         dataType: "Integer",
         required: false,
         description: "Identifier type for receiver (default: 4 for shortcode)."
-    },
+    }
+]}
+/>
+
+<SectionHeader title="Response Schema" size="small" subtitle="BusinessBuyGoodsResponse — the synchronous acknowledgement returned by client.b2b.buygoods(...)" />
+
+<ParametersTable
+parameters={[
     {
         name: "OriginatorConversationID",
-        type: "str",
+        type: "str | null",
         dataType: "String",
-        required: false,
-        description: "Unique ID for the request message (returned in response)."
+        required: true,
+        description: "Unique ID for the request message."
     },
     {
         name: "ConversationID",
-        type: "str",
+        type: "str | null",
         dataType: "String",
-        required: false,
-        description: "Unique ID for the transaction (returned in response)."
+        required: true,
+        description: "Unique ID for the transaction."
     },
     {
         name: "ResponseCode",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Status code of the request (0 means success, returned in response)."
+        required: true,
+        description: "Status code of the request. 0 means success."
     },
     {
         name: "ResponseDescription",
         type: "str",
         dataType: "String",
-        required: false,
-        description: "Status message describing the request outcome (returned in response)."
+        required: true,
+        description: "Status message describing the request outcome."
     }
 ]}
 />
@@ -375,6 +382,94 @@ async def buygoods_timeout(request: Request):
     - Result and timeout endpoints should return acknowledgements (ResultCode 0). This confirms receipt to Safaricom.
     - Process the actual Business Buy Goods result asynchronously based on the data in the result callback.
 </Alert>
+
+<SectionHeader title="Result Callback Schema" size="small" subtitle="BusinessBuyGoodsResultCallback — posted to ResultURL once the payment completes" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Result.ResultType",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "0 = success, 1 = failure."
+    },
+    {
+        name: "Result.ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "0 indicates the payment succeeded; any other value is a failure code."
+    },
+    {
+        name: "Result.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Human readable result description."
+    },
+    {
+        name: "Result.OriginatorConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the OriginatorConversationID from the initial request."
+    },
+    {
+        name: "Result.ConversationID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the ConversationID from the initial acknowledgement."
+    },
+    {
+        name: "Result.TransactionID",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "M-Pesa transaction ID for the payment, when successful."
+    },
+    {
+        name: "Result.ResultParameters.ResultParameter",
+        type: "list[{Key, Value}] | {Key, Value}",
+        dataType: "Array/Object",
+        required: false,
+        description: "Transaction details, e.g. DebitAccountBalance, Amount, DebitPartyAffectedAccountBalance, TransCompletedTime, DebitPartyCharges, ReceiverPartyPublicName, Currency, InitiatorAccountCurrentBalance."
+    },
+    {
+        name: "Result.ReferenceData.ReferenceItem",
+        type: "list[{Key, Value}] | {Key, Value}",
+        dataType: "Array/Object",
+        required: false,
+        description: "Reference items, e.g. BillReferenceNumber, QueueTimeoutURL."
+    }
+]}
+/>
+
+<SectionHeader title="Timeout Callback Schema" size="small" subtitle="BusinessBuyGoodsTimeoutCallback — posted to QueueTimeOutURL if the payment doesn't complete in time" />
+
+<p>Uses the same <code>Result</code> shape as the Result Callback Schema above (it's the same <code>BusinessBuyGoodsResultMetadata</code> model), just delivered to <code>QueueTimeOutURL</code> instead of <code>ResultURL</code>, typically with a non-zero <code>ResultCode</code>.</p>
+
+<SectionHeader title="Callback Acknowledgement Schemas" size="small" subtitle="What your webhook handler should return to Safaricom" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: false,
+        description: "Defaults to 0. Used by BusinessBuyGoodsResultCallbackResponse and BusinessBuyGoodsTimeoutCallbackResponse — the typed models to return from your /result and /timeout handlers respectively."
+    },
+    {
+        name: "ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: false,
+        description: "Defaults to 'Callback received successfully.' (result) or 'Timeout notification received successfully.' (timeout)."
+    }
+]}
+/>
 
 <SectionHeader title="Responses & Helpers" size="small" />
 

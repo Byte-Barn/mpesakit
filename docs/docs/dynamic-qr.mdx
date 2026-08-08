@@ -270,6 +270,34 @@ asyncio.run(main())`}
 - Use `is_successful` to check if the request succeeded.
 - If you need the raw response data, use `model_dump(mode="json")` to get a dictionary representation.
 
+<SectionHeader title="Response Schema" size="small" subtitle="DynamicQRGenerateResponse — returned by client.dynamic_qr.generate(...). This is a synchronous, single-call API with no result/timeout callbacks." />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResponseCode",
+        type: "str | int",
+        dataType: "String/Integer",
+        required: true,
+        description: "'00' indicates the QR code was generated successfully."
+    },
+    {
+        name: "ResponseDescription",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Human readable status description, e.g. 'QR Code Successfully Generated.'"
+    },
+    {
+        name: "QRCode",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Base64-encoded QR code image data."
+    }
+]}
+/>
+
 <CodeBlock language="json" title="Sample Response">
 {`{
     "ResponseCode": "00",

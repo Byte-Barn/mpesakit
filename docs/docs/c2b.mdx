@@ -58,13 +58,50 @@ parameters={[
         dataType: "String",
         required: true,
         description: "HTTPS endpoint that will receive validation callbacks before accepting payments."
+    }
+]}
+/>
+
+<SectionHeader title="URL Registration Response Schema" size="small" subtitle="C2BRegisterUrlResponse — the acknowledgement returned by client.c2b.register_url(...)" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "OriginatorConversationID",
+        type: "str | null",
+        dataType: "String",
+        required: true,
+        description: "Unique ID for the registration request."
     },
+    {
+        name: "ResponseCode",
+        type: "str | int",
+        dataType: "String/Integer",
+        required: true,
+        description: "Status code. Any all-zero value (e.g. '0') indicates success."
+    },
+    {
+        name: "ResponseDescription",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Status message, e.g. 'success'."
+    }
+]}
+/>
+
+<SectionHeader title="Validation & Confirmation Callback Schema" size="small" subtitle="C2BValidationRequest — the payment payload posted to both ValidationURL and ConfirmationURL" />
+
+<p>Safaricom posts the same payload shape to both URLs: a validation request before the payment is accepted (only if external validation is enabled on your shortcode), and a confirmation notice once the payment has completed.</p>
+
+<ParametersTable
+parameters={[
     {
         name: "TransactionType",
         type: "str",
         dataType: "String",
         required: true,
-        description: "Type of transaction in validation payload (e.g. 'Pay Bill', 'Buy Goods')."
+        description: "Type of transaction (e.g. 'Pay Bill', 'Buy Goods')."
     },
     {
         name: "TransID",
@@ -92,42 +129,112 @@ parameters={[
         type: "int",
         dataType: "Integer",
         required: true,
-        description: "Receiving organization's shortcode included in validation payload."
+        description: "Receiving organization's shortcode."
+    },
+    {
+        name: "BillRefNumber",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Account/reference number supplied by payer (PayBill only, max 20 chars)."
+    },
+    {
+        name: "InvoiceNumber",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Invoice number, when applicable."
+    },
+    {
+        name: "OrgAccountBalance",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Organization account balance after the payment."
+    },
+    {
+        name: "ThirdPartyTransID",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Partner transaction ID, when applicable."
     },
     {
         name: "MSISDN",
-        type: "int",
-        dataType: "Integer",
+        type: "int | str",
+        dataType: "Integer/String",
         required: true,
         description: "Customer mobile number making the payment."
     },
     {
-        name: "BillRefNumber",
-        type: "str",
+        name: "FirstName",
+        type: "str | null",
         dataType: "String",
         required: false,
-        description: "Account/reference number supplied by payer (PayBill only)."
+        description: "Customer's first name, when known to M-Pesa."
     },
     {
+        name: "MiddleName",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Customer's middle name, when known to M-Pesa."
+    },
+    {
+        name: "LastName",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Customer's last name, when known to M-Pesa."
+    }
+]}
+/>
+
+<SectionHeader title="Validation Response Schema" size="small" subtitle="C2BValidationResponse — what your /validation handler should return" />
+
+<ParametersTable
+parameters={[
+    {
         name: "ResultCode",
-        type: "str|int",
+        type: "str | int",
         dataType: "String/Integer",
         required: true,
-        description: "Validation response code. '0' or one of the defined C2B validation error codes to reject."
+        description: "'0' to accept the payment, or one of the C2B validation error codes to reject it (see Validation Result Codes below)."
     },
     {
         name: "ResultDesc",
         type: "str",
         dataType: "String",
         required: true,
-        description: "Short description for the validation response (<= 90 chars recommended)."
+        description: "Short description, e.g. 'Accepted' or 'Rejected' (<= 90 chars recommended)."
     },
     {
         name: "ThirdPartyTransID",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Optional partner transaction id to echo back."
+    }
+]}
+/>
+
+<SectionHeader title="Confirmation Acknowledgement Schema" size="small" subtitle="C2BConfirmationResponse — what your /confirmation handler should return" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: false,
+        description: "Defaults to 0 (success)."
+    },
+    {
+        name: "ResultDesc",
         type: "str",
         dataType: "String",
         required: false,
-        description: "Optional partner transaction id to echo back in responses."
+        description: "Defaults to 'Success'."
     }
 ]}
 />
@@ -370,10 +477,8 @@ async def confirmation(request: Request):
 {`
 {
     "OriginatorConversationID": "7619-37765134-1",
-    "ConversationID": "AG_20230601_123456789",
     "ResponseCode": "0",
-    "ResponseDescription": "success",
-    "CustomerMessage": "URLs registered"
+    "ResponseDescription": "success"
 }
 `}
 </CodeBlock>

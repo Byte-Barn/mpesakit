@@ -359,7 +359,7 @@ asyncio.run(main())
     {`if response.is_successful:
     print("Request accepted")
 else:
-    print(f"Error: {response.error_message()}")  # Get error message`}
+    print(f"Error: {response.ResponseDescription}")  # Get error message`}
     </CodeBlock>
     <Alert type="info" title="Error Handling">
         Any error in the request will raise an `MpesaError` exception, which we can catch and handle appropriately. We will see how to utilize this later on.
@@ -368,6 +368,48 @@ else:
 
 
 <SectionHeader title="Success Response" size="small" />
+
+<SectionHeader title="Response Schema" size="small" subtitle="StkPushSimulateResponse — the synchronous acknowledgement returned by client.stk_push(...)" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "MerchantRequestID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Global unique identifier for the submitted payment request."
+    },
+    {
+        name: "CheckoutRequestID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Global unique identifier for the processed checkout transaction request. Use this to correlate with the later callback or an StkQuery."
+    },
+    {
+        name: "ResponseCode",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "0 means the request was accepted for processing."
+    },
+    {
+        name: "ResponseDescription",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Acknowledgment message about the request submission status."
+    },
+    {
+        name: "CustomerMessage",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Message that can be shown to the customer, e.g. 'Enter your PIN to complete payment'."
+    }
+]}
+/>
 
 <CodeBlock language="json" title="JSON Response">
 {`{
@@ -523,14 +565,14 @@ async def stk_callback(request: Request):
     callback = client.process_stk_callback(payload)
 
     if callback.is_successful:
-        amount = callback.amount()
-        receipt = callback.mpesa_receipt_number()
-        phone = callback.phone_number()
-        # e.g. mark the matching order as paid using callback.CheckoutRequestID
+        amount = callback.amount
+        receipt = callback.mpesa_receipt_number
+        phone = callback.phone_number
+        # e.g. mark the matching order as paid using callback.Body.stkCallback.CheckoutRequestID
         print(f"Payment of {amount} received from {phone}, receipt {receipt}")
     else:
         # e.g. customer cancelled the prompt or had insufficient funds
-        print(f"Payment failed: {callback.result_description()}")
+        print(f"Payment failed: {callback.Body.stkCallback.ResultDesc}")
 
     # Acknowledge receipt so Safaricom stops retrying
     return {"ResultCode": 0, "ResultDesc": "Accepted"}
@@ -564,13 +606,13 @@ async def stk_callback(request: Request):
     callback = client.process_stk_callback(payload)
 
     if callback.is_successful:
-        amount = callback.amount()
-        receipt = callback.mpesa_receipt_number()
-        phone = callback.phone_number()
+        amount = callback.amount
+        receipt = callback.mpesa_receipt_number
+        phone = callback.phone_number
         # await your async order-update / notification logic here
         print(f"Payment of {amount} received from {phone}, receipt {receipt}")
     else:
-        print(f"Payment failed: {callback.result_description()}")
+        print(f"Payment failed: {callback.Body.stkCallback.ResultDesc}")
 
     return {"ResultCode": 0, "ResultDesc": "Accepted"}
 `}
@@ -602,6 +644,81 @@ async def stk_callback(request: Request):
 }
 ```
 </Alert>
+
+<SectionHeader title="Callback Schema" size="small" subtitle="StkPushSimulateCallback — the payload posted to your callback_url, exposed via Body.stkCallback" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "Body.stkCallback.MerchantRequestID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the MerchantRequestID from the initial response."
+    },
+    {
+        name: "Body.stkCallback.CheckoutRequestID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Matches the CheckoutRequestID from the initial response."
+    },
+    {
+        name: "Body.stkCallback.ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "0 means the customer completed payment. Any other value means cancellation, insufficient funds, timeout, etc."
+    },
+    {
+        name: "Body.stkCallback.ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Human readable description of the result, e.g. 'The service request is processed successfully.'"
+    },
+    {
+        name: "Body.stkCallback.CallbackMetadata.Item",
+        type: "list[{Name, Value}] | null",
+        dataType: "Array",
+        required: false,
+        description: "Present only on success. Contains Amount, MpesaReceiptNumber, TransactionDate, PhoneNumber and (occasionally) Balance."
+    }
+]}
+/>
+
+<Alert type="info" title="Convenience properties on StkPushSimulateCallback">
+    Rather than digging through <code>CallbackMetadata.Item</code> yourself, use these properties (note: properties, not methods — no <code>()</code>) exposed directly on the object returned by <code>process_stk_callback</code>:
+    - `callback.amount` — the transacted amount, from the 'Amount' item.
+    - `callback.mpesa_receipt_number` — the M-Pesa receipt number, from 'MpesaReceiptNumber'.
+    - `callback.balance` — account balance, from 'Balance', when present.
+    - `callback.transaction_date` — from 'TransactionDate'.
+    - `callback.phone_number` — payer's phone number, from 'PhoneNumber'.
+    - `callback.is_successful` — `True` when `Body.stkCallback.ResultCode == 0`.
+
+    All of these return `None` if `CallbackMetadata` is absent (i.e. the transaction failed) — always check `is_successful` first, and fall back to `callback.Body.stkCallback.ResultDesc` for the failure reason.
+</Alert>
+
+<SectionHeader title="Callback Acknowledgement Schema" size="small" subtitle="StkPushSimulateCallbackResponse — what your callback handler should return to Safaricom" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: false,
+        description: "Defaults to 0 (success)."
+    },
+    {
+        name: "ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: false,
+        description: "Defaults to 'Success'."
+    }
+]}
+/>
 
 <SectionHeader title="Querying Status Instead of (or In Addition to) Waiting" size="small" />
 

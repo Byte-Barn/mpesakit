@@ -243,16 +243,72 @@ asyncio.run(main())
     - ResponseCode of 0 generally means the query request was accepted.
     - ResultCode of 0 indicates the transaction was successful. Other ResultCodes convey errors, timeouts or user cancellation.
 
+<SectionHeader title="Response Schema" size="small" subtitle="StkPushQueryResponse — returned by client.stk_query(...) / stk_service.query(...)" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "MerchantRequestID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Global unique identifier for the original payment request."
+    },
+    {
+        name: "CheckoutRequestID",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Global unique identifier of the checkout transaction request being queried."
+    },
+    {
+        name: "ResponseCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "0 means the query request itself was accepted and processed."
+    },
+    {
+        name: "ResponseDescription",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Acknowledgment message about the query submission status."
+    },
+    {
+        name: "ResultCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "0 means the underlying STK Push transaction itself was successful. Other codes mean the transaction failed, was cancelled, or timed out."
+    },
+    {
+        name: "ResultDesc",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Human readable description of the transaction result."
+    }
+]}
+/>
+
+<Alert type="warning" title="is_successful checks ResponseCode, not ResultCode">
+    `StkPushQueryResponse.is_successful` mirrors every other response model in the SDK: it treats an all-zero `ResponseCode` as success — i.e. it tells you whether the *query itself* succeeded, not whether the underlying payment succeeded. To determine the actual payment outcome, check `ResultCode`/`ResultDesc` directly (0 = paid; anything else = failed, cancelled or timed out).
+</Alert>
+
 <CodeBlock language="python">
 {`
 # Example handling snippet (pseudo)
 resp = stk_service.query(request=q)          # or: await stk_service.query(request=q)
-if resp.is_successful:
-        # Final state returned by Daraja
-        handle_success(resp)
+if not resp.is_successful:
+        # The query itself failed/was rejected — inspect resp.ResponseDescription
+        handle_query_error(resp)
+elif str(resp.ResultCode) == "0":
+        # The underlying STK Push payment succeeded
+        handle_payment_success(resp)
 else:
-        # Log / inspect resp.ResponseCode, resp.ResultCode and resp.ResultDesc
-        handle_failure(resp)
+        # Payment failed, was cancelled, or timed out — inspect resp.ResultDesc
+        handle_payment_failure(resp)
 `}
 </CodeBlock>
 
