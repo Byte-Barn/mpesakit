@@ -36,6 +36,24 @@ def test_http_client_instance(client):
     assert isinstance(client.http_client, MpesaHttpClient)
 
 
+def test_default_max_retries_is_three(client):
+    """Test that the default max_retries is passed through to the http_client."""
+    assert client.http_client.max_retries == 3
+
+
+def test_custom_max_retries_is_passed_through():
+    """Test that a custom max_retries is passed through to the http_client."""
+    client = MpesaClient("dummy_key", "dummy_secret", max_retries=5)
+    assert client.http_client.max_retries == 5
+
+
+def test_use_session_is_passed_through():
+    """Test that use_session is passed through and creates a persistent client."""
+    client = MpesaClient("dummy_key", "dummy_secret", use_session=True)
+    assert client.http_client._client is not None
+    client.http_client.close()
+
+
 def test_token_manager_instance(client):
     """Test that the token_manager is an instance of TokenManager."""
     assert isinstance(client.token_manager, TokenManager)

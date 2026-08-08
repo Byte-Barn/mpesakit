@@ -64,6 +64,7 @@ class MpesaClient(MpesaCallbackMixin):
         consumer_secret: str,
         environment: str = "sandbox",
         use_session: bool = False,
+        max_retries: int = 3,
     ) -> None: ...
 
 class AsyncMpesaClient(MpesaCallbackMixin):
@@ -83,5 +84,9 @@ class AsyncMpesaClient(MpesaCallbackMixin):
     c2b: Incomplete
     ratiba: Incomplete
     def __init__(
-        self, consumer_key: str, consumer_secret: str, environment: str = "sandbox"
+        self,
+        consumer_key: str,
+        consumer_secret: str,
+        environment: str = "sandbox",
+        max_retries: int = 3,
     ) -> None: ...

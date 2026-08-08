@@ -119,6 +119,19 @@ def test_post_fails_after_max_retries(client):
         assert exc.value.error.error_code == "CONNECTION_ERROR"
 
 
+def test_post_respects_custom_max_retries():
+    """Test that a custom max_retries value controls the number of attempts."""
+    client = MpesaHttpClient(env="sandbox", max_retries=5)
+    with patch("httpx.Client.post") as mock_httpx_post:
+        mock_httpx_post.side_effect = httpx.ConnectError("Connection failed.")
+
+        with pytest.raises(MpesaApiException) as exc:
+            client.post("/test", json={"a": 1}, headers={"h": "v"})
+
+        assert mock_httpx_post.call_count == 5
+        assert exc.value.error.error_code == "CONNECTION_ERROR"
+
+
 def test_get_success(client):
     """Test successful GET request returns expected JSON."""
     with patch.object(client, "_raw_get") as mock_raw_get:
