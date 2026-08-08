@@ -112,7 +112,7 @@ response = client.dynamic_qr.generate(
         size="300",
 )
 
-if response.is_successful():
+if response.is_successful:
         print("QR generated", response.QRCode)
 else:
         print("Failed:", response.ResponseDescription)`}
@@ -144,7 +144,7 @@ async def main():
             size="300",
         )
 
-        if response.is_successful():
+        if response.is_successful:
             print("QR generated", response.QRCode)
         else:
             print("Failed:", response.ResponseDescription)
@@ -214,7 +214,7 @@ req = DynamicQRGenerateRequest(
 
 resp = service.generate(req)
 
-if resp.is_successful():
+if resp.is_successful:
         # resp.QRCode contains the QR payload (e.g., base64 or image data)
         print("QR ready:", resp.QRCode)
 else:
@@ -254,7 +254,7 @@ async def main():
 
         resp = await service.generate(req)
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("QR ready:", resp.QRCode)
         else:
             print("Error:", resp.ResponseDescription)
@@ -267,7 +267,7 @@ asyncio.run(main())`}
 <SectionHeader title="Response" size="small" />
 
 - Response objects are typed models with attributes matching the API response fields, whether returned directly (sync) or via `await` (async).
-- Use `is_successful()` to check if the request succeeded.
+- Use `is_successful` to check if the request succeeded.
 - If you need the raw response data, use `model_dump(mode="json")` to get a dictionary representation.
 
 <CodeBlock language="json" title="Sample Response">
@@ -280,7 +280,7 @@ asyncio.run(main())`}
 
 <CodeBlock language="python" title="Python">
 {`# Check success and extract QR payload
-if response.is_successful():
+if response.is_successful:
         payload = response.QRCode
         # store or render payload as needed
 else:

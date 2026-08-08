@@ -76,7 +76,7 @@ def test_b2c_response_is_successful_zero_code():
         ResponseCode="0",
         ResponseDescription="Accept the service request successfully.",
     )
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_b2c_response_is_successful_all_zeros():
     """Test is_successful returns True for ResponseCode '00000000'."""
@@ -86,7 +86,7 @@ def test_b2c_response_is_successful_all_zeros():
         ResponseCode="00000000",
         ResponseDescription="Accept the service request successfully.",
     )
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_b2c_response_is_successful_non_zero_code():
     """Test is_successful returns False for non-success ResponseCode."""
@@ -96,7 +96,7 @@ def test_b2c_response_is_successful_non_zero_code():
         ResponseCode="1",
         ResponseDescription="Failed.",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_b2c_response_is_successful_mixed_code():
     """Test is_successful returns False for mixed ResponseCode like '00001'."""
@@ -106,7 +106,7 @@ def test_b2c_response_is_successful_mixed_code():
         ResponseCode="00001",
         ResponseDescription="Failed.",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_b2c_response_is_successful_empty_code():
     """Test is_successful returns False for empty ResponseCode."""
@@ -116,7 +116,7 @@ def test_b2c_response_is_successful_empty_code():
         ResponseCode="",
         ResponseDescription="Failed.",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 @pytest.mark.parametrize("invalid_command_id", ["InvalidCommand", "", None])
 def test_b2c_request_invalid_command_id_raises(invalid_command_id):
@@ -321,7 +321,7 @@ def test_result_callback_is_successful_zero_code():
         ResultParameters=[],
     )
     callback = B2CResultCallback(Result=meta)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 def test_result_callback_is_successful_all_zeros():
     """Test is_successful returns True for ResultCode as string of zeros."""
@@ -337,7 +337,7 @@ def test_result_callback_is_successful_all_zeros():
     callback = B2CResultCallback(Result=meta)
     # Simulate ResultCode "00000000"
     callback.Result.ResultCode = 0
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 def test_result_callback_is_successful_non_zero_code():
     """Test is_successful returns False for non-zero ResultCode."""
@@ -351,7 +351,7 @@ def test_result_callback_is_successful_non_zero_code():
         ResultParameters=[],
     )
     callback = B2CResultCallback(Result=meta)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 def test_result_callback_is_successful_mixed_code():
     """Test is_successful returns False for mixed code like 00001."""
@@ -365,7 +365,7 @@ def test_result_callback_is_successful_mixed_code():
         ResultParameters=[],
     )
     callback = B2CResultCallback(Result=meta)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 def test_result_callback_is_successful_negative_code():
     """Test is_successful returns False for negative ResultCode."""
@@ -379,7 +379,7 @@ def test_result_callback_is_successful_negative_code():
         ResultParameters=[],
     )
     callback = B2CResultCallback(Result=meta)
-    assert callback.is_successful() is False
+    assert callback.is_successful is False
 
 @pytest.fixture
 def async_b2c(mock_async_http_client, mock_async_token_manager):

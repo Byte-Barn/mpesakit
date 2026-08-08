@@ -172,7 +172,7 @@ resp: B2CResponse = client.b2c.send_payment(
 )
 
 # Inspect the typed response
-if resp.is_successful():
+if resp.is_successful:
     print("B2C sent:", resp.ResponseDescription)
 else:
     print("B2C failed:", resp.ResponseDescription, "code:", resp.ResponseCode)
@@ -214,7 +214,7 @@ async def main():
             occasion="JulySalary",
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("B2C sent:", resp.ResponseDescription)
         else:
             print("B2C failed:", resp.ResponseDescription, "code:", resp.ResponseCode)
@@ -301,7 +301,7 @@ req = B2CRequest(
 #  - return a typed B2CResponse model
 try:
     resp: B2CResponse = b2c.send_payment(req)
-    if resp.is_successful():
+    if resp.is_successful:
         print("B2C sent:", resp.ResponseDescription)
     else:
         print("B2C failed:", resp.ResponseDescription, "code:", resp.ResponseCode)
@@ -346,7 +346,7 @@ async def main():
 
         try:
             resp: B2CResponse = await b2c.send_payment(req)
-            if resp.is_successful():
+            if resp.is_successful:
                 print("B2C sent:", resp.ResponseDescription)
             else:
                 print("B2C failed:", resp.ResponseDescription, "code:", resp.ResponseCode)
@@ -501,7 +501,7 @@ async def b2c_timeout(request: Request):
 </Alert>
 
 <Alert type="info" title="Response helpers">
-    - `B2CResponse.is_successful()` treats any all-zero string (e.g., "0" or "00000000") as success. Empty strings or mixed non-zero codes are not considered successful.
+    - `B2CResponse.is_successful` treats any all-zero string (e.g., "0" or "00000000") as success. Empty strings or mixed non-zero codes are not considered successful.
     - `B2CResultMetadata` exposes convenience properties for common result parameters:
         - `transaction_amount`, `transaction_receipt`, `recipient_is_registered` (`returns True/False/None`), `receiver_party_public_name`, `transaction_completed_datetime`, `charges`/`utility`/`working account balances`.
 </Alert>
@@ -542,7 +542,7 @@ except Exception as exc:
 
 - Send payment:
     - The service posts payment requests to the provider using the configured `HttpClient` (or `MpesaAsyncHttpClient`) and supplies Authorization via `TokenManager` (or `AsyncTokenManager`).
-    - Successful responses are returned as `B2CResponse` instances; call `is_successful()` to check outcome. This holds whether the response came back directly (sync) or via `await` (async).
+    - Successful responses are returned as `B2CResponse` instances; call `is_successful` to check outcome. This holds whether the response came back directly (sync) or via `await` (async).
 
 - Request validation:
     - Invalid `CommandID`, malformed `PartyB` or overly long `Remarks`/`Occasion` should raise validation errors during model construction.

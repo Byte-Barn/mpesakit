@@ -72,4 +72,4 @@ def test_transaction_reversal_e2e(reversal_service):
 
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
-    assert response.is_successful() is True, "Transaction reversal failed"
+    assert response.is_successful is True, "Transaction reversal failed"

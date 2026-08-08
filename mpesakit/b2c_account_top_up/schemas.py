@@ -78,6 +78,7 @@ class B2CAccountTopUpResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the response indicates a successful submission."""
         return self.ResponseCode == "0"
@@ -230,6 +231,7 @@ class B2CAccountTopUpCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the callback indicates a successful transaction."""
         code = str(self.Result.ResultCode)

@@ -103,7 +103,7 @@ result = client.stk_query(
     passkey="your_passkey_here",          # or provide password + timestamp
 )
 
-if result.is_successful():
+if result.is_successful:
         print("Transaction processed:", result.ResultDesc)
 else:
         print("Status:", result.ResponseDescription, "| Code:", result.ResponseCode)
@@ -137,7 +137,7 @@ async def main():
             passkey="your_passkey_here",
         )
 
-        if result.is_successful():
+        if result.is_successful:
             print("Transaction processed:", result.ResultDesc)
         else:
             print("Status:", result.ResponseDescription, "| Code:", result.ResponseCode)
@@ -187,7 +187,7 @@ payload = StkPushQueryRequest(
 response = stk_service.query(request=payload)
 
 # Evaluate the response
-if response.is_successful():
+if response.is_successful:
         print("Success:", response.ResultDesc)
 else:
         print("ResultCode:", response.ResultCode, "→", response.ResultDesc)
@@ -225,7 +225,7 @@ async def main():
 
         response = await stk_service.query(request=payload)
 
-        if response.is_successful():
+        if response.is_successful:
             print("Success:", response.ResultDesc)
         else:
             print("ResultCode:", response.ResultCode, "→", response.ResultDesc)
@@ -247,7 +247,7 @@ asyncio.run(main())
 {`
 # Example handling snippet (pseudo)
 resp = stk_service.query(request=q)          # or: await stk_service.query(request=q)
-if resp.is_successful():
+if resp.is_successful:
         # Final state returned by Daraja
         handle_success(resp)
 else:

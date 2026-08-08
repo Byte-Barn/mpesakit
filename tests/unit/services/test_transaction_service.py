@@ -49,7 +49,7 @@ def test_query_status_calls_transaction_status(transaction_service, mock_http_cl
         occasion="JuneSalary",
     )
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -78,7 +78,7 @@ def test_query_status_default_command_id(transaction_service, mock_http_client):
 
     # Assumption is that the default CommandID is used inside the TransactionStatusRequest
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -107,7 +107,7 @@ def test_query_status_default_remarks(transaction_service, mock_http_client):
 
     # Assumption is that the default Remarks is used inside the TransactionStatusRequest
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -135,7 +135,7 @@ def test_query_status_filters_kwargs(transaction_service, mock_http_client):
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     # unexpected_field should not be present in the response
     assert not hasattr(resp, "unexpected_field")
 
@@ -178,7 +178,7 @@ async def test_async_query_status_calls_transaction_status(
         occasion="JuneSalary",
     )
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -208,7 +208,7 @@ async def test_async_query_status_default_command_id(
     )
 
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -238,7 +238,7 @@ async def test_async_query_status_default_remarks(
     )
 
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -269,7 +269,7 @@ async def test_async_query_status_filters_kwargs(
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, TransactionStatusResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert not hasattr(resp, "unexpected_field")
 
 

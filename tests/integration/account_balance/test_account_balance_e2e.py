@@ -66,6 +66,6 @@ def test_account_balance_query_e2e(account_balance_service):
     response = account_balance_service.query(request=request)
     print(f"✅ Account Balance response: {response}")
 
-    assert response.is_successful() is True, "Account balance query failed"
+    assert response.is_successful is True, "Account balance query failed"
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None

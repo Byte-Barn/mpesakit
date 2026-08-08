@@ -53,7 +53,7 @@ def test_topup_success(b2c_account_topup, mock_http_client):
     response = b2c_account_topup.topup(request)
 
     assert isinstance(response, B2CAccountTopUpResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
@@ -89,7 +89,7 @@ def test_b2c_account_topup_success_callback():
         }
     }
     callback = B2CAccountTopUpCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
     assert callback.Result.ResultCode == 0
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultDesc.startswith("The service request is processed")
@@ -141,7 +141,7 @@ def test_b2c_account_topup_timeout_callback_response():
 
 @pytest.mark.parametrize("result_code_str, expected", [("0", True), ("1", False)])
 def test_b2c_account_topup_string_result_code_is_successful(result_code_str, expected):
-    """Ensure is_successful() handles ResultCode as a string without TypeError."""
+    """Ensure is_successful handles ResultCode as a string without TypeError."""
     payload = {
         "Result": {
             "ResultType": 0,
@@ -154,7 +154,7 @@ def test_b2c_account_topup_string_result_code_is_successful(result_code_str, exp
     }
     callback = B2CAccountTopUpCallback(**payload)
     # Should not raise a TypeError when comparing string vs int inside is_successful
-    assert callback.is_successful() is expected
+    assert callback.is_successful is expected
 
 @pytest.fixture
 def async_b2c_account_topup(mock_async_http_client, mock_async_token_manager):
@@ -181,7 +181,7 @@ async def test_async_topup_success(
     response = await async_b2c_account_topup.topup(request)
 
     assert isinstance(response, B2CAccountTopUpResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ResponseCode == response_data["ResponseCode"]
 
 @pytest.mark.asyncio
@@ -214,5 +214,5 @@ async def test_async_topup_token_retrieval(
 
     response = await async_b2c_account_topup.topup(request)
 
-    assert response.is_successful() is True
+    assert response.is_successful is True
     mock_async_token_manager.get_token.assert_called_once()

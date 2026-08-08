@@ -64,4 +64,4 @@ def test_b2b_express_checkout_e2e(b2b_express_checkout_service):
 
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
-    assert response.is_successful() is True, "B2B Express Checkout transaction failed"
+    assert response.is_successful is True, "B2B Express Checkout transaction failed"

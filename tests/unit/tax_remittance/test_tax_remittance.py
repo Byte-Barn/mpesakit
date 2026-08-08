@@ -48,7 +48,7 @@ def test_remittance_request_acknowledged(tax_remittance, mock_http_client):
     response = tax_remittance.remittance(request)
 
     assert isinstance(response, TaxRemittanceResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ConversationID == response_data["ConversationID"]
     assert (
         response.OriginatorConversationID == response_data["OriginatorConversationID"]
@@ -88,7 +88,7 @@ def test_tax_remittance_result_callback_success():
         }
     }
     callback = TaxRemittanceResultCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultParameters.ResultParameter[0].Key == "Amount"
 
@@ -140,7 +140,7 @@ def test_tax_remittance_result_callback_with_string_resultcode():
     }
     callback = TaxRemittanceResultCallback(**payload)
     # Should not raise a TypeError comparing str and int; should treat "0" as success
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 @pytest.fixture
 def async_tax_remittance(mock_async_http_client, mock_async_token_manager):
@@ -166,7 +166,7 @@ async def test_async_remittance_request_acknowledged(
     response = await async_tax_remittance.remittance(request)
 
     assert isinstance(response, TaxRemittanceResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ConversationID == response_data["ConversationID"]
 
 @pytest.mark.asyncio

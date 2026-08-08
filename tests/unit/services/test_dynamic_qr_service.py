@@ -49,7 +49,7 @@ def test_generate_success(dynamic_qr_service, mock_http_client):
         size="300",
     )
     assert isinstance(resp, DynamicQRGenerateResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_generate_filters_kwargs(dynamic_qr_service, mock_http_client):
@@ -77,7 +77,7 @@ def test_generate_filters_kwargs(dynamic_qr_service, mock_http_client):
         ExtraField="should_be_filtered",
     )
     assert isinstance(resp, DynamicQRGenerateResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_dynamic_qr_service_initializes_correctly(mock_http_client, mock_token_manager):
@@ -112,7 +112,7 @@ async def test_async_generate_success(
         size="300",
     )
     assert isinstance(resp, DynamicQRGenerateResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -143,7 +143,7 @@ async def test_async_generate_filters_kwargs(
         ExtraField="should_be_filtered",
     )
     assert isinstance(resp, DynamicQRGenerateResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_async_dynamic_qr_service_initializes_correctly(

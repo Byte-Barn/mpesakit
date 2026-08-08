@@ -65,7 +65,7 @@ response = client.stk_push(
     transaction_desc="Payment for order",
 )
 
-if response.is_successful():
+if response.is_successful:
     print("Request accepted:", response.CheckoutRequestID)
 else:
     print("Error:", response.error_message())
@@ -91,7 +91,7 @@ async def mpesa_callback(request: Request):
     # Validates the payload and returns a typed StkPushSimulateCallback object
     callback = client.process_stk_callback(payload)
 
-    if callback.is_successful()
+    if callback.is_successful:
         metadata = callback.Body.stkCallback.CallbackMetadata
         print(f"Payment confirmed — Receipt: {metadata}")
     else:
@@ -171,7 +171,7 @@ async def main():
             transaction_desc="Payment for order",
         )
 
-        if response.is_successful():
+        if response.is_successful:
             print("Request accepted:", response.CheckoutRequestID)
         else:
             print("Error:", response.error_message())
@@ -238,7 +238,7 @@ response = client.b2c.send_payment(
     result_url="https://yourdomain.com/mpesa/result",
 )
 
-if response.is_successful():
+if response.is_successful:
     print("Payout sent:", response.ResponseDescription)
 ```
 

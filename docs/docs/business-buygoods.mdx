@@ -196,7 +196,7 @@ resp = client.b2b.buygoods(
     occassion="Purchase"
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("Business Buy Goods payment initiated successfully")
 else:
     print("Business Buy Goods payment failed:", resp.ResponseDescription)
@@ -204,7 +204,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., `BusinessBuyGoodsResponse`) for ergonomic access to fields and helpers like `is_successful()`.
+            - The facade returns typed Pydantic models (e.g., `BusinessBuyGoodsResponse`) for ergonomic access to fields and helpers like `is_successful`.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -233,7 +233,7 @@ async def main():
             occassion="Purchase"
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Business Buy Goods payment initiated successfully")
         else:
             print("Business Buy Goods payment failed:", resp.ResponseDescription)
@@ -390,7 +390,7 @@ async def buygoods_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - BusinessBuyGoodsResponse provides is_successful() which normalizes success checks. Available identically on responses from the sync and async clients.
+    - BusinessBuyGoodsResponse provides is_successful which normalizes success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

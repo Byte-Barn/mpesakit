@@ -180,7 +180,7 @@ resp = client.balance.query(
     queue_timeout_url="https://your.service/webhook/account-balance/timeout",
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("Acknowledgement accepted:", resp.ConversationID or resp.OriginatorConversationID)
 else:
     print("Acknowledgement failed:", resp.ResponseDescription)
@@ -215,7 +215,7 @@ async def main():
             queue_timeout_url="https://your.service/webhook/account-balance/timeout",
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Acknowledgement accepted:", resp.ConversationID or resp.OriginatorConversationID)
         else:
             print("Acknowledgement failed:", resp.ResponseDescription)
@@ -452,7 +452,7 @@ async def account_balance_timeout(request: Request):
 <SectionHeader title="Response helpers" size="small" />
 
 - A returned AccountBalanceResponse model exposes:
-- is_successful() helper that treats any all-zero ResponseCode string (e.g., "0" or "000") as success.
+- is_successful helper that treats any all-zero ResponseCode string (e.g., "0" or "000") as success.
 - Result callbacks, once parsed via `process_account_balance_callback`, are typed `AccountBalanceResultCallback` objects with:
 - ResultParameter.ResultParameters list containing an 'AccountBalance' entry holding a delimited balance string.
 
@@ -463,7 +463,7 @@ async def account_balance_timeout(request: Request):
 <SectionHeader title="Testing & Expected Behaviors" size="small" />
 
 - Query:
-    - Should return an AccountBalanceResponse acknowledgement. Confirm `is_successful()` for `ResponseCode == 0`. True whether called via `client.balance.query(...)` or `await client.balance.query(...)`.
+    - Should return an AccountBalanceResponse acknowledgement. Confirm `is_successful` for `ResponseCode == 0`. True whether called via `client.balance.query(...)` or `await client.balance.query(...)`.
     - HTTP client must receive the correct path and headers (`Authorization Bearer token + JSON content-type`).
 
 - Result Callback:

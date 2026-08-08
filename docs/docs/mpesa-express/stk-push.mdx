@@ -356,7 +356,7 @@ asyncio.run(main())
     We can check if the request was successful by:
 
     <CodeBlock language="python" title="Python">
-    {`if response.is_successful():
+    {`if response.is_successful:
     print("Request accepted")
 else:
     print(f"Error: {response.error_message()}")  # Get error message`}
@@ -522,7 +522,7 @@ async def stk_callback(request: Request):
     # Validates and parses the payload into an StkPushSimulateCallback object
     callback = client.process_stk_callback(payload)
 
-    if callback.is_successful():
+    if callback.is_successful:
         amount = callback.amount()
         receipt = callback.mpesa_receipt_number()
         phone = callback.phone_number()
@@ -563,7 +563,7 @@ async def stk_callback(request: Request):
     # it only validates/parses the payload, it doesn't hit the network.
     callback = client.process_stk_callback(payload)
 
-    if callback.is_successful():
+    if callback.is_successful:
         amount = callback.amount()
         receipt = callback.mpesa_receipt_number()
         phone = callback.phone_number()

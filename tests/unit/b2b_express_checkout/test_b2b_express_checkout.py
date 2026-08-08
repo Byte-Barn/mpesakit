@@ -46,7 +46,7 @@ def test_ussd_push_acknowledged(b2b_express_checkout, mock_http_client):
     response = b2b_express_checkout.ussd_push(request)
 
     assert isinstance(response, B2BExpressCheckoutResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.code == response_data["code"]
     assert response.status == response_data["status"]
 
@@ -71,7 +71,7 @@ def test_b2b_express_checkout_success_callback():
         "status": "SUCCESS",
     }
     callback = B2BExpressCheckoutCallback(**payload)
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
     assert callback.status == "SUCCESS"
     assert callback.transactionId == "RDQ01NFT1Q"
     assert callback.amount == 71.0
@@ -98,7 +98,7 @@ def test_b2b_express_callback_response():
     assert "Callback received successfully" in resp.ResultDesc
 
 def test_b2b_express_callback_resultcode_as_string():
-    """Ensure resultCode as a string doesn't cause comparison/type errors in is_successful()."""
+    """Ensure resultCode as a string doesn't cause comparison/type errors in is_successful."""
     payload = {
         "resultCode": "0",
         "resultDesc": "Processed successfully",
@@ -109,7 +109,7 @@ def test_b2b_express_callback_resultcode_as_string():
 
     # Should treat "0" (string) as success and not raise a TypeError when comparing types.
     assert callback.resultCode == "0"
-    assert callback.is_successful() is True
+    assert callback.is_successful is True
 
 @pytest.fixture
 def async_b2b_express_checkout(mock_async_http_client, mock_async_token_manager):
@@ -134,7 +134,7 @@ async def test_async_ussd_push_acknowledged(
     response = await async_b2b_express_checkout.ussd_push(request)
 
     assert isinstance(response, B2BExpressCheckoutResponse)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.code == response_data["code"]
     assert response.status == response_data["status"]
 

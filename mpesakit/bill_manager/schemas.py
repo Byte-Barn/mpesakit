@@ -56,6 +56,7 @@ class BillManagerOptInResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Checks if the response indicates success."""
         return self.rescode == "200"
@@ -102,6 +103,7 @@ class BillManagerUpdateOptInResponse(BaseModel):
         json_schema_extra={"example": {"resmsg": "Success", "rescode": "200"}}
     )
 
+    @property
     def is_successful(self) -> bool:
         """Checks if the response indicates success."""
         return self.rescode == "200"
@@ -278,6 +280,7 @@ class BillManagerSingleInvoiceResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Checks if the response indicates success."""
         return self.rescode == "200"
@@ -332,6 +335,7 @@ class BillManagerBulkInvoiceResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Checks if the response indicates success."""
         return self.rescode == "200"
@@ -386,6 +390,7 @@ class BillManagerCancelInvoiceResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Checks if the response indicates success."""
         return self.rescode == "200"

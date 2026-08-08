@@ -72,7 +72,7 @@ def test_opt_in_calls_bill_manager_opt_in(bill_service, mock_http_client):
     )
 
     assert isinstance(resp, BillManagerOptInResponse)
-    resp.is_successful() is True
+    resp.is_successful is True
 
 def test_bill_manager_update_opt_in(bill_service_with_app_key, mock_http_client):
     """Test update_opt_in calls BillManager.update_opt_in."""
@@ -91,7 +91,7 @@ def test_bill_manager_update_opt_in(bill_service_with_app_key, mock_http_client)
         callback_url="https://callback.url",
     )
     assert isinstance(resp, BillManagerUpdateOptInResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_bill_manager_send_single_invoice(
     bill_service_with_app_key,
@@ -120,7 +120,7 @@ def test_bill_manager_send_single_invoice(
     )
 
     assert isinstance(resp, BillManagerSingleInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_bill_manager_send_bulk_invoice(bill_service_with_app_key, mock_http_client):
     """Test send_bulk_invoice calls BillManager.send_bulk_invoice."""
@@ -136,7 +136,7 @@ def test_bill_manager_send_bulk_invoice(bill_service_with_app_key, mock_http_cli
     resp = bill_service_with_app_key.send_bulk_invoice(invoices=invoices)
 
     assert isinstance(resp, BillManagerBulkInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_bill_manager_cancel_single_invoice(
     bill_service_with_app_key,
@@ -153,7 +153,7 @@ def test_bill_manager_cancel_single_invoice(
     mock_http_client.post.return_value = response_data
     resp = bill_service_with_app_key.cancel_single_invoice(external_reference="INV123")
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_bill_manager_cancel_bulk_invoice(bill_service_with_app_key, mock_http_client):
     """Test cancel_bulk_invoice calls BillManager.cancel_bulk_invoice."""
@@ -169,7 +169,7 @@ def test_bill_manager_cancel_bulk_invoice(bill_service_with_app_key, mock_http_c
     )
 
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_bill_service_initializes_bill_manager_correctly(
     mock_http_client, mock_token_manager
@@ -209,7 +209,7 @@ async def test_async_opt_in_calls_bill_manager_opt_in(
     )
 
     assert isinstance(resp, BillManagerOptInResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -232,7 +232,7 @@ async def test_async_bill_manager_update_opt_in(
         callback_url="https://callback.url",
     )
     assert isinstance(resp, BillManagerUpdateOptInResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -263,7 +263,7 @@ async def test_async_bill_manager_send_single_invoice(
     )
 
     assert isinstance(resp, BillManagerSingleInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -283,7 +283,7 @@ async def test_async_bill_manager_send_bulk_invoice(
     resp = await async_bill_service_with_app_key.send_bulk_invoice(invoices=invoices)
 
     assert isinstance(resp, BillManagerBulkInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -304,7 +304,7 @@ async def test_async_bill_manager_cancel_single_invoice(
         external_reference="INV123"
     )
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -324,7 +324,7 @@ async def test_async_bill_manager_cancel_bulk_invoice(
     )
 
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_async_bill_service_initializes_bill_manager_correctly(

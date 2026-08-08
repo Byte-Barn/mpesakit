@@ -164,6 +164,7 @@ class TransactionStatusResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Return True if ResponseCode indicates success (e.g., '0', '00000000')."""
         code = str(self.ResponseCode)
@@ -265,6 +266,7 @@ class TransactionStatusResultCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Return True if ResultCode indicates success (e.g., '0', '00000000')."""
         code = str(self.Result.ResultCode)

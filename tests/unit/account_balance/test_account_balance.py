@@ -48,7 +48,7 @@ def test_query_returns_acknowledgement(account_balance, mock_http_client):
 
     response = account_balance.query(request)
 
-    assert response.is_successful() is True
+    assert response.is_successful is True
 
     assert isinstance(response, AccountBalanceResponse)
     assert response.ConversationID == response_data["ConversationID"]
@@ -182,7 +182,7 @@ def test_query_handles_string_response_code(account_balance, mock_http_client):
 
     response = account_balance.query(request)
     # should not raise and should consider "0" a success
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ResponseCode == "0"
 
     # Now simulate a non-success ResponseCode as string "1"
@@ -193,7 +193,7 @@ def test_query_handles_string_response_code(account_balance, mock_http_client):
 
     response_fail = account_balance.query(request)
     # should not raise and should consider "1" a failure
-    assert response_fail.is_successful() is False
+    assert response_fail.is_successful is False
     assert response_fail.ResponseCode == "1"
 
 @pytest.fixture
@@ -219,7 +219,7 @@ async def test_async_query_returns_acknowledgement(
 
     response = await async_account_balance.query(request)
 
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert isinstance(response, AccountBalanceResponse)
     assert response.ConversationID == response_data["ConversationID"]
     assert (
@@ -249,7 +249,7 @@ async def test_async_query_handles_string_response_code(
     mock_async_http_client.post.return_value = response_data_success
 
     response = await async_account_balance.query(request)
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert response.ResponseCode == "0"
 
     response_data_fail = response_data_success.copy()
@@ -258,5 +258,5 @@ async def test_async_query_handles_string_response_code(
     mock_async_http_client.post.return_value = response_data_fail
 
     response_fail = await async_account_balance.query(request)
-    assert response_fail.is_successful() is False
+    assert response_fail.is_successful is False
     assert response_fail.ResponseCode == "1"

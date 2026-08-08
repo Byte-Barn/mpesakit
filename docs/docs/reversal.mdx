@@ -159,7 +159,7 @@ resp = client.reversal.reverse(
     occasion="Refund"
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("Reversal initiated successfully")
 else:
     print("Reversal failed:", resp.ResponseDescription)
@@ -167,7 +167,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., ReversalResponse) for ergonomic access to fields and helpers like is_successful().
+            - The facade returns typed Pydantic models (e.g., ReversalResponse) for ergonomic access to fields and helpers like is_successful.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -194,7 +194,7 @@ async def main():
             occasion="Refund"
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Reversal initiated successfully")
         else:
             print("Reversal failed:", resp.ResponseDescription)
@@ -350,7 +350,7 @@ async def reversal_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - ReversalResponse provides is_successful() which validates the ResponseCode for easy success checks. Available identically on responses from the sync and async clients.
+    - ReversalResponse provides is_successful which validates the ResponseCode for easy success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

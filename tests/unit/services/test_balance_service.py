@@ -47,7 +47,7 @@ def test_query_calls_account_balance_query(balance_service, mock_http_client):
         queue_timeout_url="http://timeout.url",
     )
     assert isinstance(resp, AccountBalanceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert "request successfully" in resp.ResponseDescription
 
 def test_query_filters_kwargs(balance_service, mock_http_client):
@@ -118,7 +118,7 @@ async def test_async_query_calls_account_balance_query(
         queue_timeout_url="http://timeout.url",
     )
     assert isinstance(resp, AccountBalanceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert "request successfully" in resp.ResponseDescription
 
 @pytest.mark.asyncio

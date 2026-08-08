@@ -69,4 +69,4 @@ def test_tax_remittance_e2e(tax_remittance_service):
 
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
-    assert response.is_successful() is True, "Tax remittance transaction failed"
+    assert response.is_successful is True, "Tax remittance transaction failed"

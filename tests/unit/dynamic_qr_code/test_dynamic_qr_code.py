@@ -33,7 +33,7 @@ def test_generate_dynamic_qr_success(dynamic_qr_service, mock_http_client):
 
     response = dynamic_qr_service.generate(request)
 
-    assert response.is_successful() is True
+    assert response.is_successful is True
 
     # Adjust the response class if needed
     assert hasattr(response, "QRCode") or hasattr(response, "qr_code")
@@ -137,7 +137,7 @@ def test_generate_dynamic_qr_send_money_cpi_normalization(monkeypatch):
 def test_generate_dynamic_qr_string_response_code_no_type_error(
     dynamic_qr_service, mock_http_client
 ):
-    """Ensure ResponseCode as a string does not cause type comparison errors in is_successful()."""
+    """Ensure ResponseCode as a string does not cause type comparison errors in is_successful."""
     request = DynamicQRGenerateRequest(
         MerchantName="Test Supermarket",
         RefNo="xewr34fer4t",
@@ -154,9 +154,9 @@ def test_generate_dynamic_qr_string_response_code_no_type_error(
     }
     mock_http_client.post.return_value = response_data
 
-    # Should not raise a TypeError when evaluating is_successful()
+    # Should not raise a TypeError when evaluating is_successful
     response = dynamic_qr_service.generate(request)
-    assert response.is_successful() is True
+    assert response.is_successful is True
 
 @pytest.fixture
 def async_dynamic_qr_service(mock_async_http_client, mock_async_token_manager):
@@ -187,7 +187,7 @@ async def test_async_generate_dynamic_qr_success(
 
     response = await async_dynamic_qr_service.generate(request)
 
-    assert response.is_successful() is True
+    assert response.is_successful is True
     assert (
         getattr(response, "QRCode", None) == "base64-encoded-string"
         or getattr(response, "qr_code", None) == "base64-encoded-string"

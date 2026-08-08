@@ -67,4 +67,4 @@ def test_business_buy_goods_e2e(business_buy_goods_service):
 
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
-    assert response.is_successful() is True, "Business Buy Goods transaction failed"
+    assert response.is_successful is True, "Business Buy Goods transaction failed"

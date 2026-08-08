@@ -167,7 +167,7 @@ resp = client.c2b.register_url(
         validation_url="https://your.example/validation",
 )
 
-if resp.is_successful():
+if resp.is_successful:
         print("Registration accepted")
 else:
         print("Registration failed:", resp.ResponseDescription)
@@ -175,7 +175,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., C2BRegisterUrlResponse) for ergonomic access to fields and helpers like is_successful().
+            - The facade returns typed Pydantic models (e.g., C2BRegisterUrlResponse) for ergonomic access to fields and helpers like is_successful.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -198,7 +198,7 @@ async def main():
             validation_url="https://your.example/validation",
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Registration accepted")
         else:
             print("Registration failed:", resp.ResponseDescription)
@@ -379,7 +379,7 @@ async def confirmation(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - C2BRegisterUrlResponse provides is_successful() which treats any all-zero string (e.g., "0" or "00000000") as success. Available identically on responses from the sync and async clients.
+    - C2BRegisterUrlResponse provides is_successful which treats any all-zero string (e.g., "0" or "00000000") as success. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

@@ -69,4 +69,4 @@ def test_b2c_account_topup_e2e(b2c_account_topup_service):
 
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
-    assert response.is_successful() is True, "B2C Account Topup transaction failed"
+    assert response.is_successful is True, "B2C Account Topup transaction failed"

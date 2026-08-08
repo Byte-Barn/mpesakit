@@ -72,4 +72,4 @@ def test_mpesa_ratiba_e2e(mpesa_ratiba_service):
 
     assert response.ResponseHeader.responseDescription is not None
     assert response.ResponseHeader.responseCode == "200"
-    assert response.is_successful() is True, "Standing Order transaction failed"
+    assert response.is_successful is True, "Standing Order transaction failed"

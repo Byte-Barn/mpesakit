@@ -44,7 +44,7 @@ def test_remittance_calls_tax_remittance(tax_service, mock_http_client):
         queue_timeout_url="https://mydomain.com/b2b/remittax/queue/",
     )
     assert isinstance(resp, TaxRemittanceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -70,7 +70,7 @@ def test_remittance_filters_kwargs(tax_service, mock_http_client):
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, TaxRemittanceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     # unexpected_field should not be present in the response
     assert not hasattr(resp, "unexpected_field")
 
@@ -113,7 +113,7 @@ async def test_async_remittance_calls_tax_remittance(
         queue_timeout_url="https://mydomain.com/b2b/remittax/queue/",
     )
     assert isinstance(resp, TaxRemittanceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
 
@@ -142,7 +142,7 @@ async def test_async_remittance_filters_kwargs(
         unexpected_field="should be ignored",
     )
     assert isinstance(resp, TaxRemittanceResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert not hasattr(resp, "unexpected_field")
 
 

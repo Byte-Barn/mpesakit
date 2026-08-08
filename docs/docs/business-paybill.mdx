@@ -188,7 +188,7 @@ resp = client.b2b.paybill(
     queue_timeout_url="https://your.example/timeout"
 )
 
-if resp.is_successful():
+if resp.is_successful:
     print("Business PayBill payment initiated successfully")
 else:
     print("Business PayBill payment failed:", resp.ResponseDescription)
@@ -196,7 +196,7 @@ else:
         </CodeBlock>
 
         <Alert type="info" title="Notes">
-            - The facade returns typed Pydantic models (e.g., `BusinessPayBillResponse`) for ergonomic access to fields and helpers like is_successful().
+            - The facade returns typed Pydantic models (e.g., `BusinessPayBillResponse`) for ergonomic access to fields and helpers like is_successful.
             - Authentication tokens are handled transparently by the client.
         </Alert>
 
@@ -224,7 +224,7 @@ async def main():
             queue_timeout_url="https://your.example/timeout"
         )
 
-        if resp.is_successful():
+        if resp.is_successful:
             print("Business PayBill payment initiated successfully")
         else:
             print("Business PayBill payment failed:", resp.ResponseDescription)
@@ -379,7 +379,7 @@ async def paybill_timeout(request: Request):
 </CodeBlock>
 
 <Alert type="info" title="Response Handling">
-    - BusinessPayBillResponse provides is_successful() which normalizes success checks. Available identically on responses from the sync and async clients.
+    - BusinessPayBillResponse provides is_successful which normalizes success checks. Available identically on responses from the sync and async clients.
     - The SDK normalizes minor provider response typos (e.g., 'OriginatorCoversationID') so fields are accessible reliably.
 </Alert>
 

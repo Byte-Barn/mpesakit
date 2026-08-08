@@ -75,6 +75,7 @@ class BusinessBuyGoodsResponse(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the response indicates a successful transaction."""
         code = str(self.ResponseCode)
@@ -231,6 +232,7 @@ class BusinessBuyGoodsResultCallback(BaseModel):
         }
     )
 
+    @property
     def is_successful(self) -> bool:
         """Check if the result indicates a successful transaction."""
         code = str(self.Result.ResultCode)

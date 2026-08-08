@@ -233,7 +233,7 @@ def test_c2b_register_url_response_is_successful_zero_code():
         CustomerMessage="URLs registered",
         ResponseCode="0",
     )
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_c2b_register_url_response_is_successful_all_zeros():
     """Test is_successful returns True for ResponseCode '00000000'."""
@@ -244,7 +244,7 @@ def test_c2b_register_url_response_is_successful_all_zeros():
         CustomerMessage="URLs registered",
         ResponseCode="00000000",
     )
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 def test_c2b_register_url_response_is_successful_non_zero_code():
     """Test is_successful returns False for non-success ResponseCode."""
@@ -255,7 +255,7 @@ def test_c2b_register_url_response_is_successful_non_zero_code():
         CustomerMessage="Error",
         ResponseCode="1",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_c2b_register_url_response_is_successful_mixed_code():
     """Test is_successful returns False for mixed ResponseCode like '00001'."""
@@ -266,7 +266,7 @@ def test_c2b_register_url_response_is_successful_mixed_code():
         CustomerMessage="Error",
         ResponseCode="00001",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_c2b_register_url_response_is_successful_empty_code():
     """Test is_successful returns False for empty ResponseCode."""
@@ -277,7 +277,7 @@ def test_c2b_register_url_response_is_successful_empty_code():
         CustomerMessage="Error",
         ResponseCode="",
     )
-    assert resp.is_successful() is False
+    assert resp.is_successful is False
 
 def test_validate_result_code_valid():
     """Test _validate_result_code accepts valid ResultCode values."""
@@ -341,7 +341,7 @@ def test_is_successful_with_mixed_string_response_code_no_type_error():
         ResponseCode="00001",
     )
     try:
-        result = resp.is_successful()
+        result = resp.is_successful
     except TypeError as e:
         pytest.fail(
             f"is_successful raised TypeError when ResponseCode is a mixed string: {e}"

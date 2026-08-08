@@ -68,4 +68,4 @@ def test_business_paybill_e2e(business_paybill_service):
 
     assert response.ResponseDescription is not None
     assert response.ConversationID is not None
-    assert response.is_successful() is True, "Business PayBill transaction failed"
+    assert response.is_successful is True, "Business PayBill transaction failed"

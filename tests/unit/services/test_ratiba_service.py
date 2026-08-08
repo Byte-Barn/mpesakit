@@ -60,7 +60,7 @@ def test_create_standing_order_success(ratiba_service, mock_http_client):
     )
 
     assert isinstance(resp, StandingOrderResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 def test_create_standing_order_filters_kwargs(ratiba_service, mock_http_client):
@@ -96,7 +96,7 @@ def test_create_standing_order_filters_kwargs(ratiba_service, mock_http_client):
     )
 
     assert isinstance(resp, StandingOrderResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert not hasattr(resp, "ExtraField")
 
 
@@ -149,7 +149,7 @@ async def test_async_create_standing_order_success(
     )
 
     assert isinstance(resp, StandingOrderResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
 
 
 @pytest.mark.asyncio
@@ -188,7 +188,7 @@ async def test_async_create_standing_order_filters_kwargs(
     )
 
     assert isinstance(resp, StandingOrderResponse)
-    assert resp.is_successful() is True
+    assert resp.is_successful is True
     assert not hasattr(resp, "ExtraField")
 
 
