@@ -264,6 +264,19 @@ client = MpesaClient(
 )
 ```
 
+### Configuring retries
+
+`MpesaClient` and `AsyncMpesaClient` retry transient network errors (timeouts, connection errors) up to `max_retries` times before raising `MpesaApiException`. It defaults to 3 and can be tuned per client:
+
+```python
+client = MpesaClient(
+    consumer_key="...",
+    consumer_secret="...",
+    environment="sandbox",
+    max_retries=5,  # default is 3
+)
+```
+
 ---
 
 ## Supported APIs
