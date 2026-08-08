@@ -6,6 +6,9 @@
   --mpesa-light-green: #4AE668;
   --dark-bg: #0a0a0a;
   --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --panel-bg: rgba(0, 0, 0, 0.3);
+  --footer-bg: rgba(0, 0, 0, 0.5);
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
   --gradient-primary: linear-gradient(135deg, var(--mpesa-green) 0%, var(--mpesa-light-green) 100%);
@@ -13,6 +16,21 @@
   --accent-blue: #3B82F6;
   --accent-purple: #8B5CF6;
   --accent-orange: #F97316;
+  /* Fixed light-on-dark palette for the terminal/code-demo mockups, which
+     stay dark in both site themes and must not flip with --text-primary. */
+  --terminal-text: #ffffff;
+  --terminal-text-secondary: #a0a0a0;
+}
+
+/* Light theme overrides (Docusaurus sets data-theme="light" on <html>) */
+[data-theme='light'] {
+  --dark-bg: #f7f9f8;
+  --card-bg: rgba(0, 0, 0, 0.03);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --panel-bg: rgba(0, 209, 58, 0.04);
+  --footer-bg: rgba(0, 0, 0, 0.04);
+  --text-primary: #16241c;
+  --text-secondary: #4b5a52;
 }
 
 .mpesaKitLanding {
@@ -196,6 +214,7 @@
 /* Code Demo - Mobile First */
 .codeDemo {
   background: var(--gradient-dark);
+  color: var(--terminal-text);
   border-radius: 16px;
   padding: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -302,7 +321,7 @@
 }
 
 .comment {
-  color: var(--text-secondary);
+  color: var(--terminal-text-secondary);
 }
 
 /* Tablet Styles */
@@ -555,7 +574,7 @@
   padding: 2rem;
   background: var(--card-bg);
   border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--card-border);
   transition: all 0.3s ease;
 }
 
@@ -615,7 +634,7 @@
   background: var(--card-bg);
   border-radius: 20px;
   padding: 2.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--card-border);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -746,7 +765,7 @@
 /* API Status Section */
 .apiStatus {
   padding: 6rem 5%;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--panel-bg);
 }
 
 .statusGrid {
@@ -761,7 +780,7 @@
   background: var(--card-bg);
   border-radius: 15px;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--card-border);
   transition: all 0.3s ease;
 }
 
@@ -884,8 +903,8 @@
 /* Footer */
 .footer {
   padding: 4rem 5% 2rem;
-  background: rgba(0, 0, 0, 0.5);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--footer-bg);
+  border-top: 1px solid var(--card-border);
 }
 
 .footerContainer {
@@ -925,7 +944,7 @@
   text-align: center;
   margin-top: 3rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--card-border);
   color: var(--text-secondary);
 }
 

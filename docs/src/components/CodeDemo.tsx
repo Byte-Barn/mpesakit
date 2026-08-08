@@ -40,7 +40,7 @@ export const CodeDemo: React.FC = () => {
           <div className={`${styles.dot} ${styles.yellow}`}></div>
           <div className={`${styles.dot} ${styles.green}`}></div>
         </div>
-        <span style={{ marginLeft: '1rem', color: 'var(--text-secondary)' }}>quick_start.py</span>
+        <span style={{ marginLeft: '1rem', color: 'var(--terminal-text-secondary)' }}>quick_start.py</span>
       </div>
       <div className={styles.codeContent}>
         {codeLines.map((line, index) => (

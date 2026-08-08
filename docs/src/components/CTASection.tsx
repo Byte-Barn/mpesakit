@@ -43,17 +43,17 @@ export const CTASection: React.FC<CTASectionProps> = ({
             padding: '2rem',
             background: 'var(--card-bg)',
             borderRadius: '15px',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
+            border: '1px solid var(--card-border)'
           }}>
             <h3 style={{ marginBottom: '1rem' }}>Installation</h3>
             <div style={{
-              background: 'var(--dark-bg)',
+              background: 'var(--gradient-dark)',
               padding: '1rem',
               borderRadius: '10px',
               fontFamily: 'monospace',
               textAlign: 'left'
             }}>
-              <span style={{ color: 'var(--text-secondary)' }}>$</span>{' '}
+              <span style={{ color: 'var(--terminal-text-secondary)' }}>$</span>{' '}
               <span style={{ color: 'var(--mpesa-green)' }}>{installCommand}</span>
             </div>
           </div>
