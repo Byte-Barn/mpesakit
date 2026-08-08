@@ -10,6 +10,7 @@ import pytest
 from pydantic import ValidationError
 
 from mpesakit.bill_manager.bill_manager import AsyncBillManager, BillManager
+from mpesakit.errors import MpesaApiException
 from mpesakit.bill_manager.schemas import (
     BillManagerBulkInvoiceRequest,
     BillManagerBulkInvoiceResponse,
@@ -185,7 +186,7 @@ def test_app_key_required_for_invoice(mock_http_client, mock_token_manager):
         http_client=mock_http_client, token_manager=mock_token_manager
     )
     request = valid_single_invoice_request()
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(MpesaApiException) as excinfo:
         manager.send_single_invoice(request)
     assert "app_key must be set" in str(excinfo.value)
 
@@ -452,6 +453,6 @@ async def test_async_app_key_required_for_invoice(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
     request = valid_single_invoice_request()
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(MpesaApiException) as excinfo:
         await manager.send_single_invoice(request)
     assert "app_key must be set" in str(excinfo.value)

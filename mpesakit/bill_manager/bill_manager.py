@@ -10,6 +10,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from mpesakit.auth import AsyncTokenManager, TokenManager
+from mpesakit.errors import MpesaApiException, MpesaError
 from mpesakit.http_client import AsyncHttpClient, HttpClient
 
 from .schemas import (
@@ -50,8 +51,11 @@ class BillManager(BaseModel):
 
     def _ensure_app_key(self):
         if self.app_key is None:
-            raise ValueError(
-                "app_key must be set for this operation. You must pass it when initializing BillManager."
+            raise MpesaApiException(
+                MpesaError(
+                    error_code="MISSING_APP_KEY",
+                    error_message="app_key must be set for this operation. You must pass it when initializing BillManager.",
+                )
             )
 
     def update_opt_in(
@@ -160,8 +164,11 @@ class AsyncBillManager(BaseModel):
 
     def _ensure_app_key(self):
         if self.app_key is None:
-            raise ValueError(
-                "app_key must be set for this operation. You must pass it when initializing AsyncBillManager."
+            raise MpesaApiException(
+                MpesaError(
+                    error_code="MISSING_APP_KEY",
+                    error_message="app_key must be set for this operation. You must pass it when initializing AsyncBillManager.",
+                )
             )
 
     async def update_opt_in(
