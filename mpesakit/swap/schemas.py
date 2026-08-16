@@ -20,7 +20,7 @@ class SwapRequest(BaseModel):
     @field_validator("customerNumber")
     @classmethod
     def validate_customer_number(cls, v: str) -> str:
-        """Conform the customer Number to required format"""
+        """Conform the customer Number to required format."""
         normalized = normalize_phone_number(str(v))
         if not normalized:
             raise ValueError(f"Invalid Kenyan MSISDN: '{v}'")
