@@ -12,7 +12,6 @@ from mpesakit.http_client.mpesa_async_http_client import MpesaAsyncHttpClient
 from mpesakit.errors import MpesaApiException
 
 
-
 @pytest.fixture
 def async_client():
     """Fixture to provide a MpesaAsyncHttpClient instance in sandbox environment."""
@@ -33,28 +32,31 @@ def test_base_url_production():
     assert client.base_url == "https://api.safaricom.co.ke"
 
 
-
 @pytest.mark.asyncio
 async def test_post_success(async_client):
     """Test successful ASYNC POST request returns expected JSON."""
-    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
-
+    with patch.object(
+        async_client._client, "post", new_callable=AsyncMock
+    ) as mock_post:
         mock_response = Mock(status_code=200, is_success=True)
         mock_response.json.return_value = {"foo": "bar"}
         mock_post.return_value = mock_response
-
 
         result = await async_client.post("/test", json={"a": 1}, headers={"h": "v"})
 
         assert result == {"foo": "bar"}
         mock_post.assert_called_once()
-        mock_post.assert_called_with("/test", json={"a": 1}, headers={"h": "v"}, timeout=10)
+        mock_post.assert_called_with(
+            "/test", json={"a": 1}, headers={"h": "v"}, timeout=10
+        )
 
 
 @pytest.mark.asyncio
 async def test_post_http_error(async_client):
     """Test ASYNC POST request returns MpesaApiException on HTTP error."""
-    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
+    with patch.object(
+        async_client._client, "post", new_callable=AsyncMock
+    ) as mock_post:
         mock_response = Mock(status_code=400, is_success=False)
         mock_response.json.return_value = {"errorMessage": "Bad Async Request"}
         mock_post.return_value = mock_response
@@ -69,7 +71,9 @@ async def test_post_http_error(async_client):
 @pytest.mark.asyncio
 async def test_post_json_decode_error(async_client):
     """Test ASYNC POST request handles JSON decode error gracefully on HTTP error."""
-    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
+    with patch.object(
+        async_client._client, "post", new_callable=AsyncMock
+    ) as mock_post:
         mock_response = Mock(status_code=500, is_success=False)
         mock_response.json.side_effect = ValueError()
         mock_response.text = "Internal Server Error"
@@ -80,7 +84,6 @@ async def test_post_json_decode_error(async_client):
 
         assert exc.value.error.error_code == "HTTP_500"
         assert "Internal Server Error" in exc.value.error.error_message
-
 
 
 @pytest.mark.asyncio
@@ -119,7 +122,9 @@ async def test_post_retries_and_succeeds(async_client):
 
     This test ensures the async retry mechanism works as intended.
     """
-    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
+    with patch.object(
+        async_client._client, "post", new_callable=AsyncMock
+    ) as mock_post:
         mock_response = Mock(status_code=200, is_success=True)
         mock_response.json.return_value = {"ResultCode": 0}
         mock_post.side_effect = [
@@ -140,7 +145,9 @@ async def test_post_fails_after_max_retries(async_client):
 
     This test ensures the async retry mechanism eventually gives up.
     """
-    with patch.object(async_client._client, "post", new_callable=AsyncMock) as mock_post:
+    with patch.object(
+        async_client._client, "post", new_callable=AsyncMock
+    ) as mock_post:
         mock_post.side_effect = httpx.ConnectError("Connection failed.", request=Mock())
 
         with pytest.raises(MpesaApiException) as exc:
@@ -194,7 +201,9 @@ async def test_get_success(async_client):
 
         assert result == {"foo": "bar"}
         mock_get.assert_called_once()
-        mock_get.assert_called_with("/test", params={"a": 1}, headers={"h": "v"}, timeout=10)
+        mock_get.assert_called_with(
+            "/test", params={"a": 1}, headers={"h": "v"}, timeout=10
+        )
 
 
 @pytest.mark.asyncio
@@ -210,6 +219,7 @@ async def test_get_http_error(async_client):
 
         assert exc.value.error.error_code == "HTTP_404"
         assert "Async Not Found" in exc.value.error.error_message
+
 
 @pytest.mark.asyncio
 async def test_get_timeout(async_client):
@@ -234,7 +244,9 @@ async def test_get_connection_error(async_client):
         async_client._client,
         "get",
         new_callable=AsyncMock,
-        side_effect=httpx.ConnectError("conn error", request=Mock()), # Use httpx's ConnectError
+        side_effect=httpx.ConnectError(
+            "conn error", request=Mock()
+        ),  # Use httpx's ConnectError
     ):
         with pytest.raises(MpesaApiException) as exc:
             await async_client.get("/conn")

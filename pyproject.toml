@@ -133,6 +133,15 @@ testpaths = ["tests"]
 plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = [
+    "dotenv.*",
+    "pyngrok.*",
+    "uvicorn.*",
+    "fastapi.*"
+]
+ignore_missing_imports = true
+
 [tool.hatch.envs.default]
 features = ["dev"]
 

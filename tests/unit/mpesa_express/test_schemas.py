@@ -344,6 +344,7 @@ def test_stkpush_simulate_request_paybill_requires_account_reference():
         )
     assert "AccountReference must be provided when using PayBill" in str(excinfo.value)
 
+
 def test_stkpush_simulate_callback_string_result_code_handling():
     """Ensure string ResultCode values are handled without type comparison errors."""
     base = {
@@ -372,4 +373,3 @@ def test_stkpush_simulate_callback_string_result_code_handling():
     data_one["Body"]["stkCallback"]["ResultCode"] = "1"
     cb_one = schemas.StkPushSimulateCallback.model_validate(data_one)
     assert cb_one.is_successful is False
-

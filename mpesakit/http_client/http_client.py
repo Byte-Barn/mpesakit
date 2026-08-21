@@ -27,6 +27,7 @@ class HttpClient(ABC):
         """Sends a GET request."""
         pass
 
+
 class AsyncHttpClient(ABC):
     """Abstract base HTTP client for making asynchronous GET and POST requests.
 

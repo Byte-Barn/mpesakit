@@ -130,7 +130,9 @@ class MpesaAsyncHttpClient(AsyncHttpClient):
         """Low-level async GET request - may raise httpx exceptions."""
         if headers is None:
             headers = {}
-        return await self._client.get(url, params=params, headers=headers, timeout=timeout)
+        return await self._client.get(
+            url, params=params, headers=headers, timeout=timeout
+        )
 
     async def get(
         self,

@@ -233,7 +233,10 @@ class TestCallbackProcessing:
                     {"Key": "B2CRecipientIsLocked", "Value": "false"},
                     {"Key": "B2CChargesPaidAccountAvailableFunds", "Value": "49900.00"},
                     {"Key": "B2CUtilityAccountAvailableFunds", "Value": "199900.00"},
-                    {"Key": "TransactionCompletedDateTime", "Value": "31.12.2021 23:59:59"},
+                    {
+                        "Key": "TransactionCompletedDateTime",
+                        "Value": "31.12.2021 23:59:59",
+                    },
                     {"Key": "B2CRecipientPhoneNumber", "Value": "254712345678"},
                 ],
             }
@@ -348,7 +351,9 @@ class TestCallbackProcessing:
         }
 
         result = client.process_ratiba_service_callback(payload)
-        assert result.ResponseHeader.requestRefID == "0acc0239-20fa-4a52-8b9d-9bd64c0465c3"
+        assert (
+            result.ResponseHeader.requestRefID == "0acc0239-20fa-4a52-8b9d-9bd64c0465c3"
+        )
         assert any(
             item.Name == "TransactionID" and item.Value == "SC8F2IQMH5"
             for item in result.ResponseBody.ResponseData

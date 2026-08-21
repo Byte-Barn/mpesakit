@@ -91,9 +91,7 @@ def test_dynamic_qr_service_initializes_correctly(mock_http_client, mock_token_m
 
 
 @pytest.mark.asyncio
-async def test_async_generate_success(
-    async_dynamic_qr_service, mock_async_http_client
-):
+async def test_async_generate_success(async_dynamic_qr_service, mock_async_http_client):
     """Test successful async generation of a dynamic QR code."""
     response_data = {
         "ResponseCode": "00",

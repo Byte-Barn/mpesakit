@@ -128,7 +128,6 @@ class AsyncTokenManager(BaseModel):
         headers = {"Authorization": self._get_basic_auth_header()}
 
         try:
-
             response = await self.http_client.get(url, headers=headers, params=params)
         except MpesaApiException as e:
             if e.error.status_code == 400 and (

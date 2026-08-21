@@ -201,7 +201,9 @@ class TaxRemittanceResultCallback(BaseModel):
 class TaxRemittanceResultCallbackResponse(BaseModel):
     """Schema for response sent back to Daraja API to acknowledge callback receipt."""
 
-    ResultCode: int | str = Field(default=0, description="Code indicating the result status.")
+    ResultCode: int | str = Field(
+        default=0, description="Code indicating the result status."
+    )
     ResultDesc: str = Field(
         default="Callback received successfully",
         description="Description of the result.",

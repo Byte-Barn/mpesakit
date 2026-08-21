@@ -1,4 +1,7 @@
-from .schemas import TaxRemittanceRequest as TaxRemittanceRequest, TaxRemittanceResponse as TaxRemittanceResponse
+from .schemas import (
+    TaxRemittanceRequest as TaxRemittanceRequest,
+    TaxRemittanceResponse as TaxRemittanceResponse,
+)
 from _typeshed import Incomplete
 from mpesakit.auth import TokenManager as TokenManager
 from mpesakit.http_client import HttpClient as HttpClient

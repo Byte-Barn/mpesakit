@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 import os
 import time
 import pytest
-from mpesakit.auth import TokenManager,AsyncTokenManager
-from mpesakit.http_client import MpesaHttpClient,MpesaAsyncHttpClient
+from mpesakit.auth import TokenManager, AsyncTokenManager
+from mpesakit.http_client import MpesaHttpClient, MpesaAsyncHttpClient
 from mpesakit.errors import MpesaApiException
 
 load_dotenv()
@@ -45,6 +45,7 @@ def delay_between_tests():
     """Introduce a delay between tests to avoid rate limiting."""
     yield
     time.sleep(20)
+
 
 @pytest.fixture(scope="module")
 def async_http_client():
@@ -123,9 +124,10 @@ def test_invalid_grant_type(http_client, valid_credentials, monkeypatch):
     monkeypatch.setattr(http_client, "get", fake_get)
     with pytest.raises(MpesaApiException) as excinfo:
         tm.get_token(force_refresh=True)
-    assert (
-        excinfo.value.error.status_code in [400, 403]
-    )  # Blocked by Imperva before reaching Daraja API
+    assert excinfo.value.error.status_code in [
+        400,
+        403,
+    ]  # Blocked by Imperva before reaching Daraja API
 
 
 def test_invalid_auth_type(http_client, valid_credentials, monkeypatch):
@@ -139,9 +141,10 @@ def test_invalid_auth_type(http_client, valid_credentials, monkeypatch):
     monkeypatch.setattr(tm, "_get_basic_auth_header", lambda: "Bearer something")
     with pytest.raises(MpesaApiException) as excinfo:
         tm.get_token(force_refresh=True)
-    assert (
-        excinfo.value.error.status_code in [400, 403]
-    )  # Blocked by Imperva before reaching Daraja API
+    assert excinfo.value.error.status_code in [
+        400,
+        403,
+    ]  # Blocked by Imperva before reaching Daraja API
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -156,6 +159,7 @@ async def test_async_get_token_success(valid_credentials, async_http_client):
     assert isinstance(token, str)
     assert len(token) > 10
 
+
 @pytest.mark.asyncio(loop_scope="session")
 async def test_async_token_caching(valid_credentials, async_http_client):
     """Test that the token is cached and reused until it expires asynchronously."""
@@ -168,6 +172,7 @@ async def test_async_token_caching(valid_credentials, async_http_client):
     token2 = await tm.get_token()
     assert token1 == token2  # Should be cached
 
+
 @pytest.mark.asyncio(loop_scope="session")
 async def test_async_invalid_credentials_raises(async_http_client, invalid_credentials):
     """Test that invalid credentials raise an exception asynchronously."""
@@ -179,12 +184,12 @@ async def test_async_invalid_credentials_raises(async_http_client, invalid_crede
     with pytest.raises(MpesaApiException) as excinfo:
         await tm.get_token()
 
-
     assert (
         "Invalid credentials" in str(excinfo.value)
         or excinfo.value.error.status_code == 400
         or excinfo.value.error.status_code == 403
     )
+
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_async_force_refresh_token(valid_credentials, async_http_client):
@@ -199,8 +204,11 @@ async def test_async_force_refresh_token(valid_credentials, async_http_client):
     # Token may or may not change, but should be valid
     assert len(token2) > 10
 
+
 @pytest.mark.asyncio(loop_scope="session")
-async def test_async_invalid_grant_type(async_http_client, valid_credentials, monkeypatch):
+async def test_async_invalid_grant_type(
+    async_http_client, valid_credentials, monkeypatch
+):
     """Test that an invalid grant type raises an exception asynchronously."""
     if not valid_credentials.get("consumer_key"):
         pytest.skip("MPESA_CONSUMER_KEY not set for integration test.")
@@ -223,13 +231,13 @@ async def test_async_invalid_grant_type(async_http_client, valid_credentials, mo
     with pytest.raises(MpesaApiException) as excinfo:
         await tm.get_token(force_refresh=True)
 
-    assert (
-        excinfo.value.error.status_code in [400, 403]
-    )
+    assert excinfo.value.error.status_code in [400, 403]
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_async_invalid_auth_type(async_http_client, valid_credentials, monkeypatch):
+async def test_async_invalid_auth_type(
+    async_http_client, valid_credentials, monkeypatch
+):
     """Test that an invalid auth type raises an exception asynchronously."""
     if not valid_credentials.get("consumer_key"):
         pytest.skip("MPESA_CONSUMER_KEY not set for integration test.")
@@ -244,6 +252,4 @@ async def test_async_invalid_auth_type(async_http_client, valid_credentials, mon
     with pytest.raises(MpesaApiException) as excinfo:
         await tm.get_token(force_refresh=True)
 
-    assert (
-        excinfo.value.error.status_code in [400, 403]
-    )
+    assert excinfo.value.error.status_code in [400, 403]
