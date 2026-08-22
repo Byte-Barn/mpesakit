@@ -42,5 +42,10 @@ class SwapResponse(BaseModel):
 
     @property
     def is_recently_swapped(self) -> bool:
-        """Returns False if lastSwapDate returns default non-swap date (01-01-1900)."""
+        """Returns False if lastSwapDate returns default non-swap date (01-01-1900).
+
+        If the specified SIM was swapped more than 3 months ago,
+        the API returns a default date of 01-01-1900.
+        Please refer to:https://developer.safaricom.co.ke/apis/Swap.
+        """
         return self.is_successful and not self.lastSwapDate.startswith("01-01-1900")

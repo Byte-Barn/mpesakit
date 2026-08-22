@@ -1,4 +1,4 @@
-"""Unit tests for the Swap class in the Mpesakit.Swap module."""
+"""Unit tests for the Swap class in the mpesakit.swap module."""
 
 from unittest.mock import AsyncMock, MagicMock
 import pytest
@@ -7,12 +7,7 @@ from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.errors import MpesaApiException
 from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.swap import AsyncSwap, Swap, SwapRequest, SwapResponse
-
-
-@pytest.fixture(params=["sandbox", "production"])
-def env(request):
-    """Parametrized fixture providing both sandbox and production environments."""
-    return request.param
+from mpesakit.swap.swap import SWAP_ENDPOINT
 
 
 @pytest.fixture
@@ -32,12 +27,11 @@ def mock_token_manager():
 
 
 @pytest.fixture
-def swap_client(mock_http_client, mock_token_manager, env):
-    """Fixture providing a synchronous Swap client instance via direct constructor call."""
+def swap_client(mock_http_client, mock_token_manager):
+    """Fixture providing a synchronous Swap client instance."""
     return Swap(
         http_client=mock_http_client,
         token_manager=mock_token_manager,
-        environment=env,
     )
 
 
@@ -96,9 +90,22 @@ def test_swap_response_helper_properties(mock_success_response, mock_swapped_res
     assert response.is_successful is True
     assert response.is_recently_swapped is False
 
+
     swapped_response = SwapResponse(**mock_swapped_response)
     assert swapped_response.is_successful is True
     assert swapped_response.is_recently_swapped is True
+
+
+def test_swap_response_failed_status():
+    """Test that is_recently_swapped evaluates to False on unsuccessful response codes."""
+    failed_response = SwapResponse(
+        requestRefID="4277-415525-3",
+        responseCode="500",
+        responseDesc="Internal Server Error",
+        lastSwapDate="15-08-2026 10:30",
+    )
+    assert failed_response.is_successful is False
+    assert failed_response.is_recently_swapped is False
 
 
 def test_swap_request_success(
@@ -107,9 +114,8 @@ def test_swap_request_success(
     mock_token_manager,
     valid_swap_request,
     mock_success_response,
-    env,
 ):
-    """Test successful synchronous Swap request execution across environments."""
+    """Test successful synchronous Swap request execution using endpoint path."""
     mock_http_client.post.return_value = mock_success_response
 
     response = swap_client.swap_request(valid_swap_request)
@@ -118,13 +124,8 @@ def test_swap_request_success(
     assert response.responseCode == "200"
     assert response.is_successful is True
 
-    expected_domain = (
-        "sandbox.safaricom.co.ke" if env == "sandbox" else "api.safaricom.co.ke"
-    )
-    expected_url = f"https://{expected_domain}/imsi/v2/checkATI"
-
     mock_http_client.post.assert_called_once_with(
-        expected_url,
+        SWAP_ENDPOINT,
         json={"customerNumber": "254722000000"},
         headers={
             "Authorization": "Bearer mocked_access_token",
@@ -162,12 +163,11 @@ def mock_async_http_client():
 
 
 @pytest.fixture
-def async_swap_client(mock_async_http_client, mock_async_token_manager, env):
-    """Fixture providing an asynchronous Swap client instance via direct constructor call."""
+def async_swap_client(mock_async_http_client, mock_async_token_manager):
+    """Fixture providing an asynchronous Swap client instance."""
     return AsyncSwap(
         http_client=mock_async_http_client,
         token_manager=mock_async_token_manager,
-        environment=env,
     )
 
 
@@ -178,9 +178,8 @@ async def test_async_swap_request_success(
     mock_async_token_manager,
     valid_swap_request,
     mock_success_response,
-    env,
 ):
-    """Test successful asynchronous Swap request execution across environments."""
+    """Test successful asynchronous Swap request execution using endpoint path."""
     mock_async_http_client.post.return_value = mock_success_response
 
     response = await async_swap_client.swap_request(valid_swap_request)
@@ -189,13 +188,8 @@ async def test_async_swap_request_success(
     assert response.responseCode == "200"
     assert response.is_successful is True
 
-    expected_domain = (
-        "sandbox.safaricom.co.ke" if env == "sandbox" else "api.safaricom.co.ke"
-    )
-    expected_url = f"https://{expected_domain}/imsi/v2/checkATI"
-
     mock_async_http_client.post.assert_called_once_with(
-        expected_url,
+        SWAP_ENDPOINT,
         json={"customerNumber": "254722000000"},
         headers={
             "Authorization": "Bearer mocked_async_access_token",

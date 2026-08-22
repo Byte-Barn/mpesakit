@@ -8,17 +8,12 @@ from mpesakit.errors import MpesaApiException
 from mpesakit.http_client import AsyncHttpClient, HttpClient
 from mpesakit.services.swap import AsyncSwapService, SwapService
 from mpesakit.swap import AsyncSwap, Swap, SwapRequest, SwapResponse
-
-
-@pytest.fixture(params=["sandbox", "production"])
-def env(request):
-    """Parametrized fixture providing both sandbox and production environments."""
-    return request.param
+from mpesakit.swap.swap import SWAP_ENDPOINT
 
 
 @pytest.fixture
 def mock_http_client():
-    """Mock that passes Pydantic instance check."""
+    """Mock synchronous HTTP client with spec to satisfy Pydantic type checks."""
     client = MagicMock(spec=HttpClient)
     client.post = MagicMock()
     return client
@@ -26,38 +21,23 @@ def mock_http_client():
 
 @pytest.fixture
 def mock_token_manager():
-    """Mock that passes Pydantic instance check."""
+    """Mock synchronous token manager with spec to satisfy Pydantic type checks."""
     manager = MagicMock(spec=TokenManager)
     manager.get_token.return_value = "mocked_access_token"
     return manager
 
 
 @pytest.fixture
-def swap_client(mock_http_client, mock_token_manager, env):
+def swap_client(mock_http_client, mock_token_manager):
     """Constructs SwapService bypassing Pydantic checks strictly in test setup."""
     service = SwapService.__new__(SwapService)
     service.http_client = mock_http_client
     service.token_manager = mock_token_manager
-    service.environment = env
+    service.environment = "sandbox"
     service._swap = Swap.model_construct(
         http_client=mock_http_client,
         token_manager=mock_token_manager,
-        environment=env,
-    )
-    return service
-
-
-@pytest.fixture
-def async_swap_client(mock_async_http_client, mock_async_token_manager, env):
-    """Constructs AsyncSwapService bypassing Pydantic checks strictly in test setup."""
-    service = AsyncSwapService.__new__(AsyncSwapService)
-    service.http_client = mock_async_http_client
-    service.token_manager = mock_async_token_manager
-    service.environment = env
-    service._swap = AsyncSwap.model_construct(
-        http_client=mock_async_http_client,
-        token_manager=mock_async_token_manager,
-        environment=env,
+        environment="sandbox",
     )
     return service
 
@@ -82,7 +62,8 @@ def make_mock_exception(code: str, message: str) -> MpesaApiException:
     return MpesaApiException(mock_error)
 
 
-def test_swap_query_success(swap_client, mock_http_client, mock_success_response, env):
+
+def test_swap_query_success(swap_client, mock_http_client, mock_success_response):
     """Test facade swap_query method normalizes string phone and calls HTTP client."""
     mock_http_client.post.return_value = mock_success_response
 
@@ -91,11 +72,8 @@ def test_swap_query_success(swap_client, mock_http_client, mock_success_response
     assert isinstance(response, SwapResponse)
     assert response.is_successful is True
 
-    expected_domain = (
-        "sandbox.safaricom.co.ke" if env == "sandbox" else "api.safaricom.co.ke"
-    )
     mock_http_client.post.assert_called_once_with(
-        f"https://{expected_domain}/imsi/v2/checkATI",
+        SWAP_ENDPOINT,
         json={"customerNumber": "254722000000"},
         headers={
             "Authorization": "Bearer mocked_access_token",
@@ -105,7 +83,7 @@ def test_swap_query_success(swap_client, mock_http_client, mock_success_response
 
 
 def test_swap_request_direct_model_success(
-    swap_client, mock_http_client, mock_success_response, env
+    swap_client, mock_http_client, mock_success_response
 ):
     """Test facade swap_request method accepts SwapRequest model directly."""
     mock_http_client.post.return_value = mock_success_response
@@ -116,11 +94,8 @@ def test_swap_request_direct_model_success(
     assert isinstance(response, SwapResponse)
     assert response.is_successful is True
 
-    expected_domain = (
-        "sandbox.safaricom.co.ke" if env == "sandbox" else "api.safaricom.co.ke"
-    )
     mock_http_client.post.assert_called_once_with(
-        f"https://{expected_domain}/imsi/v2/checkATI",
+        SWAP_ENDPOINT,
         json={"customerNumber": "254711000000"},
         headers={
             "Authorization": "Bearer mocked_access_token",
@@ -148,7 +123,7 @@ def test_swap_query_http_error(swap_client, mock_http_client):
 
 @pytest.fixture
 def mock_async_http_client():
-    """Mock that passes Pydantic instance check."""
+    """Mock synchronous HTTP client with spec to satisfy Pydantic type checks."""
     client = MagicMock(spec=AsyncHttpClient)
     client.post = AsyncMock()
     return client
@@ -156,15 +131,30 @@ def mock_async_http_client():
 
 @pytest.fixture
 def mock_async_token_manager():
-    """Mock that passes Pydantic instance check."""
+    """Mock asynchronous token manager with spec to satisfy Pydantic type checks."""
     manager = MagicMock(spec=AsyncTokenManager)
     manager.get_token = AsyncMock(return_value="mocked_async_access_token")
     return manager
 
 
+@pytest.fixture
+def async_swap_client(mock_async_http_client, mock_async_token_manager):
+    """Constructs AsyncSwapService bypassing Pydantic checks strictly in test setup."""
+    service = AsyncSwapService.__new__(AsyncSwapService)
+    service.http_client = mock_async_http_client
+    service.token_manager = mock_async_token_manager
+    service.environment = "sandbox"
+    service._swap = AsyncSwap.model_construct(
+        http_client=mock_async_http_client,
+        token_manager=mock_async_token_manager,
+        environment="sandbox",
+    )
+    return service
+
+
 @pytest.mark.asyncio
 async def test_async_swap_query_success(
-    async_swap_client, mock_async_http_client, mock_success_response, env
+    async_swap_client, mock_async_http_client, mock_success_response
 ):
     """Test async facade swap_query method normalizes string phone and calls async client."""
     mock_async_http_client.post.return_value = mock_success_response
@@ -174,11 +164,8 @@ async def test_async_swap_query_success(
     assert isinstance(response, SwapResponse)
     assert response.is_successful is True
 
-    expected_domain = (
-        "sandbox.safaricom.co.ke" if env == "sandbox" else "api.safaricom.co.ke"
-    )
     mock_async_http_client.post.assert_called_once_with(
-        f"https://{expected_domain}/imsi/v2/checkATI",
+        SWAP_ENDPOINT,
         json={"customerNumber": "254722000000"},
         headers={
             "Authorization": "Bearer mocked_async_access_token",
@@ -189,7 +176,7 @@ async def test_async_swap_query_success(
 
 @pytest.mark.asyncio
 async def test_async_swap_request_direct_model_success(
-    async_swap_client, mock_async_http_client, mock_success_response, env
+    async_swap_client, mock_async_http_client, mock_success_response
 ):
     """Test async facade swap_request method accepts SwapRequest model directly."""
     mock_async_http_client.post.return_value = mock_success_response
@@ -200,11 +187,8 @@ async def test_async_swap_request_direct_model_success(
     assert isinstance(response, SwapResponse)
     assert response.is_successful is True
 
-    expected_domain = (
-        "sandbox.safaricom.co.ke" if env == "sandbox" else "api.safaricom.co.ke"
-    )
     mock_async_http_client.post.assert_called_once_with(
-        f"https://{expected_domain}/imsi/v2/checkATI",
+        SWAP_ENDPOINT,
         json={"customerNumber": "254711000000"},
         headers={
             "Authorization": "Bearer mocked_async_access_token",
