@@ -18,7 +18,7 @@ from .schemas import (
 class TaxRemittance(BaseModel):
     """Represents the Tax Remittance API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/TaxRemittance
+    https://developer.safaricom.co.ke/apis/TaxRemittance
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

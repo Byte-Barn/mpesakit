@@ -23,7 +23,7 @@ class DynamicQRTransactionType(str, Enum):
 class DynamicQRGenerateRequest(BaseModel):
     """Represents the request payload for generating a Dynamic QR code.
 
-    https://developer.safaricom.co.ke/APIs/DynamicQRCode
+    https://developer.safaricom.co.ke/apis/DynamicQRCode
 
     Attributes:
         MerchantName (str): Name of the Company/M-Pesa Merchant Name.
@@ -129,7 +129,7 @@ class DynamicQRGenerateRequest(BaseModel):
 class DynamicQRGenerateResponse(BaseModel):
     """Represents the response returned after generating a Dynamic QR code.
 
-    https://developer.safaricom.co.ke/APIs/DynamicQRCode
+    https://developer.safaricom.co.ke/apis/DynamicQRCode
 
     Attributes:
         ResponseCode (str): Used to return the Transaction Type (alpha-numeric string).

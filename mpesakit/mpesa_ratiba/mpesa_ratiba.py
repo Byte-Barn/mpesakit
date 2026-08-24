@@ -18,7 +18,7 @@ from .schemas import (
 class MpesaRatiba(BaseModel):
     """Represents the Standing Order (Ratiba) API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/MpesaRatiba
+    https://developer.safaricom.co.ke/apis/MpesaRatiba
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

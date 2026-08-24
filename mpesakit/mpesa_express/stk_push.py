@@ -20,8 +20,8 @@ from .schemas import (
 class StkPush(BaseModel):
     """Represents the request payload for initiating an M-Pesa STK Push transaction.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressQuery
-    https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate
+    https://developer.safaricom.co.ke/apis/MpesaExpressQuery
+    https://developer.safaricom.co.ke/apis/MpesaExpressSimulate
     Attributes:
         http_client (HttpClient): The HTTP client used to make requests to the M-Pesa API.
         request (StkPushSimulateRequest): The request data for the STK Push transaction.

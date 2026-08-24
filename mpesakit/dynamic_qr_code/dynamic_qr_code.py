@@ -18,7 +18,7 @@ from .schemas import (
 class DynamicQRCode(BaseModel):
     """Represents the request payload for generating a Dynamic M-Pesa QR code.
 
-    https://developer.safaricom.co.ke/APIs/DynamicQR
+    https://developer.safaricom.co.ke/apis/DynamicQRCode
 
     Attributes:
         http_client (HttpClient): The HTTP client used to make requests to the M-Pesa API.

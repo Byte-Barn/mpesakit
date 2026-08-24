@@ -27,7 +27,7 @@ class TransactionType(str, Enum):
 class StkPushSimulateRequest(BaseModel):
     """Represents the request payload for initiating an M-Pesa STK Push transaction.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate
+    https://developer.safaricom.co.ke/apis/MpesaExpressSimulate
 
     Attributes:
         BusinessShortCode (int): Organization's shortcode (Paybill or Buygoods - 5 to 6 digits).
@@ -198,7 +198,7 @@ class StkPushSimulateRequest(BaseModel):
 class StkPushSimulateResponse(BaseModel):
     """Represents the response returned after initiating an M-Pesa STK Push transaction.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate
+    https://developer.safaricom.co.ke/apis/MpesaExpressSimulate
     Attributes:
         MerchantRequestID (str): Global unique identifier for the submitted payment request.
         CheckoutRequestID (str): Global unique identifier for the processed checkout transaction request.
@@ -254,7 +254,7 @@ class StkPushSimulateResponse(BaseModel):
 class StkPushSimulateCallbackMetadataItem(BaseModel):
     """Represents an item in the CallbackMetadata array from an M-Pesa STK Push callback.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate
+    https://developer.safaricom.co.ke/apis/MpesaExpressSimulate
     Attributes:
         Name (str): The name of the metadata field (e.g., Amount, MpesaReceiptNumber)
         Value (Optional[str | int | float]): The value of the metadata field
@@ -296,7 +296,7 @@ class StkPushSimulateCallbackMetadataItem(BaseModel):
 class StkPushSimulateCallbackMetadata(BaseModel):
     """Represents the metadata returned in a successful STK Push transaction callback.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressSimulate
+    https://developer.safaricom.co.ke/apis/MpesaExpressSimulate
     Attributes:
         Item (list[StkPushSimulateCallbackMetadataItem]): List of metadata items with transaction details
     """
@@ -467,7 +467,7 @@ class StkPushSimulateCallbackResponse(BaseModel):
 class StkPushQueryRequest(BaseModel):
     """Represents the request payload for querying the status of an M-Pesa STK Push transaction.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressQuery
+    https://developer.safaricom.co.ke/apis/MpesaExpressQuery
 
     Attributes:
         BusinessShortCode (int): Organization's shortcode (Paybill or Buygoods - 5 to 7 digits).
@@ -555,7 +555,7 @@ class StkPushQueryRequest(BaseModel):
 class StkPushQueryResponse(BaseModel):
     """Represents the response returned after querying the status of an M-Pesa STK Push transaction.
 
-    https://developer.safaricom.co.ke/APIs/MpesaExpressQuery
+    https://developer.safaricom.co.ke/apis/MpesaExpressQuery
 
     Attributes:
         MerchantRequestID (str): Global unique identifier for the submitted payment request.
