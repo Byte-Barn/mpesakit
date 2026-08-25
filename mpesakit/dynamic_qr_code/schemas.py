@@ -81,6 +81,7 @@ class DynamicQRGenerateRequest(BaseModel):
     )
 
     @model_validator(mode="before")
+    @classmethod
     def validate(cls, values):
         """Validates the TrxCode field before model validation."""
         # Validate the TrxCode field
@@ -143,6 +144,11 @@ class DynamicQRGenerateResponse(BaseModel):
         description="Used to show if the transaction was successful or not. 00 indicates success.",
         examples=["00"],
     )
+    RequestID: str = Field(
+        ...,
+        description="Unique identifier for the request.",
+        examples=["16738-27456357-1"],
+    )
     ResponseDescription: str = Field(
         ...,
         description="This is a response describing the status of the transaction.",
@@ -158,6 +164,7 @@ class DynamicQRGenerateResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "ResponseCode": "00",
+                "RequestID": "16738-27456357-1",
                 "ResponseDescription": "QR Code Successfully Generated.",
                 "QRCode": "iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAIAAAD2HxkiAAAHtElEQVR42...",
             }

@@ -323,13 +323,14 @@ class TestCallbackProcessing:
     def test_process_dynamic_qr_code_callback(self, client):
         """Test processing dynamic QR code callback payload."""
         payload = {
-            "ResponseCode": "00000000",
-            "ResponseDescription": "success",
-            "QRCode": "00000101010101010101",
+            "ResponseCode": "00",
+            "RequestID": "16738-27456357-1",
+            "ResponseDescription": "QR Code Successfully Generated.",
+            "QRCode": "base64-encoded-string",
         }
         result = client.process_dynamic_qr_code_callback(payload)
-        assert result.ResponseCode == "00000000"
-        assert result.ResponseDescription == "success"
+        assert result.ResponseCode == "00"
+        assert result.ResponseDescription == "QR Code Successfully Generated."
 
     def test_process_ratiba_service_callback(self, client):
         """Test processing ratiba service callback payload."""

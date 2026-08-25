@@ -6,8 +6,8 @@ from mpesakit.services.dynamic_qr import (
     AsyncDynamicQRCodeService,
 )
 from mpesakit.dynamic_qr_code.schemas import (
-    DynamicQRGenerateResponse,
-    DynamicQRTransactionType,
+  DynamicQRGenerateResponse,
+  DynamicQRTransactionType,
 )
 
 
@@ -88,7 +88,8 @@ def test_generate_dynamic_qr_string_response_code_no_type_error(
     # ResponseCode provided as a string (common in some APIs)
     response_data = {
         "ResponseCode": "00",
-        "ResponseDescription": "Success",
+        "RequestID": "16738-27456357-1",
+        "ResponseDescription": "QR Code Successfully Generated.",
         "QRCode": "base64-encoded-string",
     }
     mock_http_client.post.return_value = response_data
@@ -108,15 +109,10 @@ def test_generate_dynamic_qr_string_response_code_no_type_error(
 def test_generate_filters_kwargs(dynamic_qr_service, mock_http_client):
     """Test that extra kwargs are filtered out in the request."""
     response_data = {
-        "QRCode": "base64string",
-        "MerchantName": "Test Merchant",
-        "RefNo": "REF456",
-        "Amount": 200.0,
-        "TrxCode": DynamicQRTransactionType.BUY_GOODS.value,
-        "CPI": "CPI456",
-        "Size": "400x400",
-        "ResponseCode": "0",
-        "ResponseDescription": "QR code generated successfully.",
+        "ResponseCode": "00",
+        "RequestID": "16738-27456357-1",
+        "ResponseDescription": "QR Code Successfully Generated.",
+        "QRCode": "base64-encoded-string",
     }
     mock_http_client.post.return_value = response_data
 
@@ -199,15 +195,10 @@ async def test_async_generate_filters_kwargs(
 ):
     """Test that async generate filters out unexpected kwargs."""
     response_data = {
-        "QRCode": "base64string",
-        "MerchantName": "Test Merchant",
-        "RefNo": "REF456",
-        "Amount": 200.0,
-        "TrxCode": DynamicQRTransactionType.BUY_GOODS.value,
-        "CPI": "CPI456",
-        "Size": "400x400",
-        "ResponseCode": "0",
-        "ResponseDescription": "QR code generated successfully.",
+        "ResponseCode": "00",
+        "RequestID": "16738-27456357-1",
+        "ResponseDescription": "QR Code Successfully Generated.",
+        "QRCode": "base64-encoded-string",
     }
     mock_async_http_client.post.return_value = response_data
 
@@ -231,7 +222,8 @@ async def test_async_generate_dynamic_qr_token_manager_called(
     """Test that the async token manager's get_token is properly awaited."""
     mock_async_http_client.post.return_value = {
         "ResponseCode": "00",
-        "ResponseDescription": "Success",
+        "RequestID": "16738-27456357-1",
+        "ResponseDescription": "QR Code Successfully Generated.",
         "QRCode": "base64-encoded-string",
     }
 

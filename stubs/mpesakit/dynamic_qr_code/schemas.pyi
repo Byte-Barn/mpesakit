@@ -18,10 +18,13 @@ class DynamicQRGenerateRequest(BaseModel):
     CPI: str
     Size: str
     model_config: Incomplete
+
+    @classmethod
     def validate(cls, values): ...
 
 class DynamicQRGenerateResponse(BaseModel):
     ResponseCode: str | int
+    RequestID: str
     ResponseDescription: str
     QRCode: str
     model_config: Incomplete
