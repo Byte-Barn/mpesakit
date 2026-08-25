@@ -2,11 +2,9 @@
 
 from mpesakit.auth import TokenManager, AsyncTokenManager
 from mpesakit.http_client import HttpClient, AsyncHttpClient
-from mpesakit.dynamic_qr_code import (
+from mpesakit.dynamic_qr_code.schemas import (
     DynamicQRGenerateRequest,
     DynamicQRGenerateResponse,
-    DynamicQRCode,
-    AsyncDynamicQRCode,
 )
 
 
@@ -17,10 +15,7 @@ class DynamicQRCodeService:
         """Initialize the Dynamic QR Code service."""
         self.http_client = http_client
         self.token_manager = token_manager
-        self.qr_code = DynamicQRCode(
-            http_client=self.http_client,
-            token_manager=self.token_manager,
-        )
+        self._api_path = "/mpesa/qrcode/v1/generate"
 
     def generate(
         self,
@@ -49,7 +44,7 @@ class DynamicQRCodeService:
         request = DynamicQRGenerateRequest(
             MerchantName=merchant_name,
             RefNo=ref_no,
-            Amount=amount,
+            Amount=int(amount),
             TrxCode=trx_code,
             CPI=cpi,
             Size=size,
@@ -59,7 +54,16 @@ class DynamicQRCodeService:
                 if k in DynamicQRGenerateRequest.model_fields
             },
         )
-        return self.qr_code.generate(request)
+        headers = {
+            "Authorization": f"Bearer {self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+
+        response_data = self.http_client.post(
+            self._api_path, json=request.model_dump(by_alias=True), headers=headers
+        )
+
+        return DynamicQRGenerateResponse(**response_data)
 
 
 class AsyncDynamicQRCodeService:
@@ -71,10 +75,7 @@ class AsyncDynamicQRCodeService:
         """Initialize the async Dynamic QR Code service."""
         self.http_client = http_client
         self.token_manager = token_manager
-        self.qr_code = AsyncDynamicQRCode(
-            http_client=self.http_client,
-            token_manager=self.token_manager,
-        )
+        self._api_path = "/mpesa/qrcode/v1/generate"
 
     async def generate(
         self,
@@ -90,7 +91,7 @@ class AsyncDynamicQRCodeService:
         request = DynamicQRGenerateRequest(
             MerchantName=merchant_name,
             RefNo=ref_no,
-            Amount=amount,
+            Amount=int(amount),
             TrxCode=trx_code,
             CPI=cpi,
             Size=size,
@@ -100,4 +101,14 @@ class AsyncDynamicQRCodeService:
                 if k in DynamicQRGenerateRequest.model_fields
             },
         )
-        return await self.qr_code.generate(request)
+
+        headers = {
+            "Authorization": f"Bearer {await self.token_manager.get_token()}",
+            "Content-Type": "application/json",
+        }
+
+        response_data = await self.http_client.post(
+            self._api_path, json=request.model_dump(by_alias=True), headers=headers
+        )
+
+        return DynamicQRGenerateResponse(**response_data)

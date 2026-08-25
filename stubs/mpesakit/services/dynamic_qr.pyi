@@ -3,8 +3,7 @@ from mpesakit.auth import (
     TokenManager as TokenManager,
     AsyncTokenManager as AsyncTokenManager,
 )
-from mpesakit.dynamic_qr_code import (
-    DynamicQRCode as DynamicQRCode,
+from mpesakit.dynamic_qr_code.schemas import (
     DynamicQRGenerateRequest as DynamicQRGenerateRequest,
     DynamicQRGenerateResponse as DynamicQRGenerateResponse,
 )

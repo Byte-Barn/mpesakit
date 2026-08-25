@@ -4,10 +4,12 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-from mpesakit.dynamic_qr_code import (
-    DynamicQRGenerateRequest,
-    DynamicQRCode,
-    DynamicQRTransactionType,
+from mpesakit.dynamic_qr_code.schemas import (
+  DynamicQRGenerateRequest,
+  DynamicQRTransactionType,
+)
+from mpesakit.services.dynamic_qr import (
+    DynamicQRCodeService,
 )
 from mpesakit.auth import TokenManager
 from mpesakit.http_client.mpesa_http_client import MpesaHttpClient
@@ -26,7 +28,7 @@ def dynamic_qr_service():
         consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
         consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
     )
-    return DynamicQRCode(http_client=http_client, token_manager=token_manager)
+    return DynamicQRCodeService(http_client=http_client, token_manager=token_manager)
 
 
 def test_dynamic_qr_code_generate(dynamic_qr_service):
