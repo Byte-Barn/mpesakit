@@ -22,7 +22,7 @@ load_dotenv()
 @pytest.fixture
 def dynamic_qr_service():
     """Initialize the M-Pesa Dynamic QR Code service with authentication."""
-    http_client = MpesaHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
+    http_client = MpesaHttpClient(env=os.getenv("MPESA_ENVIRONMENT", "sandbox"))
     token_manager = TokenManager(
         http_client=http_client,
         consumer_key=os.getenv("MPESA_CONSUMER_KEY"),

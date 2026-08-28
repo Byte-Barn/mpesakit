@@ -37,7 +37,7 @@ def invalid_credentials():
 def http_client():
     """Provide an instance of MpesaHttpClient for testing."""
     # Use sandbox environment for testing
-    return MpesaHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
+    return MpesaHttpClient(env=os.getenv("MPESA_ENVIRONMENT", "sandbox"))
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +51,7 @@ def delay_between_tests():
 def async_http_client():
     """Provide an instance of MpesaAsyncHttpClient for testing."""
     # Use sandbox environment for testing
-    return MpesaAsyncHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
+    return MpesaAsyncHttpClient(env=os.getenv("MPESA_ENVIRONMENT", "sandbox"))
 
 
 def test_get_token_success(valid_credentials, http_client):
