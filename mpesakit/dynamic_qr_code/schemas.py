@@ -50,7 +50,7 @@ class DynamicQRGenerateRequest(BaseModel):
         examples=[1, 2000],
         gt=0,
     )
-    TrxCode: str = Field(
+    TrxCode: DynamicQRTransactionType = Field(
         ...,
         description="Transaction Type. Supported: BG, WA, PB, SM, SB.",
         examples=["BG"],
