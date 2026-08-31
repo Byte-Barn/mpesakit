@@ -21,13 +21,7 @@ class DynamicQRCodeService:
     ) -> None: ...
     def generate(
         self,
-        merchant_name: str,
-        ref_no: str,
-        amount: float,
-        trx_code: str,
-        cpi: str,
-        size: str,
-        **kwargs,
+        request: DynamicQRGenerateRequest,
     ) -> DynamicQRGenerateResponse: ...
 
 class AsyncDynamicQRCodeService:
@@ -39,11 +33,5 @@ class AsyncDynamicQRCodeService:
     ) -> None: ...
     async def generate(
         self,
-        merchant_name: str,
-        ref_no: str,
-        amount: float,
-        trx_code: str,
-        cpi: str,
-        size: str,
-        **kwargs,
+        request: DynamicQRGenerateRequest,
     ) -> DynamicQRGenerateResponse: ...

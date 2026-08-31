@@ -19,41 +19,15 @@ class DynamicQRCodeService:
 
     def generate(
         self,
-        merchant_name: str,
-        ref_no: str,
-        amount: float,
-        trx_code: str,
-        cpi: str,
-        size: str,
-        **kwargs,
+        request: DynamicQRGenerateRequest,
     ) -> DynamicQRGenerateResponse:
         """Generate a dynamic QR code for payment.
 
         Args:
-            merchant_name: Name of the merchant.
-            ref_no: Reference number for the transaction.
-            amount: Transaction amount.
-            trx_code: Transaction type (DynamicQRTransactionType).
-            cpi: CPI code.
-            size: Size of the QR code.
-            **kwargs: Additional fields for DynamicQRGenerateRequest.
-
+            request: The request object containing all required payload attrs.
         Returns:
             Response DynamicQRGenerateResponse containing QR code details.
         """
-        request = DynamicQRGenerateRequest(
-            MerchantName=merchant_name,
-            RefNo=ref_no,
-            Amount=int(amount),
-            TrxCode=trx_code,
-            CPI=cpi,
-            Size=size,
-            **{
-                k: v
-                for k, v in kwargs.items()
-                if k in DynamicQRGenerateRequest.model_fields
-            },
-        )
         headers = {
             "Authorization": f"Bearer {self.token_manager.get_token()}",
             "Content-Type": "application/json",
@@ -79,29 +53,15 @@ class AsyncDynamicQRCodeService:
 
     async def generate(
         self,
-        merchant_name: str,
-        ref_no: str,
-        amount: float,
-        trx_code: str,
-        cpi: str,
-        size: str,
-        **kwargs,
+        request: DynamicQRGenerateRequest,
     ) -> DynamicQRGenerateResponse:
-        """Generate a dynamic QR code for payment asynchronously."""
-        request = DynamicQRGenerateRequest(
-            MerchantName=merchant_name,
-            RefNo=ref_no,
-            Amount=int(amount),
-            TrxCode=trx_code,
-            CPI=cpi,
-            Size=size,
-            **{
-                k: v
-                for k, v in kwargs.items()
-                if k in DynamicQRGenerateRequest.model_fields
-            },
-        )
+        """Generate a dynamic QR code for payment asynchronously.
 
+        Args:
+            request: The request object containing all required payload attrs.
+        Returns:
+            Response DynamicQRGenerateResponse containing QR code details.
+        """
         headers = {
             "Authorization": f"Bearer {await self.token_manager.get_token()}",
             "Content-Type": "application/json",

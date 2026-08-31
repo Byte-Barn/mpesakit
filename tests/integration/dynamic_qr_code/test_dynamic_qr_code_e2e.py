@@ -11,19 +11,10 @@ pytestmark = pytest.mark.live
 
 
 def test_dynamic_qr_code_generate(
-    service: DynamicQRCodeService,
-    payload: DynamicQRGenerateRequest
+    service: DynamicQRCodeService, payload: DynamicQRGenerateRequest
 ):
     """End-to-end test for M-Pesa Dynamic QR Code generation."""
-
-    response = service.generate(
-        merchant_name=payload.MerchantName,
-        ref_no=payload.RefNo,
-        amount=payload.Amount,
-        trx_code=payload.TrxCode.value,
-        cpi=payload.CPI,
-        size=payload.Size,
-    )
+    response = service.generate(payload)
 
     # Basic assertions - adapt as needed for your SDK's response structure
     assert response is not None
