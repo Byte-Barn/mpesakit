@@ -3,7 +3,6 @@
 Provides functionality to initiate Swap queries using the M-Pesa API.
 """
 
-from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from mpesakit.auth import AsyncTokenManager, TokenManager
@@ -18,7 +17,6 @@ class Swap(BaseModel):
 
     http_client: HttpClient
     token_manager: TokenManager
-    environment: Literal["sandbox", "production"] = "sandbox"
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -40,7 +38,6 @@ class AsyncSwap(BaseModel):
 
     http_client: AsyncHttpClient
     token_manager: AsyncTokenManager
-    environment: Literal["sandbox", "production"] = "sandbox"
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

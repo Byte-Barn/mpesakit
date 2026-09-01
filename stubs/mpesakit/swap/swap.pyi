@@ -8,18 +8,13 @@ from .schemas import SwapRequest, SwapResponse
 class Swap(BaseModel):
     http_client: HttpClient
     token_manager: TokenManager
-    environment: Literal["sandbox", "production"] = "sandbox"
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
     def swap_request(self, request: SwapRequest) -> SwapResponse: ...
 
 
 class AsyncSwap(BaseModel):
     http_client: AsyncHttpClient
     token_manager: AsyncTokenManager
-    environment: Literal["sandbox", "production"] = "sandbox"
-
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
     async def swap_request(self, request: SwapRequest) -> SwapResponse: ...

@@ -22,6 +22,8 @@ from mpesakit.services import (
     AsyncRatibaService,
     ReversalService,
     AsyncReversalService,
+    SwapService,
+    AsyncSwapService,
     TaxService,
     AsyncTaxService,
     TransactionService,
@@ -223,6 +225,12 @@ class MpesaClient(MpesaCallbackMixin):
         )
 
 
+        # swap => M-PESA Swap services
+        self.swap = SwapService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+
 class AsyncMpesaClient(MpesaCallbackMixin):
     """Unified async client for all M-PESA services."""
 
@@ -295,6 +303,11 @@ class AsyncMpesaClient(MpesaCallbackMixin):
 
         # ratiba => M-PESA Ratiba services
         self.ratiba = AsyncRatibaService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # swap => M-PESA Swap services
+        self.swap = AsyncSwapService(
             http_client=self.http_client, token_manager=self.token_manager
         )
 
