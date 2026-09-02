@@ -1,5 +1,7 @@
 """End-to-End Test for M-Pesa Dynamic QR Code Generation."""
 
+from typing import Callable
+
 import pytest
 
 from mpesakit.dynamic_qr_code.schemas import (
@@ -11,10 +13,12 @@ pytestmark = pytest.mark.live
 
 
 def test_dynamic_qr_code_generate(
-    service: DynamicQRCodeService, payload: DynamicQRGenerateRequest
+    service: DynamicQRCodeService,
+    generate_qr_request: Callable[[], DynamicQRGenerateRequest],
 ):
     """End-to-end test for M-Pesa Dynamic QR Code generation."""
-    response = service.generate(payload)
+    request = generate_qr_request()
+    response = service.generate(request)
 
     # Basic assertions - adapt as needed for your SDK's response structure
     assert response is not None

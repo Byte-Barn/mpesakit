@@ -25,6 +25,7 @@ class DynamicQRCodeService:
 
         Args:
             request: The request object containing all required payload attrs.
+
         Returns:
             Response DynamicQRGenerateResponse containing QR code details.
         """
@@ -59,6 +60,7 @@ class AsyncDynamicQRCodeService:
 
         Args:
             request: The request object containing all required payload attrs.
+
         Returns:
             Response DynamicQRGenerateResponse containing QR code details.
         """

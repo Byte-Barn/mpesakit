@@ -29,7 +29,7 @@ def validate_live_environment():
         pytest.fail(
             """
             Caution: Authentication is REQUIRED.
-            
+
             Live tests must run against the real sandbox API.
             Please set MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET in your
             environment or .env file.

@@ -7,54 +7,38 @@ from mpesakit.services.dynamic_qr import (
 )
 from mpesakit.dynamic_qr_code.schemas import (
     DynamicQRGenerateResponse,
-    DynamicQRGenerateRequest,
-    DynamicQRTransactionType,
 )
 
 
-@pytest.fixture
-def dynamic_qr_service(mock_http_client, mock_token_manager):
-    """Creates a DynamicQRCodeService instance for testing."""
-    return DynamicQRCodeService(
-        http_client=mock_http_client,
-        token_manager=mock_token_manager,
-    )
+pytest_plugins = ["tests.unit.dynamic_qr_code.conftest"]
 
 
-@pytest.fixture
-def async_dynamic_qr_service(mock_async_http_client, mock_async_token_manager):
-    """Creates an AsyncDynamicQRCodeService instance for testing."""
-    return AsyncDynamicQRCodeService(
-        http_client=mock_async_http_client,
-        token_manager=mock_async_token_manager,
-    )
+@pytest.mark.parametrize("service", [DynamicQRCodeService, AsyncDynamicQRCodeService])
+def test_dynamic_qr_service_initializes_with_service_dependencies(
+    service,
+    mock_http_client,
+    mock_token_manager,
+):
+    """Test DynamicQRCodeService initializes with correct arguments."""
+    instance = service(http_client=mock_http_client, token_manager=mock_token_manager)
+
+    assert isinstance(instance.http_client, type(mock_http_client))
+    assert isinstance(instance.token_manager, type(mock_token_manager))
 
 
-@pytest.fixture
-def payload():
-    """Provide a sample Dynamic QR Code request payload for tests."""
-    return DynamicQRGenerateRequest(
-        MerchantName="Test Supermarket",
-        RefNo="xewr34fer4t",
-        Amount=200,
-        TrxCode=DynamicQRTransactionType.BUY_GOODS,
-        CPI="373132",
-        Size="300",
-    )
-
-
-def test_generate_success(dynamic_qr_service, mock_http_client, payload):
+def test_generate_success(
+    dynamic_qr_service,
+    mock_http_client,
+    generate_qr_request,
+    generate_qr_success_response,
+):
     """Test successful generation of a dynamic QR code."""
-    response_data = {
-        "ResponseCode": "00",
-        "RequestID": "16738-27456357-1",
-        "ResponseDescription": "QR Code Successfully Generated.",
-        "QRCode": "base64-encoded-string",
-    }
+    response = generate_qr_success_response()
+    mock_http_client.post.return_value = response.model_dump(by_alias=True)
 
-    mock_http_client.post.return_value = response_data
+    request = generate_qr_request()
+    response = dynamic_qr_service.generate(request)
 
-    response = dynamic_qr_service.generate(payload)
     assert isinstance(response, DynamicQRGenerateResponse)
     assert response.is_successful is True
 
@@ -72,59 +56,19 @@ def test_generate_success(dynamic_qr_service, mock_http_client, payload):
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
 
-def test_generate_dynamic_qr_handles_http_error(
-    dynamic_qr_service, mock_http_client, payload
-):
-    """Test that an HTTP error during Dynamic QR Code generation is handled."""
-    mock_http_client.post.side_effect = Exception("HTTP error")
-
-    with pytest.raises(Exception) as excinfo:
-        dynamic_qr_service.generate(payload)
-    assert "HTTP error" in str(excinfo.value)
-
-
-def test_generate_dynamic_qr_string_response_code_no_type_error(
-    dynamic_qr_service, mock_http_client, payload
-):
-    """Ensure ResponseCode as a string does not cause type comparison errors in is_successful."""
-    # ResponseCode provided as a string (common in some APIs)
-    response_data = {
-        "ResponseCode": "00",
-        "RequestID": "16738-27456357-1",
-        "ResponseDescription": "QR Code Successfully Generated.",
-        "QRCode": "base64-encoded-string",
-    }
-    mock_http_client.post.return_value = response_data
-
-    # Should not raise a TypeError when evaluating is_successful
-    response = dynamic_qr_service.generate(payload)
-    assert response.is_successful is True
-
-
-def test_dynamic_qr_service_initializes_correctly(mock_http_client, mock_token_manager):
-    """Test DynamicQRCodeService initializes with correct arguments."""
-    service = DynamicQRCodeService(
-        http_client=mock_http_client,
-        token_manager=mock_token_manager,
-    )
-    assert service.http_client is mock_http_client
-    assert service.token_manager is mock_token_manager
-
-
 @pytest.mark.asyncio
 async def test_async_generate_success(
-    async_dynamic_qr_service, mock_async_http_client, payload
+    async_dynamic_qr_service,
+    mock_async_http_client,
+    generate_qr_request,
+    generate_qr_success_response,
 ):
     """Test successful async generation of a dynamic QR code."""
-    response_data = {
-        "ResponseCode": "00",
-        "RequestID": "16738-27456357-1",
-        "ResponseDescription": "QR Code Successfully Generated.",
-        "QRCode": "base64-encoded-string",
-    }
-    mock_async_http_client.post.return_value = response_data
+    response = generate_qr_success_response()
+    mock_async_http_client.post.return_value = response.model_dump(by_alias=True)
 
-    response = await async_dynamic_qr_service.generate(payload)
+    request = generate_qr_request()
+    response = await async_dynamic_qr_service.generate(request)
     assert isinstance(response, DynamicQRGenerateResponse)
     assert response.is_successful is True
     assert (
@@ -137,42 +81,61 @@ async def test_async_generate_success(
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
 
+def test_generate_dynamic_qr_handles_http_error(
+    dynamic_qr_service, mock_http_client, generate_qr_request
+):
+    """Test that an HTTP error during Dynamic QR Code generation is handled."""
+    mock_http_client.post.side_effect = Exception("HTTP error")
+
+    with pytest.raises(Exception) as excinfo:
+        request = generate_qr_request()
+        dynamic_qr_service.generate(request)
+    assert "HTTP error" in str(excinfo.value)
+
+
 @pytest.mark.asyncio
 async def test_async_generate_dynamic_qr_handles_http_error(
-    async_dynamic_qr_service, mock_async_http_client, payload
+    async_dynamic_qr_service, mock_async_http_client, generate_qr_request
 ):
     """Test that an HTTP error during async Dynamic QR Code generation is handled."""
     mock_async_http_client.post.side_effect = Exception("Async HTTP error")
 
     with pytest.raises(Exception) as excinfo:
-        await async_dynamic_qr_service.generate(payload)
+        request = generate_qr_request()
+        await async_dynamic_qr_service.generate(request)
     assert "Async HTTP error" in str(excinfo.value)
+
+
+def test_generate_dynamic_qr_string_response_code_no_type_error(
+    dynamic_qr_service,
+    mock_http_client,
+    generate_qr_request,
+    generate_qr_success_response,
+):
+    """Ensure ResponseCode as a string does not cause type comparison errors in is_successful."""
+    # ResponseCode provided as a string (common in some APIs)
+    response = generate_qr_success_response()
+    mock_http_client.post.return_value = response.model_dump(by_alias=True)
+
+    # Should not raise a TypeError when evaluating is_successful
+    request = generate_qr_request()
+    response = dynamic_qr_service.generate(request)
+    assert response.is_successful is True
 
 
 @pytest.mark.asyncio
 async def test_async_generate_dynamic_qr_token_manager_called(
-    async_dynamic_qr_service, mock_async_token_manager, mock_async_http_client, payload
+    async_dynamic_qr_service,
+    mock_async_token_manager,
+    mock_async_http_client,
+    generate_qr_request,
+    generate_qr_success_response,
 ):
     """Test that the async token manager's get_token is properly awaited."""
-    mock_async_http_client.post.return_value = {
-        "ResponseCode": "00",
-        "RequestID": "16738-27456357-1",
-        "ResponseDescription": "QR Code Successfully Generated.",
-        "QRCode": "base64-encoded-string",
-    }
+    response = generate_qr_success_response()
+    mock_async_http_client.post.return_value = response.model_dump(by_alias=True)
 
-    await async_dynamic_qr_service.generate(payload)
+    request = generate_qr_request()
+    await async_dynamic_qr_service.generate(request)
 
     mock_async_token_manager.get_token.assert_awaited_once()
-
-
-def test_async_dynamic_qr_service_initializes_correctly(
-    mock_async_http_client, mock_async_token_manager
-):
-    """Test AsyncDynamicQRCodeService initializes with correct arguments."""
-    service = AsyncDynamicQRCodeService(
-        http_client=mock_async_http_client,
-        token_manager=mock_async_token_manager,
-    )
-    assert service.http_client is mock_async_http_client
-    assert service.token_manager is mock_async_token_manager

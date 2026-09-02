@@ -68,6 +68,7 @@ class DynamicQRGenerateRequest(BaseModel):
     )
 
     model_config = ConfigDict(
+        validate_assignment=True,
         json_schema_extra={
             "example": {
                 "MerchantName": "TEST SUPERMARKET",
@@ -77,33 +78,17 @@ class DynamicQRGenerateRequest(BaseModel):
                 "CPI": "373132",
                 "Size": "300",
             }
-        }
+        },
     )
 
     @model_validator(mode="before")
     @classmethod
     def validate(cls, values):
         """Validates the TrxCode field before model validation."""
-        # Validate the TrxCode field
-        trx_code = values.get("TrxCode")
-        if trx_code is not None:
-            cls._validate_trx_code(trx_code)
-
         # Normalize CPI for SEND_MONEY transaction type
         cls._normalize_cpi_for_send_money(values)
 
         return values
-
-    @classmethod
-    def _validate_trx_code(cls, value):
-        """Validates the transaction code against the DynamicQRTransactionType enum."""
-        try:
-            DynamicQRTransactionType(value)
-        except ValueError:
-            raise ValueError(
-                f"TrxCode must be one of: {[e.value for e in DynamicQRTransactionType]}"
-            )
-        return value
 
     @classmethod
     def _normalize_cpi_for_send_money(cls, values):
@@ -161,6 +146,7 @@ class DynamicQRGenerateResponse(BaseModel):
     )
 
     model_config = ConfigDict(
+        frozen=True,
         json_schema_extra={
             "example": {
                 "ResponseCode": "00",
@@ -168,7 +154,7 @@ class DynamicQRGenerateResponse(BaseModel):
                 "ResponseDescription": "QR Code Successfully Generated.",
                 "QRCode": "iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAIAAAD2HxkiAAAHtElEQVR42...",
             }
-        }
+        },
     )
 
     @property
