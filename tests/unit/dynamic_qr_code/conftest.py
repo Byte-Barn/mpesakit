@@ -63,7 +63,7 @@ def generate_qr_success_response():
 
     def _factory(**overrides):
         default_data = {
-            "ResponseCode": "00",
+            "ResponseCode": "0",
             "RequestID": "16738-27456357-1",
             "ResponseDescription": "QR Code Successfully Generated.",
             "QRCode": "base64-encoded-string",

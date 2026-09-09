@@ -126,8 +126,8 @@ class DynamicQRGenerateResponse(BaseModel):
 
     ResponseCode: str | int = Field(
         ...,
-        description="Used to show if the transaction was successful or not. 00 indicates success.",
-        examples=["00"],
+        description="Used to show if the transaction was successful or not. 0 indicates success.",
+        examples=["0"],
     )
     RequestID: str = Field(
         ...,
@@ -149,7 +149,7 @@ class DynamicQRGenerateResponse(BaseModel):
         frozen=True,
         json_schema_extra={
             "example": {
-                "ResponseCode": "00",
+                "ResponseCode": "0",
                 "RequestID": "16738-27456357-1",
                 "ResponseDescription": "QR Code Successfully Generated.",
                 "QRCode": "iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAIAAAD2HxkiAAAHtElEQVR42...",
