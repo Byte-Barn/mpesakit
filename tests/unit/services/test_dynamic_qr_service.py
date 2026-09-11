@@ -10,9 +10,6 @@ from mpesakit.dynamic_qr_code.schemas import (
 )
 
 
-pytest_plugins = ["tests.unit.dynamic_qr_code.conftest"]
-
-
 @pytest.mark.parametrize("service", [DynamicQRCodeService, AsyncDynamicQRCodeService])
 def test_dynamic_qr_service_initializes_with_service_dependencies(
     service,
