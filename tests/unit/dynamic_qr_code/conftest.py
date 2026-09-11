@@ -1,4 +1,4 @@
-"""Shareable fixtures and configs for module: Dynamic QR Code
+"""Shareable fixtures and configs for module: Dynamic QR Code.
 
 Note: Test structure for this library results in tests shared across various
 scripts and modules. This file provides fixtures that can be reused across

@@ -8,9 +8,12 @@ from mpesakit.services.dynamic_qr import (
 from mpesakit.dynamic_qr_code.schemas import (
     DynamicQRGenerateResponse,
 )
-
-
-pytest_plugins = ["tests.unit.dynamic_qr_code.conftest"]
+from tests.unit.dynamic_qr_code.conftest import (
+    dynamic_qr_service,
+    async_dynamic_qr_service,
+    generate_qr_request,
+    generate_qr_success_response,
+)
 
 
 @pytest.mark.parametrize("service", [DynamicQRCodeService, AsyncDynamicQRCodeService])

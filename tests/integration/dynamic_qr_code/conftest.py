@@ -2,13 +2,10 @@
 
 import pytest
 
-from mpesakit.dynamic_qr_code.schemas import (
-    DynamicQRGenerateRequest,
-    DynamicQRTransactionType,
+from tests.unit.dynamic_qr_code.conftest import (
+    generate_qr_request,
+    generate_qr_success_response,
 )
-
-
-pytest_plugins = ["tests.unit.dynamic_qr_code.conftest"]
 
 
 @pytest.fixture(scope="session")
@@ -26,3 +23,10 @@ def service(mpesa_http_client, token_manager):
     return DynamicQRCodeService(
         http_client=mpesa_http_client, token_manager=token_manager
     )
+
+
+# Expose the imported factories as local fixtures for registration
+__all__ = [
+    "generate_qr_request",
+    "generate_qr_success_response",
+]
