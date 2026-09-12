@@ -51,7 +51,6 @@ def swap_service(env):
     return Swap(
         http_client=http_client,
         token_manager=token_manager,
-        environment=env,
     )
 
 
@@ -76,7 +75,6 @@ def async_swap_service(env):
     return AsyncSwap(
         http_client=http_client,
         token_manager=token_manager,
-        environment=env,
     )
 
 

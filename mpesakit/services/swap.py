@@ -12,16 +12,13 @@ class SwapService:
         self,
         http_client: HttpClient,
         token_manager: TokenManager,
-        environment: str = "sandbox",
     ) -> None:
         """Initialize the Swap service facade."""
         self.http_client = http_client
         self.token_manager = token_manager
-        self.environment = environment
         self._swap = Swap(
             http_client=self.http_client,
             token_manager=self.token_manager,
-            environment=self.environment,
         )
 
     def swap_query(self, customer_number: str) -> SwapResponse:
@@ -41,16 +38,13 @@ class AsyncSwapService:
         self,
         http_client: AsyncHttpClient,
         token_manager: AsyncTokenManager,
-        environment: str = "sandbox",
     ) -> None:
         """Initialize the Swap service facade."""
         self.http_client = http_client
         self.token_manager = token_manager
-        self.environment = environment
         self._swap = AsyncSwap(
             http_client=self.http_client,
             token_manager=self.token_manager,
-            environment=self.environment,
         )
 
     async def swap_query(self, customer_number: str) -> SwapResponse:

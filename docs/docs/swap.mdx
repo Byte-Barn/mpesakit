@@ -109,7 +109,6 @@ token_mgr = TokenManager(
 swap_service = Swap(
     http_client=http_client,
     token_manager=token_mgr,
-    environment=env,
 )
 
 # 3. Create request and perform query
@@ -148,7 +147,6 @@ async def check_sim_swap():
     swap_service = AsyncSwap(
         http_client=http_client,
         token_manager=token_mgr,
-        environment=env,
     )
 
     request = SwapRequest(customerNumber=os.getenv("TEST_CUSTOMER_NUMBER", "0722000000"))
