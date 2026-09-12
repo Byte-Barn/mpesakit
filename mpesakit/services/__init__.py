@@ -1,5 +1,6 @@
 from .b2b import B2BService, AsyncB2BService
 from .b2c import B2CService, AsyncB2CService
+from .b2p import B2PService
 from .balance import BalanceService, AsyncBalanceService
 from .bill import BillService, AsyncBillService
 from .c2b import C2BService, AsyncC2BService
@@ -15,6 +16,7 @@ __all__ = [
     "AsyncB2BService",
     "B2CService",
     "AsyncB2CService",
+    "B2PService",
     "BalanceService",
     "AsyncBalanceService",
     "BillService",

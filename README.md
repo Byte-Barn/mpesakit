@@ -107,6 +107,7 @@ All `process_*` methods follow the same pattern — pass in the raw JSON payload
 | `client.process_stk_callback(payload)` | `StkPushSimulateCallback` |
 | `client.process_stk_query_callback(payload)` | `StkPushQueryResponse` |
 | `client.process_b2c_callback(payload)` | `B2CResultCallback` |
+| `client.process_b2p_callback(payload)` | `B2PResultCallback` |
 | `client.process_account_balance_callback(payload)` | `AccountBalanceResultCallback` |
 | `client.process_account_balance_timeout(payload)` | `AccountBalanceTimeoutCallback` |
 | `client.process_transactions_callback(payload)` | `TransactionStatusResultCallback` |
@@ -244,6 +245,28 @@ if response.is_successful:
 
 > **Note:** B2C in production requires a Bulk Disbursement Account from Safaricom — a standard PayBill or Till will not work. See the [B2C docs](https://mpesakit.dev/b2c) for details.
 
+### B2Pochi — Pay a customer's Pochi La Biashara wallet
+
+```python
+response = client.b2p.send_payment(
+    originator_conversation_id="ocid-1234-5678",
+    initiator_name="your_initiator_name",
+    security_credential="your_encrypted_security_credential",
+    amount=10,
+    party_a="600992",           # Your bulk disbursement shortcode
+    party_b="254705912645",    # Recipient phone number (normalized by SDK)
+    remarks="Pochi disbursement",
+    queue_timeout_url="https://yourdomain.com/mpesa/timeout",
+    result_url="https://yourdomain.com/mpesa/result",
+    occasion="ChristmasPay",
+)
+
+if response.is_successful:
+    print("Payout accepted:", response.ConversationID)
+```
+
+The receiving party must have a Pochi La Biashara (Micro SME) wallet. Production uses the same Bulk Disbursement / one-account shortcode as B2C.
+
 ### STK Query — Check a push status
 
 ```python
@@ -289,6 +312,7 @@ Every API below ships with both a sync and an async client.
 | **STK Query** | ✅ Ready | Check the status of an STK Push request |
 | **C2B Payments** | ✅ Ready | Receive payments from customers via paybill or till |
 | **B2C Payments** | ✅ Ready | Send money to customers or staff |
+| **B2Pochi Payments** | ✅ Ready (sync) | Pay a customer's Pochi La Biashara wallet |
 | **B2C Account Top-up** | ✅ Ready | Top up B2C utility accounts |
 | **Business Paybill** | ✅ Ready | Business-to-business paybill transfers |
 | **Business BuyGoods** | ✅ Ready | Business-to-business till transfers |

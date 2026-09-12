@@ -8,6 +8,7 @@ from mpesakit.services import (
     AsyncB2BService,
     B2CService,
     AsyncB2CService,
+    B2PService,
     BalanceService,
     AsyncBalanceService,
     BillService,
@@ -79,6 +80,15 @@ class MpesaCallbackMixin:
         from mpesakit.b2c.schemas import B2CResultCallback
 
         return B2CResultCallback.model_validate(payload)
+
+    def process_b2p_callback(self, payload):
+        """Process B2Pochi (Business-to-Pochi) callback payload.
+
+        Validates and parses B2Pochi payment result callback.
+        """
+        from mpesakit.b2p.schemas import B2PResultCallback
+
+        return B2PResultCallback.model_validate(payload)
 
     def process_b2b_callback(self, payload):
         """Process B2B Express Checkout callback payload.
@@ -177,6 +187,11 @@ class MpesaClient(MpesaCallbackMixin):
             http_client=self.http_client, token_manager=self.token_manager
         )
 
+        # b2p => M-PESA Business to Pochi services
+        self.b2p = B2PService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
         # b2b => M-PESA Business to Business services
         self.b2b = B2BService(
             http_client=self.http_client, token_manager=self.token_manager
@@ -234,7 +249,9 @@ class AsyncMpesaClient(MpesaCallbackMixin):
         max_retries: int = DEFAULT_MAX_RETRIES,
     ) -> None:
         """Initialize the AsyncMpesaClient with all service facades."""
-        self.http_client = MpesaAsyncHttpClient(env=environment, max_retries=max_retries)
+        self.http_client = MpesaAsyncHttpClient(
+            env=environment, max_retries=max_retries
+        )
         self.token_manager = AsyncTokenManager(
             http_client=self.http_client,
             consumer_key=consumer_key,

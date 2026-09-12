@@ -8,6 +8,7 @@ from mpesakit.services import (
     AsyncB2BService as AsyncB2BService,
     B2CService as B2CService,
     AsyncB2CService as AsyncB2CService,
+    B2PService as B2PService,
     BalanceService as BalanceService,
     AsyncBalanceService as AsyncBalanceService,
     BillService as BillService,
@@ -34,6 +35,7 @@ class MpesaCallbackMixin:
     def process_account_balance_callback(self, payload): ...
     def process_account_balance_timeout(self, payload): ...
     def process_b2c_callback(self, payload): ...
+    def process_b2p_callback(self, payload): ...
     def process_b2b_callback(self, payload): ...
     def process_transactions_callback(self, payload): ...
     def process_bill_manager_callback(self, payload): ...
@@ -49,6 +51,7 @@ class MpesaClient(MpesaCallbackMixin):
     stk_push: Incomplete
     stk_query: Incomplete
     b2c: Incomplete
+    b2p: Incomplete
     b2b: Incomplete
     transactions: Incomplete
     tax: Incomplete
