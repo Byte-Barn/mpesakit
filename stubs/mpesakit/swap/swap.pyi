@@ -1,4 +1,3 @@
-from typing import Literal
 from pydantic import BaseModel, ConfigDict
 from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.http_client import AsyncHttpClient, HttpClient

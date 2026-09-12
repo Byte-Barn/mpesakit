@@ -68,7 +68,7 @@ def make_mock_exception(code: str, message: str) -> MpesaApiException:
     mock_error = MagicMock()
     mock_error.error_code = code
     mock_error.error_message = message
-    mock_error.__str__.return_value = f"[{code}] {message}"
+    type(mock_error).__str__ = MagicMock(return_value = f"[{code}] {message}")
     return MpesaApiException(mock_error)
 
 
