@@ -6,8 +6,9 @@ These tests cover token retrieval, caching, and error handling for both synchron
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import patch
-from mpesakit.auth import TokenManager , AsyncTokenManager
+from mpesakit.auth import TokenManager, AsyncTokenManager
 from mpesakit.errors import MpesaApiException, MpesaError
+
 
 @pytest.fixture
 def valid_credentials():
@@ -17,6 +18,7 @@ def valid_credentials():
         "consumer_secret": "test_secret",
     }
 
+
 @pytest.fixture
 def invalid_credentials():
     """Provide invalid M-Pesa credentials for testing."""
@@ -24,6 +26,7 @@ def invalid_credentials():
         "consumer_key": "invalid_key",
         "consumer_secret": "invalid_secret",
     }
+
 
 def test_get_token_success(valid_credentials, mock_http_client):
     """Test that a valid token can be retrieved."""
@@ -38,6 +41,7 @@ def test_get_token_success(valid_credentials, mock_http_client):
     )
     token = tm.get_token()
     assert token == "mocked_token_1234567890"
+
 
 def test_token_caching(valid_credentials, mock_http_client):
     """Test that the token is cached and reused until it expires."""
@@ -54,6 +58,7 @@ def test_token_caching(valid_credentials, mock_http_client):
     token2 = tm.get_token()
     assert token1 == token2
 
+
 def test_force_refresh_token(valid_credentials, mock_http_client):
     """Test that forcing a token refresh retrieves a new token."""
     mock_http_client.get.side_effect = [
@@ -69,6 +74,7 @@ def test_force_refresh_token(valid_credentials, mock_http_client):
     token2 = tm.get_token(force_refresh=True)
     assert token1 == "token1"
     assert token2 == "token2"
+
 
 def test_invalid_credentials_raises(mock_http_client, invalid_credentials):
     """Test that invalid credentials raise an exception."""
@@ -91,6 +97,7 @@ def test_invalid_credentials_raises(mock_http_client, invalid_credentials):
         or excinfo.value.error.status_code == 403
     )
 
+
 def test_invalid_grant_type(valid_credentials, mock_http_client, monkeypatch):
     """Test that an invalid grant type raises an exception."""
     tm = TokenManager(
@@ -108,6 +115,7 @@ def test_invalid_grant_type(valid_credentials, mock_http_client, monkeypatch):
     with pytest.raises(MpesaApiException) as excinfo:
         tm.get_token(force_refresh=True)
     assert excinfo.value.error.status_code == 403
+
 
 def test_invalid_auth_type(valid_credentials, mock_http_client, monkeypatch):
     """Test that an invalid auth type raises an exception."""
@@ -127,6 +135,7 @@ def test_invalid_auth_type(valid_credentials, mock_http_client, monkeypatch):
     with pytest.raises(MpesaApiException) as excinfo:
         tm.get_token(force_refresh=True)
     assert excinfo.value.error.status_code == 403
+
 
 def test_mpesa_api_exception_with_empty_error_message(
     valid_credentials, mock_http_client, monkeypatch
@@ -155,6 +164,7 @@ def test_mpesa_api_exception_with_empty_error_message(
     assert "Invalid credentials" in err.error_message
     assert err.status_code == 400
 
+
 def test_token_missing_raises_exception(
     valid_credentials, mock_http_client, monkeypatch
 ):
@@ -176,6 +186,7 @@ def test_token_missing_raises_exception(
     assert "No access token returned" in err.error_message
     assert err.raw_response == {"expires_in": 3600}
 
+
 @pytest.mark.asyncio
 async def test_async_get_token_success(valid_credentials, mock_async_http_client):
     """Test that a valid token can be retrieved asynchronously."""
@@ -191,6 +202,7 @@ async def test_async_get_token_success(valid_credentials, mock_async_http_client
     token = await tm.get_token()
     assert token == "mocked_async_token"
     mock_async_http_client.get.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_async_token_caching(valid_credentials, mock_async_http_client):
@@ -208,6 +220,7 @@ async def test_async_token_caching(valid_credentials, mock_async_http_client):
     token2 = await tm.get_token()
     assert token1 == token2
     mock_async_http_client.get.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_async_force_refresh_token(valid_credentials, mock_async_http_client):
@@ -227,9 +240,12 @@ async def test_async_force_refresh_token(valid_credentials, mock_async_http_clie
     assert token2 == "async_token2"
     assert mock_async_http_client.get.call_count == 2
 
+
 @pytest.mark.asyncio
 @patch("mpesakit.auth.token_manager.datetime")
-async def test_async_expired_token_refresh(mock_dt, valid_credentials, mock_async_http_client):
+async def test_async_expired_token_refresh(
+    mock_dt, valid_credentials, mock_async_http_client
+):
     """Test that an expired token is automatically refreshed asynchronously."""
     initial_time = datetime.now() - timedelta(hours=2)
     mock_dt.now.return_value = initial_time
@@ -252,8 +268,11 @@ async def test_async_expired_token_refresh(mock_dt, valid_credentials, mock_asyn
     assert token == "refreshed_async_token"
     assert mock_async_http_client.get.call_count == 2
 
+
 @pytest.mark.asyncio
-async def test_async_invalid_credentials_raises_custom_error(valid_credentials, mock_async_http_client):
+async def test_async_invalid_credentials_raises_custom_error(
+    valid_credentials, mock_async_http_client
+):
     """Test the specific async logic for empty 400 response being converted to a detailed MpesaApiException."""
 
     async def fake_async_get(*args, **kwargs):
@@ -276,8 +295,11 @@ async def test_async_invalid_credentials_raises_custom_error(valid_credentials, 
     assert "Invalid credentials" in err.error_message
     assert err.status_code == 400
 
+
 @pytest.mark.asyncio
-async def test_async_invalid_grant_type(valid_credentials, mock_async_http_client, monkeypatch):
+async def test_async_invalid_grant_type(
+    valid_credentials, mock_async_http_client, monkeypatch
+):
     """Test that an invalid grant type raises an exception asynchronously."""
     tm = AsyncTokenManager(
         consumer_key=valid_credentials["consumer_key"],
@@ -295,8 +317,11 @@ async def test_async_invalid_grant_type(valid_credentials, mock_async_http_clien
         await tm.get_token(force_refresh=True)
     assert excinfo.value.error.status_code == 403
 
+
 @pytest.mark.asyncio
-async def test_async_invalid_auth_type(valid_credentials, mock_async_http_client, monkeypatch):
+async def test_async_invalid_auth_type(
+    valid_credentials, mock_async_http_client, monkeypatch
+):
     """Test that an invalid auth type raises an exception asynchronously."""
     tm = AsyncTokenManager(
         consumer_key=valid_credentials["consumer_key"],
@@ -316,8 +341,11 @@ async def test_async_invalid_auth_type(valid_credentials, mock_async_http_client
         await tm.get_token(force_refresh=True)
     assert excinfo.value.error.status_code == 403
 
+
 @pytest.mark.asyncio
-async def test_async_token_missing_raises_exception(valid_credentials, mock_async_http_client):
+async def test_async_token_missing_raises_exception(
+    valid_credentials, mock_async_http_client
+):
     """Test that a missing access_token field in the async API response raises an exception."""
     mock_async_http_client.get.return_value = {"expires_in": 3600, "not_token": "value"}
     tm = AsyncTokenManager(**valid_credentials, http_client=mock_async_http_client)

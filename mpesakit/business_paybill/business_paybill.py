@@ -18,7 +18,7 @@ from .schemas import (
 class BusinessPayBill(BaseModel):
     """Represents the Business PayBill API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/BusinessPayBill
+    https://developer.safaricom.co.ke/apis/BusinessPayBill
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

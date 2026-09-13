@@ -4,11 +4,11 @@ from mpesakit.utils.phone import normalize_phone_number as normalize_phone_numbe
 from pydantic import BaseModel
 
 class DynamicQRTransactionType(str, Enum):
-    BUY_GOODS = 'BG'
-    WITHDRAW_CASH = 'WA'
-    PAYBILL = 'PB'
-    SEND_MONEY = 'SM'
-    SEND_TO_BUSINESS = 'SB'
+    BUY_GOODS = "BG"
+    WITHDRAW_CASH = "WA"
+    PAYBILL = "PB"
+    SEND_MONEY = "SM"
+    SEND_TO_BUSINESS = "SB"
 
 class DynamicQRGenerateRequest(BaseModel):
     MerchantName: str
@@ -18,10 +18,13 @@ class DynamicQRGenerateRequest(BaseModel):
     CPI: str
     Size: str
     model_config: Incomplete
+
+    @classmethod
     def validate(cls, values): ...
 
 class DynamicQRGenerateResponse(BaseModel):
     ResponseCode: str | int
+    RequestID: str
     ResponseDescription: str
     QRCode: str
     model_config: Incomplete

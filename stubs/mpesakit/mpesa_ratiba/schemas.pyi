@@ -5,22 +5,22 @@ from pydantic import BaseModel, HttpUrl as HttpUrl
 from typing import Any
 
 class FrequencyEnum(str, Enum):
-    ONE_OFF = '1'
-    DAILY = '2'
-    WEEKLY = '3'
-    MONTHLY = '4'
-    BI_MONTHLY = '5'
-    QUARTERLY = '6'
-    HALF_YEAR = '7'
-    YEARLY = '8'
+    ONE_OFF = "1"
+    DAILY = "2"
+    WEEKLY = "3"
+    MONTHLY = "4"
+    BI_MONTHLY = "5"
+    QUARTERLY = "6"
+    HALF_YEAR = "7"
+    YEARLY = "8"
 
 class TransactionTypeEnum(str, Enum):
-    STANDING_ORDER_CUSTOMER_PAY_BILL = 'Standing Order Customer Pay Bill'
-    STANDING_ORDER_CUSTOMER_PAY_MERCHANT = 'Standing Order Customer Pay Merchant'
+    STANDING_ORDER_CUSTOMER_PAY_BILL = "Standing Order Customer Pay Bill"
+    STANDING_ORDER_CUSTOMER_PAY_MERCHANT = "Standing Order Customer Pay Merchant"
 
 class ReceiverPartyIdentifierTypeEnum(str, Enum):
-    MERCHANT_TILL = '2'
-    BUSINESS_SHORT_CODE = '4'
+    MERCHANT_TILL = "2"
+    BUSINESS_SHORT_CODE = "4"
 
 class StandingOrderRequest(BaseModel):
     StandingOrderName: str

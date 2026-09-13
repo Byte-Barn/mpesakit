@@ -18,7 +18,7 @@ from .schemas import (
 class B2BExpressCheckout(BaseModel):
     """Represents the B2B Express Checkout API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/B2BExpressCheckout
+    https://developer.safaricom.co.ke/apis/B2BExpressCheckout
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

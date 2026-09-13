@@ -288,13 +288,13 @@ export const MpesaKitLanding: React.FC = () => {
         name: "Bill Manager",
         status: "maintenance" as "working" | "down" | "maintenance",
         note: "On hold per Safaricom API support",
-        link: { text: "Bill Manager (notes)", href: "https://developer.safaricom.co.ke/APIs/BillManager" }
+        link: { text: "Bill Manager (notes)", href: "https://developer.safaricom.co.ke/apis/BillManager" }
       },
       {
         name: "B2B Express Checkout",
         status: "maintenance" as "working" | "down" | "maintenance",
         note: "On hold per Safaricom API support",
-        link: { text: "B2B Express (notes)", href: "https://developer.safaricom.co.ke/APIs/B2BExpressCheckout" }
+        link: { text: "B2B Express (notes)", href: "https://developer.safaricom.co.ke/apis/B2BExpressCheckout" }
       },
       {
         name: "B2C Account Top Up",
@@ -306,7 +306,7 @@ export const MpesaKitLanding: React.FC = () => {
         name: "M-Pesa Ratiba",
         status: "maintenance" as "working" | "down" | "maintenance",
         note: "On hold per Safaricom API support",
-        link: { text: "Ratiba (notes)", href: "https://developer.safaricom.co.ke/APIs/MpesaRatiba" }
+        link: { text: "Ratiba (notes)", href: "https://developer.safaricom.co.ke/apis/MpesaRatiba" }
       }
     ]
   };

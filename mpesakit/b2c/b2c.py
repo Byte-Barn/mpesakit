@@ -18,7 +18,7 @@ from .schemas import (
 class B2C(BaseModel):
     """Represents the B2C API client for M-Pesa Business to Customer operations.
 
-    https://developer.safaricom.co.ke/APIs/BusinessToCustomerPayment
+    https://developer.safaricom.co.ke/apis/BusinessToCustomerPayment
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

@@ -1,4 +1,7 @@
-from .schemas import TransactionStatusRequest as TransactionStatusRequest, TransactionStatusResponse as TransactionStatusResponse
+from .schemas import (
+    TransactionStatusRequest as TransactionStatusRequest,
+    TransactionStatusResponse as TransactionStatusResponse,
+)
 from _typeshed import Incomplete
 from mpesakit.auth import TokenManager as TokenManager
 from mpesakit.http_client import HttpClient as HttpClient

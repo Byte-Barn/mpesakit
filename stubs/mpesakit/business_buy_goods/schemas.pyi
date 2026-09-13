@@ -38,7 +38,9 @@ class BusinessBuyGoodsReferenceData(BaseModel):
     ReferenceItem: list[BusinessBuyGoodsReferenceItem] | BusinessBuyGoodsReferenceItem
 
 class BusinessBuyGoodsResultParameters(BaseModel):
-    ResultParameter: list[BusinessBuyGoodsResultParameter] | BusinessBuyGoodsResultParameter
+    ResultParameter: (
+        list[BusinessBuyGoodsResultParameter] | BusinessBuyGoodsResultParameter
+    )
 
 class BusinessBuyGoodsResultMetadata(BaseModel):
     ResultType: int

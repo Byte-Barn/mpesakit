@@ -8,6 +8,7 @@ from mpesakit.b2c_account_top_up import (
     B2CAccountTopUpResponse,
 )
 
+
 @pytest.fixture
 def b2c_service(mock_http_client, mock_token_manager):
     """Fixture to create a B2CService instance with mocked dependencies."""
@@ -16,6 +17,7 @@ def b2c_service(mock_http_client, mock_token_manager):
         token_manager=mock_token_manager,
     )
 
+
 @pytest.fixture
 def async_b2c_service(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncB2CService instance with mocked dependencies."""
@@ -23,6 +25,7 @@ def async_b2c_service(mock_async_http_client, mock_async_token_manager):
         http_client=mock_async_http_client,
         token_manager=mock_async_token_manager,
     )
+
 
 def test_send_payment_calls_b2c_send_payment(b2c_service, mock_http_client):
     """Test that send_payment calls the B2C service."""
@@ -51,6 +54,7 @@ def test_send_payment_calls_b2c_send_payment(b2c_service, mock_http_client):
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "Request accepted successfully."
 
+
 def test_account_topup_calls_account_topup(b2c_service, mock_http_client):
     """Test that account_topup calls the B2CAccountTopUp service."""
     response_data = {
@@ -76,6 +80,7 @@ def test_account_topup_calls_account_topup(b2c_service, mock_http_client):
     assert isinstance(resp, B2CAccountTopUpResponse)
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "TopUp accepted successfully."
+
 
 def test_send_payment_filters_kwargs(b2c_service, mock_http_client):
     """Test that send_payment filters out unexpected kwargs."""
@@ -104,6 +109,7 @@ def test_send_payment_filters_kwargs(b2c_service, mock_http_client):
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "Request accepted successfully."
 
+
 def test_account_topup_filters_kwargs(b2c_service, mock_http_client):
     """Test that account_topup filters out unexpected kwargs."""
     response_data = {
@@ -130,6 +136,7 @@ def test_account_topup_filters_kwargs(b2c_service, mock_http_client):
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "TopUp accepted successfully."
 
+
 def test_b2c_service_initializes_b2c_correctly(mock_http_client, mock_token_manager):
     """Test B2CService initializes with correct arguments."""
     service = B2CService(
@@ -142,6 +149,7 @@ def test_b2c_service_initializes_b2c_correctly(mock_http_client, mock_token_mana
     if hasattr(service, "b2c"):
         assert service.b2c.http_client is mock_http_client
         assert service.b2c.token_manager is mock_token_manager
+
 
 @pytest.mark.asyncio
 async def test_async_send_payment_calls_b2c_send_payment(
@@ -173,6 +181,7 @@ async def test_async_send_payment_calls_b2c_send_payment(
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "Request accepted successfully."
 
+
 @pytest.mark.asyncio
 async def test_async_account_topup_calls_account_topup(
     async_b2c_service, mock_async_http_client
@@ -201,6 +210,7 @@ async def test_async_account_topup_calls_account_topup(
     assert isinstance(resp, B2CAccountTopUpResponse)
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "TopUp accepted successfully."
+
 
 @pytest.mark.asyncio
 async def test_async_send_payment_filters_kwargs(
@@ -233,6 +243,7 @@ async def test_async_send_payment_filters_kwargs(
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "Request accepted successfully."
 
+
 @pytest.mark.asyncio
 async def test_async_account_topup_filters_kwargs(
     async_b2c_service, mock_async_http_client
@@ -262,6 +273,7 @@ async def test_async_account_topup_filters_kwargs(
     assert isinstance(resp, B2CAccountTopUpResponse)
     assert resp.ResponseCode == "0"
     assert resp.ResponseDescription == "TopUp accepted successfully."
+
 
 def test_async_b2c_service_initializes_b2c_correctly(
     mock_async_http_client, mock_async_token_manager

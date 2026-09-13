@@ -25,6 +25,7 @@ from mpesakit.bill_manager.schemas import (
     BillManagerUpdateOptInResponse,
 )
 
+
 @pytest.fixture
 def bill_manager(mock_http_client, mock_token_manager):
     """Fixture to create a BillManager instance with mocked HttpClient and TokenManager."""
@@ -33,6 +34,7 @@ def bill_manager(mock_http_client, mock_token_manager):
         token_manager=mock_token_manager,
         app_key="test_app_key",
     )
+
 
 def valid_opt_in_request():
     """Creates a valid opt-in request for Bill Manager."""
@@ -45,6 +47,7 @@ def valid_opt_in_request():
         callbackurl="http://my.server.com/bar/callback",
     )
 
+
 def valid_update_opt_in_request():
     """Creates a valid update opt-in request for Bill Manager."""
     return BillManagerUpdateOptInRequest(
@@ -55,6 +58,7 @@ def valid_update_opt_in_request():
         logo="image",
         callbackurl="http://my.server.com/bar/callback",
     )
+
 
 def valid_single_invoice_request():
     """Creates a valid single invoice request for Bill Manager."""
@@ -73,13 +77,16 @@ def valid_single_invoice_request():
         ],
     )
 
+
 def valid_bulk_invoice_request():
     """Creates a valid bulk invoice request for Bill Manager."""
     return BillManagerBulkInvoiceRequest(invoices=[valid_single_invoice_request()])
 
+
 def valid_cancel_single_invoice_request():
     """Creates a valid cancel single invoice request for Bill Manager."""
     return BillManagerCancelSingleInvoiceRequest(externalReference="113")
+
 
 def valid_cancel_bulk_invoice_request():
     """Creates a valid cancel bulk invoice request for Bill Manager."""
@@ -89,6 +96,7 @@ def valid_cancel_bulk_invoice_request():
             BillManagerCancelSingleInvoiceRequest(externalReference="114"),
         ]
     )
+
 
 def test_opt_in_success(bill_manager, mock_http_client):
     """Test successful opt-in to Bill Manager."""
@@ -104,6 +112,7 @@ def test_opt_in_success(bill_manager, mock_http_client):
     assert response.app_key == response_data["app_key"]
     assert response.rescode == "200"
 
+
 def test_update_opt_in_success(bill_manager, mock_http_client):
     """Test successful update of opt-in settings for Bill Manager."""
     request = valid_update_opt_in_request()
@@ -115,6 +124,7 @@ def test_update_opt_in_success(bill_manager, mock_http_client):
     response = bill_manager.update_opt_in(request)
     assert isinstance(response, BillManagerUpdateOptInResponse)
     assert response.rescode == "200"
+
 
 def test_send_single_invoice_success(bill_manager, mock_http_client):
     """Test sending a single invoice via Bill Manager."""
@@ -130,6 +140,7 @@ def test_send_single_invoice_success(bill_manager, mock_http_client):
     assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
+
 def test_send_bulk_invoice_success(bill_manager, mock_http_client):
     """Test sending multiple invoices via Bill Manager."""
     request = valid_bulk_invoice_request()
@@ -142,6 +153,7 @@ def test_send_bulk_invoice_success(bill_manager, mock_http_client):
     response = bill_manager.send_bulk_invoice(request)
     assert isinstance(response, BillManagerBulkInvoiceResponse)
     assert response.Status_Message == response_data["Status_Message"]
+
 
 def test_cancel_single_invoice_success(bill_manager, mock_http_client):
     """Test cancelling a single invoice via Bill Manager."""
@@ -158,6 +170,7 @@ def test_cancel_single_invoice_success(bill_manager, mock_http_client):
     assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
+
 def test_cancel_bulk_invoice_success(bill_manager, mock_http_client):
     """Test cancelling multiple invoices via Bill Manager."""
     request = valid_cancel_bulk_invoice_request()
@@ -172,6 +185,7 @@ def test_cancel_bulk_invoice_success(bill_manager, mock_http_client):
     assert isinstance(response, BillManagerCancelInvoiceResponse)
     assert response.Status_Message == response_data["Status_Message"]
 
+
 def test_bill_manager_http_error(bill_manager, mock_http_client):
     """Test handling of HTTP errors when sending a single invoice."""
     request = valid_single_invoice_request()
@@ -179,6 +193,7 @@ def test_bill_manager_http_error(bill_manager, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         bill_manager.send_single_invoice(request)
     assert "HTTP error" in str(excinfo.value)
+
 
 def test_app_key_required_for_invoice(mock_http_client, mock_token_manager):
     """Test app_key requirement for sending a single invoice."""
@@ -189,6 +204,7 @@ def test_app_key_required_for_invoice(mock_http_client, mock_token_manager):
     with pytest.raises(MpesaApiException) as excinfo:
         manager.send_single_invoice(request)
     assert "app_key must be set" in str(excinfo.value)
+
 
 @pytest.mark.parametrize(
     "due_date,expected",
@@ -246,6 +262,7 @@ def test_due_date_valid_formats(due_date, expected):
         microsecond=(dt_result.microsecond // 10000) * 10000
     ) == dt_expected.replace(microsecond=(dt_expected.microsecond // 10000) * 10000)
 
+
 @pytest.mark.parametrize(
     "due_date",
     [
@@ -275,6 +292,7 @@ def test_due_date_invalid_formats_raise(due_date):
         BillManagerSingleInvoiceRequest(**req)
     assert "validation error" in str(excinfo.value)
 
+
 def test_due_date_missing_raises():
     """Test missing dueDate raises ValueError."""
     req = {
@@ -292,6 +310,7 @@ def test_due_date_missing_raises():
         BillManagerSingleInvoiceRequest.model_validate(req)
     assert "dueDate is required" in str(excinfo.value)
 
+
 def test_billed_period_invalid_raises():
     """Test invalid billedPeriod raises ValueError."""
     req = {
@@ -308,6 +327,7 @@ def test_billed_period_invalid_raises():
     with pytest.raises(ValueError) as excinfo:
         BillManagerSingleInvoiceRequest(**req)
     assert "billedPeriod" in str(excinfo.value)
+
 
 def test_result_code_as_string_does_not_raise(bill_manager, mock_http_client):
     """Ensure response.resultCode as a string does not cause type errors in is_successful."""
@@ -328,6 +348,7 @@ def test_result_code_as_string_does_not_raise(bill_manager, mock_http_client):
     is_success = response.is_successful
     assert isinstance(is_success, bool)
 
+
 @pytest.fixture
 def async_bill_manager(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncBillManager instance with mocked AsyncHttpClient and AsyncTokenManager."""
@@ -336,6 +357,7 @@ def async_bill_manager(mock_async_http_client, mock_async_token_manager):
         token_manager=mock_async_token_manager,
         app_key="test_app_key",
     )
+
 
 @pytest.mark.asyncio
 async def test_async_opt_in_success(async_bill_manager, mock_async_http_client):
@@ -352,6 +374,7 @@ async def test_async_opt_in_success(async_bill_manager, mock_async_http_client):
     assert response.app_key == response_data["app_key"]
     assert response.rescode == "200"
 
+
 @pytest.mark.asyncio
 async def test_async_update_opt_in_success(async_bill_manager, mock_async_http_client):
     """Test successful async update of opt-in settings for Bill Manager."""
@@ -364,6 +387,7 @@ async def test_async_update_opt_in_success(async_bill_manager, mock_async_http_c
     response = await async_bill_manager.update_opt_in(request)
     assert isinstance(response, BillManagerUpdateOptInResponse)
     assert response.rescode == "200"
+
 
 @pytest.mark.asyncio
 async def test_async_send_single_invoice_success(
@@ -382,6 +406,7 @@ async def test_async_send_single_invoice_success(
     assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
+
 @pytest.mark.asyncio
 async def test_async_send_bulk_invoice_success(
     async_bill_manager, mock_async_http_client
@@ -397,6 +422,7 @@ async def test_async_send_bulk_invoice_success(
     response = await async_bill_manager.send_bulk_invoice(request)
     assert isinstance(response, BillManagerBulkInvoiceResponse)
     assert response.Status_Message == response_data["Status_Message"]
+
 
 @pytest.mark.asyncio
 async def test_async_cancel_single_invoice_success(
@@ -416,6 +442,7 @@ async def test_async_cancel_single_invoice_success(
     assert response.is_successful is True
     assert response.Status_Message == response_data["Status_Message"]
 
+
 @pytest.mark.asyncio
 async def test_async_cancel_bulk_invoice_success(
     async_bill_manager, mock_async_http_client
@@ -433,6 +460,7 @@ async def test_async_cancel_bulk_invoice_success(
     assert isinstance(response, BillManagerCancelInvoiceResponse)
     assert response.Status_Message == response_data["Status_Message"]
 
+
 @pytest.mark.asyncio
 async def test_async_bill_manager_http_error(
     async_bill_manager, mock_async_http_client
@@ -443,6 +471,7 @@ async def test_async_bill_manager_http_error(
     with pytest.raises(Exception) as excinfo:
         await async_bill_manager.send_single_invoice(request)
     assert "HTTP error" in str(excinfo.value)
+
 
 @pytest.mark.asyncio
 async def test_async_app_key_required_for_invoice(

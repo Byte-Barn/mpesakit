@@ -6,6 +6,7 @@ from mpesakit.account_balance import (
     AccountBalanceResponse,
 )
 
+
 @pytest.fixture
 def balance_service(mock_http_client, mock_token_manager):
     """Fixture to create a BalanceService instance with mocked dependencies."""
@@ -13,6 +14,7 @@ def balance_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
+
 
 @pytest.fixture
 def async_balance_service(mock_async_http_client, mock_async_token_manager):
@@ -22,9 +24,11 @@ def async_balance_service(mock_async_http_client, mock_async_token_manager):
         token_manager=mock_async_token_manager,
     )
 
+
 def test_init_sets_account_balance(balance_service):
     """Test that BalanceService initializes AccountBalance."""
     assert hasattr(balance_service, "account_balance")
+
 
 def test_query_calls_account_balance_query(balance_service, mock_http_client):
     """Test that query calls the BalanceService and returns AccountBalanceResponse."""
@@ -49,6 +53,7 @@ def test_query_calls_account_balance_query(balance_service, mock_http_client):
     assert isinstance(resp, AccountBalanceResponse)
     assert resp.is_successful is True
     assert "request successfully" in resp.ResponseDescription
+
 
 def test_query_filters_kwargs(balance_service, mock_http_client):
     """Test that query filters out unexpected kwargs."""
@@ -77,6 +82,7 @@ def test_query_filters_kwargs(balance_service, mock_http_client):
         hasattr(resp, "unexpected_field") is False
     )  # Response should not have ExtraField
 
+
 def test_balance_service_initializes_account_balance_correctly(
     mock_http_client, mock_token_manager
 ):
@@ -90,9 +96,11 @@ def test_balance_service_initializes_account_balance_correctly(
     assert service.account_balance.http_client is mock_http_client
     assert service.account_balance.token_manager is mock_token_manager
 
+
 def test_async_init_sets_account_balance(async_balance_service):
     """Test that AsyncBalanceService initializes AsyncAccountBalance."""
     assert hasattr(async_balance_service, "account_balance")
+
 
 @pytest.mark.asyncio
 async def test_async_query_calls_account_balance_query(
@@ -121,6 +129,7 @@ async def test_async_query_calls_account_balance_query(
     assert resp.is_successful is True
     assert "request successfully" in resp.ResponseDescription
 
+
 @pytest.mark.asyncio
 async def test_async_query_filters_kwargs(
     async_balance_service, mock_async_http_client
@@ -147,6 +156,7 @@ async def test_async_query_filters_kwargs(
     )
     assert isinstance(resp, AccountBalanceResponse)
     assert hasattr(resp, "unexpected_field") is False
+
 
 def test_async_balance_service_initializes_account_balance_correctly(
     mock_async_http_client, mock_async_token_manager

@@ -233,7 +233,10 @@ class TestCallbackProcessing:
                     {"Key": "B2CRecipientIsLocked", "Value": "false"},
                     {"Key": "B2CChargesPaidAccountAvailableFunds", "Value": "49900.00"},
                     {"Key": "B2CUtilityAccountAvailableFunds", "Value": "199900.00"},
-                    {"Key": "TransactionCompletedDateTime", "Value": "31.12.2021 23:59:59"},
+                    {
+                        "Key": "TransactionCompletedDateTime",
+                        "Value": "31.12.2021 23:59:59",
+                    },
                     {"Key": "B2CRecipientPhoneNumber", "Value": "254712345678"},
                 ],
             }
@@ -320,13 +323,14 @@ class TestCallbackProcessing:
     def test_process_dynamic_qr_code_callback(self, client):
         """Test processing dynamic QR code callback payload."""
         payload = {
-            "ResponseCode": "00000000",
-            "ResponseDescription": "success",
-            "QRCode": "00000101010101010101",
+            "ResponseCode": "00",
+            "RequestID": "16738-27456357-1",
+            "ResponseDescription": "QR Code Successfully Generated.",
+            "QRCode": "base64-encoded-string",
         }
         result = client.process_dynamic_qr_code_callback(payload)
-        assert result.ResponseCode == "00000000"
-        assert result.ResponseDescription == "success"
+        assert result.ResponseCode == "00"
+        assert result.ResponseDescription == "QR Code Successfully Generated."
 
     def test_process_ratiba_service_callback(self, client):
         """Test processing ratiba service callback payload."""
@@ -348,7 +352,9 @@ class TestCallbackProcessing:
         }
 
         result = client.process_ratiba_service_callback(payload)
-        assert result.ResponseHeader.requestRefID == "0acc0239-20fa-4a52-8b9d-9bd64c0465c3"
+        assert (
+            result.ResponseHeader.requestRefID == "0acc0239-20fa-4a52-8b9d-9bd64c0465c3"
+        )
         assert any(
             item.Name == "TransactionID" and item.Value == "SC8F2IQMH5"
             for item in result.ResponseBody.ResponseData

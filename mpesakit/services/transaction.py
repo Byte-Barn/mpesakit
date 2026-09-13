@@ -75,7 +75,7 @@ class TransactionService:
         optionals = {
             "CommandID": command_id,
             "Remarks": remarks,
-            "OriginalConversationID": original_conversation_id
+            "OriginalConversationID": original_conversation_id,
         }
 
         for field_name, value in optionals.items():

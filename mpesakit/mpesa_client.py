@@ -234,7 +234,9 @@ class AsyncMpesaClient(MpesaCallbackMixin):
         max_retries: int = DEFAULT_MAX_RETRIES,
     ) -> None:
         """Initialize the AsyncMpesaClient with all service facades."""
-        self.http_client = MpesaAsyncHttpClient(env=environment, max_retries=max_retries)
+        self.http_client = MpesaAsyncHttpClient(
+            env=environment, max_retries=max_retries
+        )
         self.token_manager = AsyncTokenManager(
             http_client=self.http_client,
             consumer_key=consumer_key,

@@ -23,7 +23,7 @@ class DynamicQRTransactionType(str, Enum):
 class DynamicQRGenerateRequest(BaseModel):
     """Represents the request payload for generating a Dynamic QR code.
 
-    https://developer.safaricom.co.ke/APIs/DynamicQRCode
+    https://developer.safaricom.co.ke/apis/DynamicQRCode
 
     Attributes:
         MerchantName (str): Name of the Company/M-Pesa Merchant Name.
@@ -50,7 +50,7 @@ class DynamicQRGenerateRequest(BaseModel):
         examples=[1, 2000],
         gt=0,
     )
-    TrxCode: str = Field(
+    TrxCode: DynamicQRTransactionType = Field(
         ...,
         description="Transaction Type. Supported: BG, WA, PB, SM, SB.",
         examples=["BG"],
@@ -68,6 +68,7 @@ class DynamicQRGenerateRequest(BaseModel):
     )
 
     model_config = ConfigDict(
+        validate_assignment=True,
         json_schema_extra={
             "example": {
                 "MerchantName": "TEST SUPERMARKET",
@@ -77,32 +78,17 @@ class DynamicQRGenerateRequest(BaseModel):
                 "CPI": "373132",
                 "Size": "300",
             }
-        }
+        },
     )
 
     @model_validator(mode="before")
+    @classmethod
     def validate(cls, values):
         """Validates the TrxCode field before model validation."""
-        # Validate the TrxCode field
-        trx_code = values.get("TrxCode")
-        if trx_code is not None:
-            cls._validate_trx_code(trx_code)
-
         # Normalize CPI for SEND_MONEY transaction type
         cls._normalize_cpi_for_send_money(values)
 
         return values
-
-    @classmethod
-    def _validate_trx_code(cls, value):
-        """Validates the transaction code against the DynamicQRTransactionType enum."""
-        try:
-            DynamicQRTransactionType(value)
-        except ValueError:
-            raise ValueError(
-                f"TrxCode must be one of: {[e.value for e in DynamicQRTransactionType]}"
-            )
-        return value
 
     @classmethod
     def _normalize_cpi_for_send_money(cls, values):
@@ -129,7 +115,7 @@ class DynamicQRGenerateRequest(BaseModel):
 class DynamicQRGenerateResponse(BaseModel):
     """Represents the response returned after generating a Dynamic QR code.
 
-    https://developer.safaricom.co.ke/APIs/DynamicQRCode
+    https://developer.safaricom.co.ke/apis/DynamicQRCode
 
     Attributes:
         ResponseCode (str): Used to return the Transaction Type (alpha-numeric string).
@@ -140,8 +126,13 @@ class DynamicQRGenerateResponse(BaseModel):
 
     ResponseCode: str | int = Field(
         ...,
-        description="Used to show if the transaction was successful or not. 00 indicates success.",
-        examples=["00"],
+        description="Used to show if the transaction was successful or not. 0 indicates success.",
+        examples=["0"],
+    )
+    RequestID: str = Field(
+        ...,
+        description="Unique identifier for the request.",
+        examples=["16738-27456357-1"],
     )
     ResponseDescription: str = Field(
         ...,
@@ -155,13 +146,15 @@ class DynamicQRGenerateResponse(BaseModel):
     )
 
     model_config = ConfigDict(
+        frozen=True,
         json_schema_extra={
             "example": {
-                "ResponseCode": "00",
+                "ResponseCode": "0",
+                "RequestID": "16738-27456357-1",
                 "ResponseDescription": "QR Code Successfully Generated.",
                 "QRCode": "iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAIAAAD2HxkiAAAHtElEQVR42...",
             }
-        }
+        },
     )
 
     @property
