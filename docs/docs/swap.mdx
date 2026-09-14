@@ -1,0 +1,216 @@
+---
+title: SIM Swap Detection
+description: How mpesakit checks SIM swap history using Safaricom's paid checkATI API, including onboarding and environment setup.
+---
+
+import SectionHeader from '@site/docs/components/SectionHeader';
+import CodeBlock from '@site/docs/components/CodeBlock';
+import Alert from '@site/docs/components/Alert';
+import ParametersTable from '@site/docs/components/ParametersTable';
+
+<SectionHeader
+    subtitle="Detect recent SIM swap events on Safaricom subscriber numbers to prevent account takeover and fraud during high-value transactions."
+    gradient={true}
+    size="large"
+/>
+
+<Alert type="warning" title="Paid API & Mandatory Onboarding">
+    Unlike standard M-Pesa APIs (like STK Push or C2B), the <strong>IMSI checkATI / SIM Swap API</strong> is a paid service on the Safaricom Developer Portal (Daraja).
+    <br/><br/>
+    <strong>Requirements before integration:</strong>
+    <ul>
+      <li>You must request access and complete commercial onboarding with Safaricom to enable the API on your App credentials.</li>
+      <li>In production, calls to this endpoint consume API credits or billed usage per query according to your Safaricom tariff plan.</li>
+    </ul>
+</Alert>
+
+<SectionHeader title="Environment Variables Setup" size="small" />
+
+To keep credentials secure, configure your consumer key, secret, and target phone numbers in your `.env` file or environment settings:
+
+<CodeBlock language="bash" title=".env">
+{`# Safaricom Daraja Credentials (Must have Swap/IMSI API product enabled)
+MPESA_CONSUMER_KEY=your_consumer_key_here
+MPESA_CONSUMER_SECRET=your_consumer_secret_here
+
+# M-Pesa Environment: "sandbox" or "production"
+MPESA_ENVIRONMENT=sandbox
+
+# Optional: Default target subscriber for testing
+TEST_CUSTOMER_NUMBER=0722000000
+`}
+</CodeBlock>
+
+<SectionHeader title="Parameters Definition" size="small" />
+
+<ParametersTable 
+parameters={[
+        {
+            name: "customerNumber",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "The subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized by SwapRequest."
+        },
+        {
+            name: "http_client",
+            type: "HttpClient / AsyncHttpClient",
+            dataType: "Object",
+            required: true,
+            description: "An instance of mpesakit's HTTP client configured for sandbox or production."
+        },
+        {
+            name: "token_manager",
+            type: "TokenManager / AsyncTokenManager",
+            dataType: "Object",
+            required: true,
+            description: "Instance of TokenManager managing OAuth access tokens."
+        },
+        {
+            name: "environment",
+            type: "str",
+            dataType: "String",
+            required: false,
+            description: "Either 'sandbox' or 'production'. Defaults to 'sandbox'."
+        },
+]}
+/>
+
+<SectionHeader title="Overview & Architecture" size="small" />
+
+The `Swap` and `AsyncSwap` classes interface with Safaricom's `/imsi/v2/checkATI` endpoint to check if a subscriber's SIM card has been swapped recently.
+
+- **Automatic MSISDN Normalization:** Normalizes local formats (e.g. `0722...` or `+254722...`) into standard `254722...` format via `SwapRequest`.
+- **Smart Fraud Helper:** Exposes `response.is_recently_swapped`, which automatically checks if `lastSwapDate` differs from the default baseline (`01-01-1900 00:00`).
+- **Sync & Async Support:** Ready for synchronous web frameworks (Django/Flask) or asynchronous engines (FastAPI/Tornado).
+
+<SectionHeader title="Synchronous Usage Example" size="small" />
+
+<CodeBlock language="python" title="Swap (Synchronous)">
+{`import os
+from dotenv import load_dotenv
+from mpesakit.auth import TokenManager
+from mpesakit.http_client import MpesaHttpClient
+from mpesakit.swap import Swap, SwapRequest
+
+load_dotenv()
+
+env = os.getenv("MPESA_ENVIRONMENT", "sandbox")
+
+# 1. Initialize HTTP client and TokenManager
+http_client = MpesaHttpClient(env=env)
+token_mgr = TokenManager(
+    consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+    consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+    http_client=http_client,
+)
+
+# 2. Instantiate Swap service
+swap_service = Swap(
+    http_client=http_client,
+    token_manager=token_mgr,
+)
+
+# 3. Create request and perform query
+request = SwapRequest(customerNumber=os.getenv("TEST_CUSTOMER_NUMBER", "0722000000"))
+response = swap_service.swap_request(request)
+
+if response.is_recently_swapped:
+    print(f"FRAUD WARNING: SIM swapped on {response.lastSwapDate}")
+else:
+    print("SAFE: No recent SIM swap detected")
+`}
+</CodeBlock>
+
+<SectionHeader title="Asynchronous Usage Example" size="small" />
+
+<CodeBlock language="python" title="AsyncSwap (Asynchronous)">
+{`import os
+import asyncio
+from dotenv import load_dotenv
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+from mpesakit.swap import AsyncSwap, SwapRequest
+
+load_dotenv()
+
+async def check_sim_swap():
+    env = os.getenv("MPESA_ENVIRONMENT", "sandbox")
+
+    http_client = MpesaAsyncHttpClient(env=env)
+    token_mgr = AsyncTokenManager(
+        consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+        consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+        http_client=http_client,
+    )
+
+    swap_service = AsyncSwap(
+        http_client=http_client,
+        token_manager=token_mgr,
+    )
+
+    request = SwapRequest(customerNumber=os.getenv("TEST_CUSTOMER_NUMBER", "0722000000"))
+    response = await swap_service.swap_request(request)
+
+    print(f"Request Ref ID: {response.requestRefID}")
+    print(f"Last Swap Date: {response.lastSwapDate}")
+    print(f"Is Recently Swapped: {response.is_recently_swapped}")
+
+asyncio.run(check_sim_swap())
+`}
+</CodeBlock>
+
+<SectionHeader title="Response Model (SwapResponse)" size="small" />
+
+<ParametersTable 
+parameters={[
+        {
+            name: "requestRefID",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Unique transaction query ID generated by Safaricom."
+        },
+        {
+            name: "responseCode",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "API return code ('200' for successful check)."
+        },
+        {
+            name: "responseDesc",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Description from Safaricom API (e.g. 'Success')."
+        },
+        {
+            name: "lastSwapDate",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Timestamp of last swap in 'DD-MM-YYYY HH:MM' format. Baseline default is '01-01-1900 00:00'."
+        },
+        {
+            name: "is_recently_swapped",
+            type: "bool (property)",
+            dataType: "Boolean",
+            required: false,
+            description: "Evaluates to True if lastSwapDate is strictly greater than '01-01-1900 00:00'."
+        },
+]}
+/>
+
+<Alert type="info" title="Endpoints Used">
+    <ul>
+        <li><strong>Sandbox:</strong> <code>https://sandbox.safaricom.co.ke/imsi/v2/checkATI</code></li>
+        <li><strong>Production:</strong> <code>https://api.safaricom.co.ke/imsi/v2/checkATI</code></li>
+    </ul>
+</Alert>
+
+## Related Documentation
+
+- [Auth & Token Management](/auth) - Managing credentials and OAuth tokens
+- [Getting Credentials](/getting-credentials) - How to set up Daraja portal apps
+- [Production Checklist](/production) - Going live on Safaricom M-Pesa APIs

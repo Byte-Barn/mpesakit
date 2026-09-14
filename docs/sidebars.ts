@@ -103,6 +103,11 @@ const sidebars: SidebarsConfig = {
           id: 'b2c-account-top-up',
           label: 'B2C Account Top Up',
         },
+        {
+          type: 'doc',
+          id: 'swap',
+          label: 'SIM Swap Detection',
+        },
       ],
     },
     {

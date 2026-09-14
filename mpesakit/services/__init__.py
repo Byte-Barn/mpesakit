@@ -7,6 +7,7 @@ from .dynamic_qr import DynamicQRCodeService, AsyncDynamicQRCodeService
 from .express import StkPushService, AsyncStkPushService
 from .ratiba import RatibaService, AsyncRatibaService
 from .reversal import ReversalService, AsyncReversalService
+from .swap  import SwapService, AsyncSwapService
 from .tax import TaxService, AsyncTaxService
 from .transaction import TransactionService, AsyncTransactionService
 
@@ -29,6 +30,8 @@ __all__ = [
     "AsyncRatibaService",
     "ReversalService",
     "AsyncReversalService",
+    "SwapService",
+    "AsyncSwapService",
     "TaxService",
     "AsyncTaxService",
     "TransactionService",
