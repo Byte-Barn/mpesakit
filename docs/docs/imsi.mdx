@@ -188,6 +188,13 @@ parameters={[
             required: true,
             description: "Hashed or encrypted IMSI identifier for the subscriber line."
         },
+         {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
+        },
         {
             name: "is_recently_swapped",
             type: "bool (property)",
@@ -223,6 +230,13 @@ parameters={[
             required: false,
             description: "Timestamp when subscriber MSISDN was registered with Safaricom."
         },
+         {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
+        }
 ]}
 />
 
@@ -258,6 +272,13 @@ parameters={[
             dataType: "String",
             required: true,
             description: "Status message description (e.g. 'Success')."
+        },
+         {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
         }
 ]}
 />

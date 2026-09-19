@@ -57,7 +57,6 @@ class IMSIV3Strategy(BaseIMSIVersionStrategy[IMSIV3Response]):
     response_schema = IMSIV3Response
 
 
-# 3. Make IMSI and AsyncIMSI Generic over R
 class IMSI(BaseModel, Generic[R]):
     """Represents the Synchronous IMSI API client."""
 

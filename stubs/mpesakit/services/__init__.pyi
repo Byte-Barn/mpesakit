@@ -5,6 +5,7 @@ from .bill import BillService as BillService, AsyncBillService as AsyncBillServi
 from .c2b import C2BService as C2BService, AsyncC2BService as AsyncC2BService
 from .dynamic_qr import DynamicQRCodeService as DynamicQRCodeService, AsyncDynamicQRCodeService as AsyncDynamicQRCodeService
 from .express import StkPushService as StkPushService, AsyncStkPushService as AsyncStkPushService
+from  .imsi import  IMSIService as IMSIService , AsyncIMSIService as AsyncIMSIService
 from .ratiba import RatibaService as RatibaService, AsyncRatibaService as AsyncRatibaService
 from .reversal import ReversalService as ReversalService, AsyncReversalService as AsyncReversalService
 from .tax import TaxService as TaxService, AsyncTaxService as AsyncTaxService
@@ -23,6 +24,8 @@ __all__ = [
     'AsyncC2BService',
     'DynamicQRCodeService',
     'AsyncDynamicQRCodeService',
+    'IMSIService',
+    'AsyncIMSIService',
     'StkPushService',
     'AsyncStkPushService',
     'RatibaService',

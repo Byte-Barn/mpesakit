@@ -9,7 +9,6 @@ from .imsi import (
 from .schemas import (
     IMSIRequest,
     BaseIMSISelfResponse,
-    IMSIResponse,
     IMSIV1Response,
     IMSIV2Response,
     IMSIV3Response,
@@ -19,7 +18,6 @@ __all__ = [
     "AsyncIMSI",
     "BaseIMSISelfResponse",
     "IMSI",
-    "IMSIResponse",
     "IMSIRequest",
     "IMSIV1Response",
     "IMSIV2Response",

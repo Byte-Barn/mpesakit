@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Type
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from mpesakit.auth import AsyncTokenManager, TokenManager
 from mpesakit.http_client import AsyncHttpClient, HttpClient
@@ -33,4 +33,3 @@ class AsyncIMSI(BaseModel):
     token_manager: AsyncTokenManager
     version_strategy: BaseIMSIVersionStrategy = IMSIV1Strategy()
     async def query(self,request: IMSIRequest) -> BaseIMSISelfResponse:...
-    

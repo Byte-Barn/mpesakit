@@ -12,6 +12,7 @@ from mpesakit.services import (
     BillService,
     C2BService,
     DynamicQRCodeService,
+    IMSIService,
     StkPushService,
     RatibaService,
     ReversalService,
@@ -112,6 +113,10 @@ def test_c2b_service_instance(client):
 def test_ratiba_service_instance(client):
     """Test that the ratiba service is an instance of RatibaService."""
     assert isinstance(client.ratiba, RatibaService)
+
+def test_imsi_service_instance(client):
+    """Test that the ratiba service is an instance of RatibaService."""
+    assert isinstance(client.imsi, IMSIService)
 
 
 # Tests for callback processing methods

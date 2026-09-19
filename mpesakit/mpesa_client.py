@@ -16,6 +16,8 @@ from mpesakit.services import (
     AsyncC2BService,
     DynamicQRCodeService,
     AsyncDynamicQRCodeService,
+    IMSIService,
+    AsyncIMSIService,
     StkPushService,
     AsyncStkPushService,
     RatibaService,
@@ -222,6 +224,11 @@ class MpesaClient(MpesaCallbackMixin):
             http_client=self.http_client, token_manager=self.token_manager
         )
 
+        # imsi => M-PESA Imsi services
+        self.imsi = IMSIService(
+                    http_client=self.http_client, token_manager=self.token_manager
+                )
+
 
 class AsyncMpesaClient(MpesaCallbackMixin):
     """Unified async client for all M-PESA services."""
@@ -297,6 +304,12 @@ class AsyncMpesaClient(MpesaCallbackMixin):
         self.ratiba = AsyncRatibaService(
             http_client=self.http_client, token_manager=self.token_manager
         )
+
+
+        # imsi => M-PESA Imsi services
+        self.imsi = AsyncIMSIService(
+                    http_client=self.http_client, token_manager=self.token_manager
+                )
 
     async def __aenter__(self):
         await self.http_client.__aenter__()

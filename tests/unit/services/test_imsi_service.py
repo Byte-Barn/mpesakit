@@ -63,7 +63,7 @@ def test_query_v1_facade_filters_kwargs(imsi_service, mock_http_client):
 
     resp = imsi_service.query_v1(
         customer_number="0722000000",
-     
+
     )
 
     assert isinstance(resp, IMSIV1Response)

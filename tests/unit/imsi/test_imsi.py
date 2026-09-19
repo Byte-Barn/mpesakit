@@ -42,7 +42,6 @@ def test_imsi_request_msisdn_normalization():
 
 def test_imsi_v1_response_is_recently_swapped():
     """Test is_recently_swapped evaluation on IMSIV1Response."""
-   
     resp_safe = IMSIV1Response(
         requestRefID="REF123",
         responseCode="200",
@@ -51,7 +50,7 @@ def test_imsi_v1_response_is_recently_swapped():
     )
     assert resp_safe.is_recently_swapped is False
 
-  
+
     resp_swapped = IMSIV1Response(
         requestRefID="REF123",
         responseCode="200",

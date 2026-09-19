@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from mpesakit.auth import AsyncTokenManager, TokenManager
-from mpesakit.http_client import AsyncHttpClient, HttpClient
+from mpesakit.auth import TokenManager , AsyncTokenManager
+from mpesakit.http_client import HttpClient , AsyncHttpClient
 from mpesakit.imsi import (
     IMSIV1Response,
     IMSIV2Response,
@@ -18,8 +18,7 @@ class IMSIService:
 class AsyncIMSIService:
     http_client = Incomplete
     token_manager = Incomplete
-    def __init__(self,http_client: HttpClient,token_manager: TokenManager) ->None: ...
+    def __init__(self,http_client: AsyncHttpClient,token_manager: AsyncTokenManager) ->None: ...
     async def query_v1(self,customer_number: str) -> IMSIV1Response: ...
     async def query_v2(self,customer_number: str) -> IMSIV2Response: ...
     async def query_v3(self,customer_number: str) -> IMSIV3Response: ...
-    

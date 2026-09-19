@@ -28,14 +28,13 @@ class IMSIRequest(BaseModel):
 class StatusMixin:
     """Provides status indicator helpers based on Daraja response codes."""
 
-    responseCode: Optional[str] = None
-
     @property
     def is_successful(self) -> bool:
         """Returns True if response code indicates success ('200')."""
-        if not self.responseCode:
+        response_code = getattr(self, "responseCode", None)
+        if not response_code:
             return False
-        return str(self.responseCode).strip() == "200"
+        return str(response_code).strip() == "200"
 
 
 class SwapCheckMixin:
@@ -94,7 +93,3 @@ class IMSIV3Response(BaseIMSISelfResponse):
     imsi: Optional[str] = Field(None, description="Hashed IMSI string.")
 
 
-class IMSIResponse(BaseIMSISelfResponse, SwapCheckMixin, NetworkAgeMixin):
-    """Unified Response schema capable of parsing V1, V2, or V3 responses safely."""
-
-    imsi: Optional[str] = Field(None, description="Hashed IMSI string.")
