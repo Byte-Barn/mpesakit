@@ -33,7 +33,7 @@ jobs:
         run: uv venv .venv
 
       - name: Install dependencies
-        run: uv pip install -e '.[dev]'
+        run: uv pip install -e '.[dev,mcp]'
 
       - name: Run Ruff
         run: uv run ruff check mpesakit && uv run ruff check tests
@@ -56,7 +56,7 @@ jobs:
         run: uv venv .venv
 
       - name: Install dependencies
-        run: uv pip install -e '.[dev]'
+        run: uv pip install -e '.[dev,mcp]'
 
       - name: Run Mypy
         run: uv run mypy mpesakit
@@ -79,7 +79,7 @@ jobs:
         run: uv venv .venv
 
       - name: Install dependencies
-        run: uv pip install -e '.[dev]'
+        run: uv pip install -e '.[dev,mcp]'
 
       - name: Run Bandit
         run: uv run bandit -r mpesakit  -iii
