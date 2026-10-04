@@ -313,6 +313,12 @@ export const MpesaKitLanding: React.FC = () => {
         status: "working" as "working" | "down" | "maintenance",
         note: "IMSI checkATI query endpoint operating normally (Paid API product)",
         link: { text: "SIM Swap Docs", href: "/swap"}
+      },
+      {
+        name: "M-Pesa IMSI",
+        status: "maintenance" as "working" | "down" | "maintenance",
+        note: "IMSI checkATI (Paid API product)",
+        link: { text: "IMSI (notes)", href: "/imsi" }
       }
     ]
   };
