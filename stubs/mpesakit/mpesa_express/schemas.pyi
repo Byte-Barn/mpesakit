@@ -4,8 +4,8 @@ from mpesakit.utils.phone import normalize_phone_number as normalize_phone_numbe
 from pydantic import BaseModel
 
 class TransactionType(str, Enum):
-    CUSTOMER_PAYBILL_ONLINE = 'CustomerPayBillOnline'
-    CUSTOMER_BUYGOODS_ONLINE = 'CustomerBuyGoodsOnline'
+    CUSTOMER_PAYBILL_ONLINE = "CustomerPayBillOnline"
+    CUSTOMER_BUYGOODS_ONLINE = "CustomerBuyGoodsOnline"
 
 class StkPushSimulateRequest(BaseModel):
     BusinessShortCode: int

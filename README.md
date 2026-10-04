@@ -84,6 +84,7 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
+
 @app.post("/mpesa/callback")
 async def mpesa_callback(request: Request):
     payload = await request.json()
@@ -126,8 +127,8 @@ try:
     response = client.stk_push(...)
 except MpesaApiException as e:
     err = e.error
-    print(f"Code: {err.error_code}")       # e.g. AUTH_INVALID_CREDENTIALS
-    print(f"Message: {err.error_message}") # Human-readable description
+    print(f"Code: {err.error_code}")  # e.g. AUTH_INVALID_CREDENTIALS
+    print(f"Message: {err.error_message}")  # Human-readable description
     print(f"HTTP status: {err.status_code}")
     print(f"Request ID: {err.request_id}")
 except Exception as exc:
@@ -150,6 +151,7 @@ from mpesakit import AsyncMpesaClient
 from mpesakit.mpesa_express import TransactionType
 
 load_dotenv()
+
 
 async def main():
     # Use as an async context manager so the connection pool is closed for you
@@ -176,6 +178,7 @@ async def main():
         else:
             print("Error:", response.ResponseDescription)
 
+
 asyncio.run(main())
 ```
 
@@ -197,19 +200,21 @@ await client.aclose()
 Because every call returns a coroutine, you can fan requests out concurrently with `asyncio.gather` instead of awaiting them one at a time — handy for payroll-style B2C runs, bulk QR generation, or reconciliation jobs that check many transaction statuses at once:
 
 ```python
-responses = await asyncio.gather(*(
-    client.transactions.query_status(
-        initiator="api_user",
-        security_credential="ENCRYPTED_CREDENTIAL",
-        transaction_id=tid,
-        party_a=int(os.getenv("MPESA_SHORTCODE")),
-        identifier_type=4,  # short code
-        result_url="https://yourdomain.com/mpesa/result",
-        queue_timeout_url="https://yourdomain.com/mpesa/timeout",
-        remarks="Nightly reconciliation",
+responses = await asyncio.gather(
+    *(
+        client.transactions.query_status(
+            initiator="api_user",
+            security_credential="ENCRYPTED_CREDENTIAL",
+            transaction_id=tid,
+            party_a=int(os.getenv("MPESA_SHORTCODE")),
+            identifier_type=4,  # short code
+            result_url="https://yourdomain.com/mpesa/result",
+            queue_timeout_url="https://yourdomain.com/mpesa/timeout",
+            remarks="Nightly reconciliation",
+        )
+        for tid in pending_transaction_ids
     )
-    for tid in pending_transaction_ids
-))
+)
 ```
 
 Keep Safaricom's rate limits in mind — chunk large batches rather than firing hundreds of requests in one `gather`.
@@ -231,8 +236,8 @@ response = client.b2c.send_payment(
     security_credential="your_encrypted_security_credential",
     command_id=B2CCommandIDType.BusinessPayment,
     amount=1500,
-    party_a="600999",           # Your bulk disbursement shortcode
-    party_b="254712345678",     # Recipient phone number (normalized by SDK)
+    party_a="600999",  # Your bulk disbursement shortcode
+    party_b="254712345678",  # Recipient phone number (normalized by SDK)
     remarks="Refund for order 042",
     queue_timeout_url="https://yourdomain.com/mpesa/timeout",
     result_url="https://yourdomain.com/mpesa/result",

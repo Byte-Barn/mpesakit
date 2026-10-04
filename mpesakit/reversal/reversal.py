@@ -18,7 +18,7 @@ from .schemas import (
 class Reversal(BaseModel):
     """Represents the Transaction Reversal API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/Reversal
+    https://developer.safaricom.co.ke/apis/Reversal
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

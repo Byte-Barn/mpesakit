@@ -18,7 +18,7 @@ from .schemas import (
 class TransactionStatus(BaseModel):
     """Represents the Transaction Status API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/TransactionStatus
+    https://developer.safaricom.co.ke/apis/TransactionStatus
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

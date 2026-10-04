@@ -17,12 +17,14 @@ from mpesakit.b2c_account_top_up import (
     B2CAccountTopUpTimeoutCallbackResponse,
 )
 
+
 @pytest.fixture
 def b2c_account_topup(mock_http_client, mock_token_manager):
     """Fixture to create a B2CAccountTopUp instance with mocked dependencies."""
     return B2CAccountTopUp(
         http_client=mock_http_client, token_manager=mock_token_manager
     )
+
 
 def valid_b2c_account_topup_request():
     """Create a valid B2CAccountTopUpRequest for testing."""
@@ -38,6 +40,7 @@ def valid_b2c_account_topup_request():
         QueueTimeOutURL="https://mydomain/path/timeout",
         ResultURL="https://mydomain/path/result",
     )
+
 
 def test_topup_success(b2c_account_topup, mock_http_client):
     """Test that topup request is acknowledged and successful."""
@@ -57,6 +60,7 @@ def test_topup_success(b2c_account_topup, mock_http_client):
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
+
 def test_topup_http_error(b2c_account_topup, mock_http_client):
     """Test handling of HTTP errors during topup request."""
     request = valid_b2c_account_topup_request()
@@ -64,6 +68,7 @@ def test_topup_http_error(b2c_account_topup, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         b2c_account_topup.topup(request)
     assert "HTTP error" in str(excinfo.value)
+
 
 def test_b2c_account_topup_success_callback():
     """Test parsing of a successful B2C Account TopUp callback."""
@@ -94,6 +99,7 @@ def test_b2c_account_topup_success_callback():
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultDesc.startswith("The service request is processed")
 
+
 def test_b2c_account_topup_fail_callback():
     """Test parsing of a failed B2C Account TopUp callback."""
     payload = {
@@ -111,11 +117,13 @@ def test_b2c_account_topup_fail_callback():
     assert "cancelled" in callback.Result.ResultDesc
     assert callback.Result.TransactionID == "TX123456"
 
+
 def test_b2c_account_topup_callback_response():
     """Test the response schema for B2C Account TopUp callback."""
     resp = B2CAccountTopUpCallbackResponse()
     assert resp.ResultCode == 0
     assert "processed successfully" in resp.ResultDesc
+
 
 def test_b2c_account_topup_timeout_callback():
     """Test parsing of a B2C Account TopUp timeout callback."""
@@ -133,11 +141,13 @@ def test_b2c_account_topup_timeout_callback():
     assert callback.Result.ResultCode == "1"
     assert "timed out" in callback.Result.ResultDesc
 
+
 def test_b2c_account_topup_timeout_callback_response():
     """Test the response schema for B2C Account TopUp timeout callback."""
     resp = B2CAccountTopUpTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
+
 
 @pytest.mark.parametrize("result_code_str, expected", [("0", True), ("1", False)])
 def test_b2c_account_topup_string_result_code_is_successful(result_code_str, expected):
@@ -156,12 +166,14 @@ def test_b2c_account_topup_string_result_code_is_successful(result_code_str, exp
     # Should not raise a TypeError when comparing string vs int inside is_successful
     assert callback.is_successful is expected
 
+
 @pytest.fixture
 def async_b2c_account_topup(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncB2CAccountTopUp instance with mocked dependencies."""
     return AsyncB2CAccountTopUp(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
+
 
 @pytest.mark.asyncio
 async def test_async_topup_success(
@@ -184,6 +196,7 @@ async def test_async_topup_success(
     assert response.is_successful is True
     assert response.ResponseCode == response_data["ResponseCode"]
 
+
 @pytest.mark.asyncio
 async def test_async_topup_http_error(
     async_b2c_account_topup, mock_async_http_client, mock_async_token_manager
@@ -196,6 +209,7 @@ async def test_async_topup_http_error(
     with pytest.raises(Exception) as excinfo:
         await async_b2c_account_topup.topup(request)
     assert "Async HTTP error" in str(excinfo.value)
+
 
 @pytest.mark.asyncio
 async def test_async_topup_token_retrieval(

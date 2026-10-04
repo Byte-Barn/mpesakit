@@ -136,6 +136,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+*.env
 .env
 .envrc
 .venv
@@ -202,6 +203,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-
-uv.lock

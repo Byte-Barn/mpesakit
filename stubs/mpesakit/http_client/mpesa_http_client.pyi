@@ -1,13 +1,30 @@
 from .http_client import HttpClient as HttpClient
-from mpesakit.errors import MpesaApiException as MpesaApiException, MpesaError as MpesaError
+from mpesakit.errors import (
+    MpesaApiException as MpesaApiException,
+    MpesaError as MpesaError,
+)
 from typing import Any
 
 class MpesaHttpClient(HttpClient):
     base_url: str
     max_retries: int
-    def __init__(self, env: str = 'sandbox', use_session: bool = False, trust_env: bool = True, max_retries: int = 3) -> None: ...
-    def post(self, url: str, json: dict[str, Any], headers: dict[str, str], timeout: int = 10) -> dict[str, Any]: ...
-    def get(self, url: str, params: dict[str, Any] | None = None, headers: dict[str, str] | None = None, timeout: int = 10) -> dict[str, Any]: ...
+    def __init__(
+        self,
+        env: str = "sandbox",
+        use_session: bool = False,
+        trust_env: bool = True,
+        max_retries: int = 3,
+    ) -> None: ...
+    def post(
+        self, url: str, json: dict[str, Any], headers: dict[str, str], timeout: int = 10
+    ) -> dict[str, Any]: ...
+    def get(
+        self,
+        url: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: int = 10,
+    ) -> dict[str, Any]: ...
     def close(self) -> None: ...
     def __enter__(self) -> MpesaHttpClient: ...
     def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...

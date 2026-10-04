@@ -18,7 +18,7 @@ from .schemas import (
 class C2B(BaseModel):
     """Represents the C2B API client for M-Pesa Customer to Business operations.
 
-    https://developer.safaricom.co.ke/APIs/CustomerToBusinessRegisterURL
+    https://developer.safaricom.co.ke/apis/CustomerToBusinessRegisterURL
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.
@@ -61,7 +61,7 @@ class C2B(BaseModel):
 class AsyncC2B(BaseModel):
     """Represents the async C2B API client for M-Pesa Customer to Business operations.
 
-    https://developer.safaricom.co.ke/APIs/CustomerToBusinessRegisterURL
+    https://developer.safaricom.co.ke/apis/CustomerToBusinessRegisterURL
 
     Attributes:
         http_client (AsyncHttpClient): Async HTTP client for making requests to the M-Pesa API.

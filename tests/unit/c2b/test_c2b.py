@@ -15,10 +15,12 @@ from mpesakit.c2b import (
     C2BValidationResultCodeType,
 )
 
+
 @pytest.fixture
 def c2b(mock_http_client, mock_token_manager):
     """Fixture to create an instance of C2B with mocked dependencies."""
     return C2B(http_client=mock_http_client, token_manager=mock_token_manager)
+
 
 def test_register_url_success(c2b, mock_http_client):
     """Test that a successful C2B URL registration can be performed."""
@@ -47,6 +49,7 @@ def test_register_url_success(c2b, mock_http_client):
     assert args[0] == "/mpesa/c2b/v1/registerurl"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
+
 def test_register_url_handles_typo_field(c2b, mock_http_client):
     """Test that the C2B URL registration handles the typo in the response field."""
     request = C2BRegisterUrlRequest(
@@ -68,6 +71,7 @@ def test_register_url_handles_typo_field(c2b, mock_http_client):
 
     assert response.OriginatorConversationID == "typo123"
 
+
 def test_register_url_handles_http_error(c2b, mock_http_client):
     """Test that the C2B URL registration handles HTTP errors gracefully."""
     request = C2BRegisterUrlRequest(
@@ -81,6 +85,7 @@ def test_register_url_handles_http_error(c2b, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         c2b.register_url(request)
     assert "HTTP error" in str(excinfo.value)
+
 
 def test_validate_payment_success(c2b):
     """Test that a C2B payment validation can be handled successfully."""
@@ -108,6 +113,7 @@ def test_validate_payment_success(c2b):
     assert response.ResultDesc == result_desc
     assert response.ThirdPartyTransID == "trans123"
 
+
 def test_validate_payment_rejected(c2b):
     """Test that a C2B payment validation can be handled as rejected."""
     request = C2BValidationRequest(
@@ -132,11 +138,13 @@ def test_validate_payment_rejected(c2b):
     assert response.ResultDesc == result_desc
     assert response.ThirdPartyTransID == "trans456"
 
+
 def test_confirm_payment_success(c2b):
     """Test that a C2B payment confirmation can be acknowledged successfully."""
     response = C2BConfirmationResponse()
     assert response.ResultCode == 0
     assert "Success" in response.ResultDesc
+
 
 def test_warn_invalid_urls_triggers_warning(monkeypatch):
     """Test that _warn_invalid_urls triggers a warning for forbidden keywords in URLs."""
@@ -164,6 +172,7 @@ def test_warn_invalid_urls_triggers_warning(monkeypatch):
     )
     assert all(call[1] is UserWarning for call in warn_calls)
 
+
 def test_warn_invalid_urls_no_warning(monkeypatch):
     """Test that _warn_invalid_urls does not trigger a warning for safe URLs."""
     warn_calls = []
@@ -178,6 +187,7 @@ def test_warn_invalid_urls_no_warning(monkeypatch):
     C2BRegisterUrlRequest._warn_invalid_urls(values)
 
     assert len(warn_calls) == 0
+
 
 def test_warn_invalid_urls_multiple_keywords(monkeypatch):
     """Test that _warn_invalid_urls triggers multiple warnings for multiple forbidden keywords."""
@@ -209,6 +219,7 @@ def test_warn_invalid_urls_multiple_keywords(monkeypatch):
         for call in warn_calls
     )
 
+
 def test_register_url_invalid_response_type_raises_value_error():
     """Test that C2BRegisterUrlRequest raises ValueError for invalid ResponseType."""
     invalid_response_type = "InvalidType"
@@ -224,6 +235,7 @@ def test_register_url_invalid_response_type_raises_value_error():
     assert "ResponseType must be one of" in str(excinfo.value)
     assert invalid_response_type in str(excinfo.value)
 
+
 def test_c2b_register_url_response_is_successful_zero_code():
     """Test is_successful returns True for ResponseCode '0'."""
     resp = C2BRegisterUrlResponse(
@@ -234,6 +246,7 @@ def test_c2b_register_url_response_is_successful_zero_code():
         ResponseCode="0",
     )
     assert resp.is_successful is True
+
 
 def test_c2b_register_url_response_is_successful_all_zeros():
     """Test is_successful returns True for ResponseCode '00000000'."""
@@ -246,6 +259,7 @@ def test_c2b_register_url_response_is_successful_all_zeros():
     )
     assert resp.is_successful is True
 
+
 def test_c2b_register_url_response_is_successful_non_zero_code():
     """Test is_successful returns False for non-success ResponseCode."""
     resp = C2BRegisterUrlResponse(
@@ -256,6 +270,7 @@ def test_c2b_register_url_response_is_successful_non_zero_code():
         ResponseCode="1",
     )
     assert resp.is_successful is False
+
 
 def test_c2b_register_url_response_is_successful_mixed_code():
     """Test is_successful returns False for mixed ResponseCode like '00001'."""
@@ -268,6 +283,7 @@ def test_c2b_register_url_response_is_successful_mixed_code():
     )
     assert resp.is_successful is False
 
+
 def test_c2b_register_url_response_is_successful_empty_code():
     """Test is_successful returns False for empty ResponseCode."""
     resp = C2BRegisterUrlResponse(
@@ -279,12 +295,14 @@ def test_c2b_register_url_response_is_successful_empty_code():
     )
     assert resp.is_successful is False
 
+
 def test_validate_result_code_valid():
     """Test _validate_result_code accepts valid ResultCode values."""
     for code in [e.value for e in C2BValidationResultCodeType]:
         values = {"ResultCode": code}
         result = C2BValidationResponse._validate_result_code(values)
         assert result == values
+
 
 def test_validate_result_code_invalid():
     """Test _validate_result_code raises ValueError for invalid ResultCode."""
@@ -294,6 +312,7 @@ def test_validate_result_code_invalid():
         C2BValidationResponse._validate_result_code(values)
     assert f"ResultCode must be one of {valid_codes}" in str(excinfo.value)
     assert "INVALID_CODE" in str(excinfo.value)
+
 
 def test_warn_long_resultdesc_triggers_warning(monkeypatch):
     """Test _warn_long_resultdesc triggers a warning if ResultDesc exceeds 90 chars."""
@@ -308,6 +327,7 @@ def test_warn_long_resultdesc_triggers_warning(monkeypatch):
     assert all(call[1] is UserWarning for call in warn_calls)
     assert result == values
 
+
 def test_warn_long_resultdesc_no_warning(monkeypatch):
     """Test _warn_long_resultdesc does not trigger warning for <= 90 chars."""
     warn_calls = []
@@ -320,6 +340,7 @@ def test_warn_long_resultdesc_no_warning(monkeypatch):
     assert len(warn_calls) == 0
     assert result == values
 
+
 def test_warn_long_resultdesc_none(monkeypatch):
     """Test _warn_long_resultdesc does not warn if ResultDesc is None."""
     warn_calls = []
@@ -330,6 +351,7 @@ def test_warn_long_resultdesc_none(monkeypatch):
     result = C2BValidationResponse._warn_long_resultdesc(values)
     assert len(warn_calls) == 0
     assert result == values
+
 
 def test_is_successful_with_mixed_string_response_code_no_type_error():
     """Ensure is_successful handles mixed/numeric-like string ResponseCode without TypeError and returns False for non-success codes."""
@@ -349,12 +371,14 @@ def test_is_successful_with_mixed_string_response_code_no_type_error():
     assert isinstance(result, bool)
     assert result is False
 
+
 @pytest.fixture
 def async_c2b(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an instance of AsyncC2B with mocked dependencies."""
     return AsyncC2B(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
+
 
 @pytest.mark.asyncio
 async def test_async_register_url_success(async_c2b, mock_async_http_client):
@@ -384,6 +408,7 @@ async def test_async_register_url_success(async_c2b, mock_async_http_client):
     assert args[0] == "/mpesa/c2b/v1/registerurl"
     assert kwargs["headers"]["Authorization"] == "Bearer test_token"
 
+
 @pytest.mark.asyncio
 async def test_async_register_url_handles_typo_field(async_c2b, mock_async_http_client):
     """Test that the async C2B URL registration handles the typo in the response field."""
@@ -405,6 +430,7 @@ async def test_async_register_url_handles_typo_field(async_c2b, mock_async_http_
     response = await async_c2b.register_url(request)
 
     assert response.OriginatorConversationID == "typo123"
+
 
 @pytest.mark.asyncio
 async def test_async_register_url_handles_http_error(async_c2b, mock_async_http_client):

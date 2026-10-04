@@ -14,6 +14,7 @@ from mpesakit.bill_manager import (
     InvoiceItem,
 )
 
+
 @pytest.fixture
 def bill_service(mock_http_client, mock_token_manager):
     """Fixture to create a BillService instance with mocked dependencies."""
@@ -21,6 +22,7 @@ def bill_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
+
 
 @pytest.fixture
 def bill_service_with_app_key(mock_http_client, mock_token_manager):
@@ -42,9 +44,7 @@ def async_bill_service(mock_async_http_client, mock_async_token_manager):
 
 
 @pytest.fixture
-def async_bill_service_with_app_key(
-    mock_async_http_client, mock_async_token_manager
-):
+def async_bill_service_with_app_key(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncBillService with an app key."""
     return AsyncBillService(
         http_client=mock_async_http_client,
@@ -74,6 +74,7 @@ def test_opt_in_calls_bill_manager_opt_in(bill_service, mock_http_client):
     assert isinstance(resp, BillManagerOptInResponse)
     resp.is_successful is True
 
+
 def test_bill_manager_update_opt_in(bill_service_with_app_key, mock_http_client):
     """Test update_opt_in calls BillManager.update_opt_in."""
     response_data = {
@@ -92,6 +93,7 @@ def test_bill_manager_update_opt_in(bill_service_with_app_key, mock_http_client)
     )
     assert isinstance(resp, BillManagerUpdateOptInResponse)
     assert resp.is_successful is True
+
 
 def test_bill_manager_send_single_invoice(
     bill_service_with_app_key,
@@ -122,6 +124,7 @@ def test_bill_manager_send_single_invoice(
     assert isinstance(resp, BillManagerSingleInvoiceResponse)
     assert resp.is_successful is True
 
+
 def test_bill_manager_send_bulk_invoice(bill_service_with_app_key, mock_http_client):
     """Test send_bulk_invoice calls BillManager.send_bulk_invoice."""
     response_data = {
@@ -137,6 +140,7 @@ def test_bill_manager_send_bulk_invoice(bill_service_with_app_key, mock_http_cli
 
     assert isinstance(resp, BillManagerBulkInvoiceResponse)
     assert resp.is_successful is True
+
 
 def test_bill_manager_cancel_single_invoice(
     bill_service_with_app_key,
@@ -155,6 +159,7 @@ def test_bill_manager_cancel_single_invoice(
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
     assert resp.is_successful is True
 
+
 def test_bill_manager_cancel_bulk_invoice(bill_service_with_app_key, mock_http_client):
     """Test cancel_bulk_invoice calls BillManager.cancel_bulk_invoice."""
     response_data = {
@@ -170,6 +175,7 @@ def test_bill_manager_cancel_bulk_invoice(bill_service_with_app_key, mock_http_c
 
     assert isinstance(resp, BillManagerCancelInvoiceResponse)
     assert resp.is_successful is True
+
 
 def test_bill_service_initializes_bill_manager_correctly(
     mock_http_client, mock_token_manager

@@ -25,7 +25,7 @@ pytestmark = pytest.mark.live
 @pytest.fixture
 def transaction_status_service():
     """Initialize the M-Pesa Transaction Status service with authentication."""
-    http_client = MpesaHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
+    http_client = MpesaHttpClient(env=os.getenv("MPESA_ENVIRONMENT", "sandbox"))
     token_manager = TokenManager(
         consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
         consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),

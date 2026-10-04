@@ -18,7 +18,7 @@ from .schemas import (
 class B2CAccountTopUp(BaseModel):
     """Represents the B2C Account TopUp API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/B2CAccountTopUp
+    https://developer.safaricom.co.ke/apis/B2CAccountTopUp
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

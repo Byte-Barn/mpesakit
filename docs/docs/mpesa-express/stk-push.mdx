@@ -257,7 +257,7 @@ from mpesakit.http_client import MpesaHttpClient
 import os
 
 # Configure HTTP client and token manager
-http_client = MpesaHttpClient(env=os.getenv("MPESA_ENV", "sandbox"))
+http_client = MpesaHttpClient(env=os.getenv("MPESA_ENVIRONMENT", "sandbox"))
 token_manager = TokenManager(
     consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
     consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
@@ -309,7 +309,7 @@ from mpesakit.auth import AsyncTokenManager
 from mpesakit.http_client import MpesaAsyncHttpClient
 
 async def main():
-    async with MpesaAsyncHttpClient(env=os.getenv("MPESA_ENV", "sandbox")) as http_client:
+    async with MpesaAsyncHttpClient(env=os.getenv("MPESA_ENVIRONMENT", "sandbox")) as http_client:
         token_manager = AsyncTokenManager(
             consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
             consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),

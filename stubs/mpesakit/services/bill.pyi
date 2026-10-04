@@ -1,28 +1,124 @@
 from _typeshed import Incomplete
-from mpesakit.auth import TokenManager as TokenManager, AsyncTokenManager as AsyncTokenManager
-from mpesakit.bill_manager import BillManager as BillManager, BillManagerBulkInvoiceRequest as BillManagerBulkInvoiceRequest, BillManagerBulkInvoiceResponse as BillManagerBulkInvoiceResponse, BillManagerCancelBulkInvoiceRequest as BillManagerCancelBulkInvoiceRequest, BillManagerCancelInvoiceResponse as BillManagerCancelInvoiceResponse, BillManagerCancelSingleInvoiceRequest as BillManagerCancelSingleInvoiceRequest, BillManagerOptInRequest as BillManagerOptInRequest, BillManagerOptInResponse as BillManagerOptInResponse, BillManagerSingleInvoiceRequest as BillManagerSingleInvoiceRequest, BillManagerSingleInvoiceResponse as BillManagerSingleInvoiceResponse, BillManagerUpdateOptInRequest as BillManagerUpdateOptInRequest, BillManagerUpdateOptInResponse as BillManagerUpdateOptInResponse, InvoiceItem as InvoiceItem
-from mpesakit.http_client import HttpClient as HttpClient, AsyncHttpClient as AsyncHttpClient
+from mpesakit.auth import (
+    TokenManager as TokenManager,
+    AsyncTokenManager as AsyncTokenManager,
+)
+from mpesakit.bill_manager import (
+    BillManager as BillManager,
+    BillManagerBulkInvoiceRequest as BillManagerBulkInvoiceRequest,
+    BillManagerBulkInvoiceResponse as BillManagerBulkInvoiceResponse,
+    BillManagerCancelBulkInvoiceRequest as BillManagerCancelBulkInvoiceRequest,
+    BillManagerCancelInvoiceResponse as BillManagerCancelInvoiceResponse,
+    BillManagerCancelSingleInvoiceRequest as BillManagerCancelSingleInvoiceRequest,
+    BillManagerOptInRequest as BillManagerOptInRequest,
+    BillManagerOptInResponse as BillManagerOptInResponse,
+    BillManagerSingleInvoiceRequest as BillManagerSingleInvoiceRequest,
+    BillManagerSingleInvoiceResponse as BillManagerSingleInvoiceResponse,
+    BillManagerUpdateOptInRequest as BillManagerUpdateOptInRequest,
+    BillManagerUpdateOptInResponse as BillManagerUpdateOptInResponse,
+    InvoiceItem as InvoiceItem,
+)
+from mpesakit.http_client import (
+    HttpClient as HttpClient,
+    AsyncHttpClient as AsyncHttpClient,
+)
 
 class BillService:
     http_client: Incomplete
     token_manager: Incomplete
     bill_manager: Incomplete
-    def __init__(self, http_client: HttpClient, token_manager: TokenManager, app_key: str | None = None) -> None: ...
-    def opt_in(self, shortcode: int, email: str, official_contact: str, send_reminders: int, logo: str | None, callback_url: str) -> BillManagerOptInResponse: ...
-    def update_opt_in(self, shortcode: int, email: str, official_contact: str, send_reminders: int, logo: str | None = None, callback_url: str | None = None) -> BillManagerUpdateOptInResponse: ...
-    def send_single_invoice(self, external_reference: str, billed_full_name: str, billed_phone_number: str, billed_period: str, invoice_name: str, due_date: str, account_reference: str, amount: int, invoice_items: list[InvoiceItem] | None = None) -> BillManagerSingleInvoiceResponse: ...
-    def send_bulk_invoice(self, invoices: list[BillManagerSingleInvoiceRequest]) -> BillManagerBulkInvoiceResponse: ...
-    def cancel_single_invoice(self, external_reference: str) -> BillManagerCancelInvoiceResponse: ...
-    def cancel_bulk_invoice(self, external_references: list[str]) -> BillManagerCancelInvoiceResponse: ...
+    def __init__(
+        self,
+        http_client: HttpClient,
+        token_manager: TokenManager,
+        app_key: str | None = None,
+    ) -> None: ...
+    def opt_in(
+        self,
+        shortcode: int,
+        email: str,
+        official_contact: str,
+        send_reminders: int,
+        logo: str | None,
+        callback_url: str,
+    ) -> BillManagerOptInResponse: ...
+    def update_opt_in(
+        self,
+        shortcode: int,
+        email: str,
+        official_contact: str,
+        send_reminders: int,
+        logo: str | None = None,
+        callback_url: str | None = None,
+    ) -> BillManagerUpdateOptInResponse: ...
+    def send_single_invoice(
+        self,
+        external_reference: str,
+        billed_full_name: str,
+        billed_phone_number: str,
+        billed_period: str,
+        invoice_name: str,
+        due_date: str,
+        account_reference: str,
+        amount: int,
+        invoice_items: list[InvoiceItem] | None = None,
+    ) -> BillManagerSingleInvoiceResponse: ...
+    def send_bulk_invoice(
+        self, invoices: list[BillManagerSingleInvoiceRequest]
+    ) -> BillManagerBulkInvoiceResponse: ...
+    def cancel_single_invoice(
+        self, external_reference: str
+    ) -> BillManagerCancelInvoiceResponse: ...
+    def cancel_bulk_invoice(
+        self, external_references: list[str]
+    ) -> BillManagerCancelInvoiceResponse: ...
 
 class AsyncBillService:
     http_client: Incomplete
     token_manager: Incomplete
     bill_manager: Incomplete
-    def __init__(self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager, app_key: str | None = None) -> None: ...
-    async def opt_in(self, shortcode: int, email: str, official_contact: str, send_reminders: int, logo: str | None, callback_url: str) -> BillManagerOptInResponse: ...
-    async def update_opt_in(self, shortcode: int, email: str, official_contact: str, send_reminders: int, logo: str | None = None, callback_url: str | None = None) -> BillManagerUpdateOptInResponse: ...
-    async def send_single_invoice(self, external_reference: str, billed_full_name: str, billed_phone_number: str, billed_period: str, invoice_name: str, due_date: str, account_reference: str, amount: int, invoice_items: list[InvoiceItem] | None = None) -> BillManagerSingleInvoiceResponse: ...
-    async def send_bulk_invoice(self, invoices: list[BillManagerSingleInvoiceRequest]) -> BillManagerBulkInvoiceResponse: ...
-    async def cancel_single_invoice(self, external_reference: str) -> BillManagerCancelInvoiceResponse: ...
-    async def cancel_bulk_invoice(self, external_references: list[str]) -> BillManagerCancelInvoiceResponse: ...
+    def __init__(
+        self,
+        http_client: AsyncHttpClient,
+        token_manager: AsyncTokenManager,
+        app_key: str | None = None,
+    ) -> None: ...
+    async def opt_in(
+        self,
+        shortcode: int,
+        email: str,
+        official_contact: str,
+        send_reminders: int,
+        logo: str | None,
+        callback_url: str,
+    ) -> BillManagerOptInResponse: ...
+    async def update_opt_in(
+        self,
+        shortcode: int,
+        email: str,
+        official_contact: str,
+        send_reminders: int,
+        logo: str | None = None,
+        callback_url: str | None = None,
+    ) -> BillManagerUpdateOptInResponse: ...
+    async def send_single_invoice(
+        self,
+        external_reference: str,
+        billed_full_name: str,
+        billed_phone_number: str,
+        billed_period: str,
+        invoice_name: str,
+        due_date: str,
+        account_reference: str,
+        amount: int,
+        invoice_items: list[InvoiceItem] | None = None,
+    ) -> BillManagerSingleInvoiceResponse: ...
+    async def send_bulk_invoice(
+        self, invoices: list[BillManagerSingleInvoiceRequest]
+    ) -> BillManagerBulkInvoiceResponse: ...
+    async def cancel_single_invoice(
+        self, external_reference: str
+    ) -> BillManagerCancelInvoiceResponse: ...
+    async def cancel_bulk_invoice(
+        self, external_references: list[str]
+    ) -> BillManagerCancelInvoiceResponse: ...

@@ -31,7 +31,7 @@ class C2BValidationResultCodeType(str, Enum):
 class C2BRegisterUrlRequest(BaseModel):
     """Request schema for registering C2B validation and confirmation URLs.
 
-    https://developer.safaricom.co.ke/APIs/CustomerToBusinessRegisterURL
+    https://developer.safaricom.co.ke/apis/CustomerToBusinessRegisterURL
     """
 
     ShortCode: int = Field(..., description="Organization's Paybill/Till number.")

@@ -3,17 +3,17 @@ from enum import Enum
 from pydantic import BaseModel
 
 class C2BResponseType(str, Enum):
-    COMPLETED = 'Completed'
-    CANCELLED = 'Cancelled'
+    COMPLETED = "Completed"
+    CANCELLED = "Cancelled"
 
 class C2BValidationResultCodeType(str, Enum):
-    ACCEPTED = '0'
-    INVALID_MSISDN = 'C2B00011'
-    INVALID_ACCOUNT_NUMBER = 'C2B00012'
-    INVALID_AMOUNT = 'C2B00013'
-    INVALID_KYC_DETAILS = 'C2B00014'
-    INVALID_SHORTCODE = 'C2B00015'
-    OTHER_ERROR = 'C2B00016'
+    ACCEPTED = "0"
+    INVALID_MSISDN = "C2B00011"
+    INVALID_ACCOUNT_NUMBER = "C2B00012"
+    INVALID_AMOUNT = "C2B00013"
+    INVALID_KYC_DETAILS = "C2B00014"
+    INVALID_SHORTCODE = "C2B00015"
+    OTHER_ERROR = "C2B00016"
 
 class C2BRegisterUrlRequest(BaseModel):
     ShortCode: int

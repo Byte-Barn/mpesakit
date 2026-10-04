@@ -1,4 +1,16 @@
-from .schemas import BillManagerBulkInvoiceRequest as BillManagerBulkInvoiceRequest, BillManagerBulkInvoiceResponse as BillManagerBulkInvoiceResponse, BillManagerCancelBulkInvoiceRequest as BillManagerCancelBulkInvoiceRequest, BillManagerCancelInvoiceResponse as BillManagerCancelInvoiceResponse, BillManagerCancelSingleInvoiceRequest as BillManagerCancelSingleInvoiceRequest, BillManagerOptInRequest as BillManagerOptInRequest, BillManagerOptInResponse as BillManagerOptInResponse, BillManagerSingleInvoiceRequest as BillManagerSingleInvoiceRequest, BillManagerSingleInvoiceResponse as BillManagerSingleInvoiceResponse, BillManagerUpdateOptInRequest as BillManagerUpdateOptInRequest, BillManagerUpdateOptInResponse as BillManagerUpdateOptInResponse
+from .schemas import (
+    BillManagerBulkInvoiceRequest as BillManagerBulkInvoiceRequest,
+    BillManagerBulkInvoiceResponse as BillManagerBulkInvoiceResponse,
+    BillManagerCancelBulkInvoiceRequest as BillManagerCancelBulkInvoiceRequest,
+    BillManagerCancelInvoiceResponse as BillManagerCancelInvoiceResponse,
+    BillManagerCancelSingleInvoiceRequest as BillManagerCancelSingleInvoiceRequest,
+    BillManagerOptInRequest as BillManagerOptInRequest,
+    BillManagerOptInResponse as BillManagerOptInResponse,
+    BillManagerSingleInvoiceRequest as BillManagerSingleInvoiceRequest,
+    BillManagerSingleInvoiceResponse as BillManagerSingleInvoiceResponse,
+    BillManagerUpdateOptInRequest as BillManagerUpdateOptInRequest,
+    BillManagerUpdateOptInResponse as BillManagerUpdateOptInResponse,
+)
 from _typeshed import Incomplete
 from mpesakit.auth import TokenManager as TokenManager
 from mpesakit.http_client import HttpClient as HttpClient
@@ -10,8 +22,18 @@ class BillManager(BaseModel):
     app_key: str | None
     model_config: Incomplete
     def opt_in(self, request: BillManagerOptInRequest) -> BillManagerOptInResponse: ...
-    def update_opt_in(self, request: BillManagerUpdateOptInRequest) -> BillManagerUpdateOptInResponse: ...
-    def send_single_invoice(self, request: BillManagerSingleInvoiceRequest) -> BillManagerSingleInvoiceResponse: ...
-    def send_bulk_invoice(self, request: BillManagerBulkInvoiceRequest) -> BillManagerBulkInvoiceResponse: ...
-    def cancel_single_invoice(self, request: BillManagerCancelSingleInvoiceRequest) -> BillManagerCancelInvoiceResponse: ...
-    def cancel_bulk_invoice(self, request: BillManagerCancelBulkInvoiceRequest) -> BillManagerCancelInvoiceResponse: ...
+    def update_opt_in(
+        self, request: BillManagerUpdateOptInRequest
+    ) -> BillManagerUpdateOptInResponse: ...
+    def send_single_invoice(
+        self, request: BillManagerSingleInvoiceRequest
+    ) -> BillManagerSingleInvoiceResponse: ...
+    def send_bulk_invoice(
+        self, request: BillManagerBulkInvoiceRequest
+    ) -> BillManagerBulkInvoiceResponse: ...
+    def cancel_single_invoice(
+        self, request: BillManagerCancelSingleInvoiceRequest
+    ) -> BillManagerCancelInvoiceResponse: ...
+    def cancel_bulk_invoice(
+        self, request: BillManagerCancelBulkInvoiceRequest
+    ) -> BillManagerCancelInvoiceResponse: ...

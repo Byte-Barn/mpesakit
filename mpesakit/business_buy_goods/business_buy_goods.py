@@ -18,7 +18,7 @@ from .schemas import (
 class BusinessBuyGoods(BaseModel):
     """Represents the Business Buy Goods API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/BusinessBuyGoods
+    https://developer.safaricom.co.ke/apis/BusinessBuyGoods
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

@@ -17,12 +17,14 @@ from mpesakit.business_buy_goods import (
     BusinessBuyGoodsTimeoutCallbackResponse,
 )
 
+
 @pytest.fixture
 def business_buy_goods(mock_http_client, mock_token_manager):
     """Fixture to create a BusinessBuyGoods instance with mocked dependencies."""
     return BusinessBuyGoods(
         http_client=mock_http_client, token_manager=mock_token_manager
     )
+
 
 def valid_business_buy_goods_request():
     """Create a valid BusinessBuyGoodsRequest for testing."""
@@ -37,6 +39,7 @@ def valid_business_buy_goods_request():
         QueueTimeOutURL="https://mydomain.com/b2b/buygoods/queue/",
         ResultURL="https://mydomain.com/b2b/buygoods/result/",
     )
+
 
 def test_buy_goods_request_acknowledged(business_buy_goods, mock_http_client):
     """Test that buy goods request is acknowledged, not finalized."""
@@ -60,6 +63,7 @@ def test_buy_goods_request_acknowledged(business_buy_goods, mock_http_client):
     assert response.ResponseCode == response_data["ResponseCode"]
     assert response.ResponseDescription == response_data["ResponseDescription"]
 
+
 def test_buy_goods_http_error(business_buy_goods, mock_http_client):
     """Test handling of HTTP errors during buy goods request."""
     request = valid_business_buy_goods_request()
@@ -67,6 +71,7 @@ def test_buy_goods_http_error(business_buy_goods, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         business_buy_goods.buy_goods(request)
     assert "HTTP error" in str(excinfo.value)
+
 
 def test_business_buy_goods_result_callback_success():
     """Test parsing of a successful business buy goods result callback."""
@@ -96,11 +101,13 @@ def test_business_buy_goods_result_callback_success():
     assert callback.Result.TransactionID == "QKA81LK5CY"
     assert callback.Result.ResultParameters.ResultParameter[0].Key == "Amount"
 
+
 def test_business_buy_goods_result_callback_response():
     """Test the response schema for result callback."""
     resp = BusinessBuyGoodsResultCallbackResponse()
     assert resp.ResultCode == 0
     assert "Callback received successfully" in resp.ResultDesc
+
 
 def test_business_buy_goods_timeout_callback():
     """Test parsing of a business buy goods timeout callback."""
@@ -118,11 +125,13 @@ def test_business_buy_goods_timeout_callback():
     assert callback.Result.ResultCode == 1
     assert "timed out" in callback.Result.ResultDesc
 
+
 def test_business_buy_goods_timeout_callback_response():
     """Test the response schema for timeout callback."""
     resp = BusinessBuyGoodsTimeoutCallbackResponse()
     assert resp.ResultCode == 0
     assert "Timeout notification received" in resp.ResultDesc
+
 
 def test_business_buy_goods_result_callback_resultcode_string():
     """Ensure a string ResultCode does not raise when checking success."""
@@ -149,12 +158,14 @@ def test_business_buy_goods_result_callback_resultcode_string():
     # Also assert it is considered successful.
     assert callback.is_successful is True
 
+
 @pytest.fixture
 def async_business_buy_goods(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncBusinessBuyGoods instance with mocked dependencies."""
     return AsyncBusinessBuyGoods(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
+
 
 @pytest.mark.asyncio
 async def test_async_buy_goods_request_acknowledged(
@@ -176,6 +187,7 @@ async def test_async_buy_goods_request_acknowledged(
     assert response.is_successful is True
     assert response.ConversationID == response_data["ConversationID"]
 
+
 @pytest.mark.asyncio
 async def test_async_buy_goods_http_error(
     async_business_buy_goods, mock_async_http_client
@@ -188,6 +200,7 @@ async def test_async_buy_goods_http_error(
         await async_business_buy_goods.buy_goods(request)
 
     assert "Async HTTP error" in str(excinfo.value)
+
 
 @pytest.mark.asyncio
 async def test_async_buy_goods_token_manager_called(
@@ -206,6 +219,7 @@ async def test_async_buy_goods_token_manager_called(
     await async_business_buy_goods.buy_goods(request)
 
     mock_async_token_manager.get_token.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_async_buy_goods_http_client_called_with_correct_params(

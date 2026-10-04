@@ -1,13 +1,25 @@
 from .http_client import AsyncHttpClient as AsyncHttpClient
-from mpesakit.errors import MpesaApiException as MpesaApiException, MpesaError as MpesaError
+from mpesakit.errors import (
+    MpesaApiException as MpesaApiException,
+    MpesaError as MpesaError,
+)
 from typing import Any
 
 class MpesaAsyncHttpClient(AsyncHttpClient):
     base_url: str
     max_retries: int
-    def __init__(self, env: str = 'sandbox', trust_env: bool = True, max_retries: int = 3) -> None: ...
+    def __init__(
+        self, env: str = "sandbox", trust_env: bool = True, max_retries: int = 3
+    ) -> None: ...
     async def __aenter__(self): ...
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None: ...
-    async def post(self, url: str, json: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]: ...
-    async def get(self, url: str, params: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]: ...
+    async def post(
+        self, url: str, json: dict[str, Any], headers: dict[str, str]
+    ) -> dict[str, Any]: ...
+    async def get(
+        self,
+        url: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]: ...
     async def aclose(self) -> None: ...

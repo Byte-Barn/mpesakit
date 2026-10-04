@@ -13,6 +13,7 @@ from mpesakit.b2b_express_checkout import (
     B2BExpressCheckoutResponse,
 )
 
+
 @pytest.fixture
 def b2b_service(mock_http_client, mock_token_manager):
     """Fixture to create a B2BService instance with mocked dependencies."""
@@ -21,6 +22,7 @@ def b2b_service(mock_http_client, mock_token_manager):
         http_client=mock_http_client,
         token_manager=mock_token_manager,
     )
+
 
 def test_express_checkout_calls_ussd_push(b2b_service, mock_http_client):
     """Test that express_checkout calls the B2BExpressCheckout service."""
@@ -39,6 +41,7 @@ def test_express_checkout_calls_ussd_push(b2b_service, mock_http_client):
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.code == "0"
     assert resp.status == "USSD Initiated Successfully"
+
 
 def test_paybill_calls_paybill(b2b_service, mock_http_client):
     """Test that paybill calls the BusinessPayBill service."""
@@ -65,6 +68,7 @@ def test_paybill_calls_paybill(b2b_service, mock_http_client):
     assert isinstance(resp, BusinessPayBillResponse)
     assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
+
 
 def test_buygoods_calls_buy_goods(b2b_service, mock_http_client):
     """Test that buygoods calls the BusinessBuyGoods service."""
@@ -93,6 +97,7 @@ def test_buygoods_calls_buy_goods(b2b_service, mock_http_client):
     assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
+
 def test_express_checkout_filters_kwargs(b2b_service, mock_http_client):
     """Test that express_checkout filters out unexpected kwargs."""
     response_data = {"code": "0", "status": "USSD Initiated Successfully"}
@@ -112,6 +117,7 @@ def test_express_checkout_filters_kwargs(b2b_service, mock_http_client):
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.is_successful is True
     assert resp.status == "USSD Initiated Successfully"
+
 
 def test_b2b_service_initializes_services_correctly(
     mock_http_client, mock_token_manager
@@ -134,13 +140,14 @@ def test_b2b_service_initializes_services_correctly(
         assert service.buygoods_service.http_client is mock_http_client
         assert service.buygoods_service.token_manager is mock_token_manager
 
+
 @pytest.fixture
 def async_b2b_service(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncB2BService instance with mocked dependencies."""
     return AsyncB2BService(
-        http_client=mock_async_http_client,
-        token_manager=mock_async_token_manager
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
+
 
 @pytest.mark.asyncio
 async def test_async_express_checkout_calls_ussd_push(
@@ -163,6 +170,7 @@ async def test_async_express_checkout_calls_ussd_push(
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.code == "0"
     assert resp.status == "USSD Initiated Successfully"
+
 
 @pytest.mark.asyncio
 async def test_async_paybill_calls_paybill(async_b2b_service, mock_async_http_client):
@@ -191,6 +199,7 @@ async def test_async_paybill_calls_paybill(async_b2b_service, mock_async_http_cl
     assert isinstance(resp, BusinessPayBillResponse)
     assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
+
 
 @pytest.mark.asyncio
 async def test_async_buygoods_calls_buy_goods(
@@ -223,6 +232,7 @@ async def test_async_buygoods_calls_buy_goods(
     assert resp.is_successful is True
     assert resp.ResponseDescription == "Accept the service request successfully."
 
+
 @pytest.mark.asyncio
 async def test_async_express_checkout_filters_kwargs(
     async_b2b_service, mock_async_http_client
@@ -245,6 +255,7 @@ async def test_async_express_checkout_filters_kwargs(
     assert isinstance(resp, B2BExpressCheckoutResponse)
     assert resp.is_successful is True
     assert resp.status == "USSD Initiated Successfully"
+
 
 def test_async_b2b_service_initializes_services_correctly(
     mock_async_http_client, mock_async_token_manager

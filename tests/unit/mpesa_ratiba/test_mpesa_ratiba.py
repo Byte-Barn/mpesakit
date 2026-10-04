@@ -18,10 +18,12 @@ from mpesakit.mpesa_ratiba import (
     TransactionTypeEnum,
 )
 
+
 @pytest.fixture
 def mpesa_ratiba(mock_http_client, mock_token_manager):
     """Fixture to create a MpesaRatiba instance with mocked dependencies."""
     return MpesaRatiba(http_client=mock_http_client, token_manager=mock_token_manager)
+
 
 def valid_standing_order_request():
     """Create a valid StandingOrderRequest for testing."""
@@ -39,6 +41,7 @@ def valid_standing_order_request():
         TransactionDesc="Electric Bike",
         Frequency=FrequencyEnum.DAILY,
     )
+
 
 def test_create_standing_order_success(mpesa_ratiba, mock_http_client):
     """Test that standing order request is acknowledged and successful."""
@@ -70,6 +73,7 @@ def test_create_standing_order_success(mpesa_ratiba, mock_http_client):
         == response_data["ResponseHeader"]["responseDescription"]
     )
 
+
 def test_create_standing_order_http_error(mpesa_ratiba, mock_http_client):
     """Test handling of HTTP errors during standing order request."""
     request = valid_standing_order_request()
@@ -77,6 +81,7 @@ def test_create_standing_order_http_error(mpesa_ratiba, mock_http_client):
     with pytest.raises(Exception) as excinfo:
         mpesa_ratiba.create_standing_order(request)
     assert "HTTP error" in str(excinfo.value)
+
 
 def test_standing_order_success_callback():
     """Test parsing of a successful Standing Order callback."""
@@ -108,6 +113,7 @@ def test_standing_order_success_callback():
         for item in callback.ResponseBody.ResponseData
     )
 
+
 def test_standing_order_fail_callback():
     """Test parsing of a failed Standing Order callback."""
     payload = {
@@ -137,11 +143,13 @@ def test_standing_order_fail_callback():
         for item in callback.ResponseBody.ResponseData
     )
 
+
 def test_standing_order_callback_response():
     """Test the response schema for Standing Order callback."""
     resp = StandingOrderCallbackResponse()
     assert resp.ResultCode == "0"
     assert "processed successfully" in resp.ResultDesc
+
 
 def test_standing_order_request_invalid_date_format():
     """Test StandingOrderRequest raises ValueError for invalid date format."""
@@ -162,6 +170,7 @@ def test_standing_order_request_invalid_date_format():
         )
     assert "Date must be in 'yyyymmdd' format" in str(excinfo.value)
 
+
 def test_standing_order_request_invalid_date_value():
     """Test StandingOrderRequest raises ValueError for invalid date value."""
     with pytest.raises(ValueError) as excinfo:
@@ -181,6 +190,7 @@ def test_standing_order_request_invalid_date_value():
         )
     assert "Date must be in 'yyyymmdd' format" in str(excinfo.value)
 
+
 def test_standing_order_request_other_date_value():
     """Test StandingOrderRequest raises ValueError for invalid date value."""
     request = StandingOrderRequest(
@@ -198,6 +208,7 @@ def test_standing_order_request_other_date_value():
         Frequency=FrequencyEnum.MONTHLY,
     )
     assert request.StartDate == "20241205"  # Should normalize to yyyymmdd format
+
 
 def test_invalid_phone_number():
     """Test that invalid phone numbers raise ValueError."""
@@ -217,6 +228,7 @@ def test_invalid_phone_number():
             Frequency=FrequencyEnum.MONTHLY,
         )
     assert "Invalid PartyA phone number" in str(excinfo.value)
+
 
 def test_callback_resultcode_as_string_handled_gracefully():
     """Ensure StandingOrderCallback.is_successful handles responseCode as a string without TypeError."""
@@ -245,12 +257,14 @@ def test_callback_resultcode_as_string_handled_gracefully():
         )
     assert result is True
 
+
 @pytest.fixture
 def async_mpesa_ratiba(mock_async_http_client, mock_async_token_manager):
     """Fixture to create an AsyncMpesaRatiba instance with mocked dependencies."""
     return AsyncMpesaRatiba(
         http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
+
 
 @pytest.mark.asyncio
 async def test_create_standing_order_success_async(
@@ -284,6 +298,7 @@ async def test_create_standing_order_success_async(
         response.ResponseHeader.responseDescription
         == response_data["ResponseHeader"]["responseDescription"]
     )
+
 
 @pytest.mark.asyncio
 async def test_create_standing_order_http_error_async(

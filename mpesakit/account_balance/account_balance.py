@@ -18,7 +18,7 @@ from .schemas import (
 class AccountBalance(BaseModel):
     """Represents the Account Balance API client for M-Pesa operations.
 
-    https://developer.safaricom.co.ke/APIs/AccountBalance
+    https://developer.safaricom.co.ke/apis/AccountBalance
 
     Attributes:
         http_client (HttpClient): HTTP client for making requests to the M-Pesa API.

@@ -1,4 +1,7 @@
-from .schemas import AccountBalanceRequest as AccountBalanceRequest, AccountBalanceResponse as AccountBalanceResponse
+from .schemas import (
+    AccountBalanceRequest as AccountBalanceRequest,
+    AccountBalanceResponse as AccountBalanceResponse,
+)
 from _typeshed import Incomplete
 from mpesakit.auth import TokenManager as TokenManager
 from mpesakit.http_client import HttpClient as HttpClient

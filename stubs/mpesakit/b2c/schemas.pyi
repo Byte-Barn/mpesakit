@@ -4,9 +4,9 @@ from mpesakit.utils.phone import normalize_phone_number as normalize_phone_numbe
 from pydantic import BaseModel
 
 class B2CCommandIDType(str, Enum):
-    SalaryPayment = 'SalaryPayment'
-    BusinessPayment = 'BusinessPayment'
-    PromotionPayment = 'PromotionPayment'
+    SalaryPayment = "SalaryPayment"
+    BusinessPayment = "BusinessPayment"
+    PromotionPayment = "PromotionPayment"
 
 class B2CRequest(BaseModel):
     OriginatorConversationID: str

@@ -190,14 +190,16 @@ class B2BService:
         )
         return self._business_buygoods.buy_goods(request)
 
+
 class AsyncB2BService:
     """Async facade for all M-Pesa B2B APIs."""
 
-    def __init__(self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager) -> None:
+    def __init__(
+        self, http_client: AsyncHttpClient, token_manager: AsyncTokenManager
+    ) -> None:
         """Initialize Async B2BService facade."""
         self.http_client = http_client
         self.token_manager = token_manager
-
 
         self._express_checkout = AsyncB2BExpressCheckout(
             http_client=self.http_client,
