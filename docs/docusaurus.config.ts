@@ -10,8 +10,8 @@ const config: Config = {
     v4: true,
   },
 
-  // Production URL (GitHub Pages URL)
-  url: 'https://rafaeljohn9.github.io', // Your GitHub Pages URL
+  // Production URL (custom domain on GitHub Pages)
+  url: 'https://mpesakit.bytebarn.org',
   baseUrl: '/', // Project repo name as base path
 
   // GitHub Pages deployment settings

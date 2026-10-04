@@ -247,7 +247,7 @@ if response.is_successful:
     print("Payout sent:", response.ResponseDescription)
 ```
 
-> **Note:** B2C in production requires a Bulk Disbursement Account from Safaricom — a standard PayBill or Till will not work. See the [B2C docs](https://mpesakit.dev/b2c) for details.
+> **Note:** B2C in production requires a Bulk Disbursement Account from Safaricom — a standard PayBill or Till will not work. See the [B2C docs](https://mpesakit.bytebarn.org/b2c) for details.
 
 ### STK Query — Check a push status
 
@@ -318,7 +318,7 @@ Every API below ships with both a sync and an async client.
 
 ## Full Documentation
 
-API reference, webhook guides, and production checklist: **[mpesakit.dev](https://mpesakit.dev)**
+API reference, webhook guides, and production checklist: **[mpesakit.bytebarn.org](https://mpesakit.bytebarn.org)**
 
 ---
 
@@ -347,7 +347,7 @@ Please follow PEP 8 and include type hints in new code.
 
 ## Support
 
-- 📖 Docs: [mpesakit.dev](https://mpesakit.dev)
+- 📖 Docs: [mpesakit.bytebarn.org](https://mpesakit.bytebarn.org)
 - 🐛 Issues: [github.com/Byte-Barn/mpesakit/issues](https://github.com/Byte-Barn/mpesakit/issues)
 - 💬 Discussions: [github.com/Byte-Barn/mpesakit/discussions](https://github.com/Byte-Barn/mpesakit/discussions)
 - 📧 Email: johnmkagunda@gmail.com
