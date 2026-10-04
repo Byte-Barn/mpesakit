@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.unit.dynamic_qr_code.conftest import (
+from tests.unit.conftest import (
     generate_qr_request,
     generate_qr_success_response,
 )
