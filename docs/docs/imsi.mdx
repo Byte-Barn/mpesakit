@@ -1,0 +1,298 @@
+---
+title: SIM Swap & IMSI Detection
+description: How mpesakit checks SIM swap history and retrieves IMSI data using Safaricom's paid CheckATI API (V1, V2, V3), including onboarding, client access, and environment setup.
+---
+
+import SectionHeader from '@site/docs/components/SectionHeader';
+import CodeBlock from '@site/docs/components/CodeBlock';
+import Alert from '@site/docs/components/Alert';
+import ParametersTable from '@site/docs/components/ParametersTable';
+
+<SectionHeader
+    subtitle="Detect recent SIM swap events and verify subscriber IMSI status across Safaricom V1, V2, and V3 endpoints to prevent account takeover and transaction fraud."
+    gradient={true}
+    size="large"
+/>
+
+<Alert type="warning" title="Paid API & Mandatory Onboarding">
+    Unlike standard M-Pesa APIs (such as STK Push or C2B), the <strong>IMSI CheckATI / SIM Swap APIs</strong> are paid services on the Safaricom Developer Portal (Daraja).
+    <br/><br/>
+    <strong>Requirements before integration:</strong>
+    <ul>
+      <li>You must request access and complete commercial onboarding with Safaricom to enable the IMSI product family on your App credentials.</li>
+      <li>In production, calls to V1, V2, and V3 endpoints consume API credits or billed usage per query according to your Safaricom tariff plan.</li>
+    </ul>
+</Alert>
+
+<SectionHeader title="Environment Variables Setup" size="small" />
+
+Configure your consumer key, secret, and optional test phone numbers in your `.env` file:
+
+<CodeBlock language="bash" title=".env">
+{`# Safaricom Daraja Credentials (Must have IMSI/Swap product enabled)
+MPESA_CONSUMER_KEY=your_consumer_key_here
+MPESA_CONSUMER_SECRET=your_consumer_secret_here
+
+# M-Pesa Environment: "sandbox" or "production"
+MPESA_ENVIRONMENT=sandbox
+
+# Optional: Default target subscriber for testing
+TEST_CUSTOMER_NUMBER=0722000000
+`}
+</CodeBlock>
+
+<SectionHeader title="Overview & Architecture" size="small" />
+
+The `IMSIService` and `AsyncIMSIService` classes manage queries against Safaricom's IMSI endpoints (V1, V2, and V3) via `client.imsi`.
+
+- **Automatic MSISDN Normalization:** Automatically normalizes local formats (e.g., `0722...` or `+254722...`) into standard `254722...` format.
+- **Smart Fraud Detection:** Exposes `response.is_recently_swapped` on V1 and V3 responses to instantly identify swapped SIMs compared to baseline timestamps (`01-01-1900 00:00`).
+- **Unified Client Support:** Seamlessly exposed via `MpesaClient.imsi` (Synchronous) and `AsyncMpesaClient.imsi` (Asynchronous).
+
+<SectionHeader title="Service Methods & API Endpoints" size="small" />
+
+| Method | Endpoint Path | Description |
+| :--- | :--- | :--- |
+| `query_v1(customer_number)` | `/imsi/v1/checkATI` | Queries basic SIM swap status and last swap timestamp. |
+| `query_v2(customer_number)` | `/imsi/v2/checkATI` | Retrieves registration date details and raw check status. |
+| `query_v3(customer_number)` | `/imsi/v3/checkATI` | Queries hashed IMSI data alongside recent swap indicators. |
+
+<SectionHeader title="Synchronous Usage Example" size="small" />
+
+<CodeBlock language="python" title="MpesaClient (Synchronous IMSI Check)">
+{`import os
+from dotenv import load_dotenv
+from mpesakit import MpesaClient
+
+load_dotenv()
+
+client = MpesaClient(
+    consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+    consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+    environment=os.getenv("MPESA_ENVIRONMENT", "sandbox"),
+)
+
+customer = os.getenv("TEST_CUSTOMER_NUMBER", "0722000000")
+
+# 1. Query V1 - Basic SIM Swap Check
+v1_res = client.imsi.query_v1(customer_number=customer)
+if v1_res.is_recently_swapped:
+    print(f"FRAUD WARNING (V1): SIM swapped on {v1_res.lastSwapDate}")
+else:
+    print("SAFE (V1): No recent SIM swap detected")
+
+# 2. Query V2 - Registration Details
+v2_res = client.imsi.query_v2(customer_number=customer)
+print(f"V2 Reg Date: {v2_res.msisdnRegistrationDate}")
+
+# 3. Query V3 - Hashed IMSI & Swap Status
+v3_res = client.imsi.query_v3(customer_number=customer)
+print(f"V3 Hashed IMSI: {v3_res.imsi}")
+print(f"V3 Recently Swapped: {v3_res.is_recently_swapped}")
+`}
+</CodeBlock>
+
+<SectionHeader title="Asynchronous Usage Example" size="small" />
+
+<CodeBlock language="python" title="AsyncMpesaClient (Asynchronous IMSI Check)">
+{`import os
+import asyncio
+from dotenv import load_dotenv
+from mpesakit import AsyncMpesaClient
+
+load_dotenv()
+
+async def check_imsi_services():
+    async with AsyncMpesaClient(
+        consumer_key=os.getenv("MPESA_CONSUMER_KEY"),
+        consumer_secret=os.getenv("MPESA_CONSUMER_SECRET"),
+        environment=os.getenv("MPESA_ENVIRONMENT", "sandbox"),
+    ) as client:
+        customer = os.getenv("TEST_CUSTOMER_NUMBER", "0722000000")
+
+        # Execute requests concurrently
+        v1_res, v2_res, v3_res = await asyncio.gather(
+            client.imsi.query_v1(customer_number=customer),
+            client.imsi.query_v2(customer_number=customer),
+            client.imsi.query_v3(customer_number=customer),
+        )
+
+        print(f"V1 Swap Date: {v1_res.lastSwapDate}")
+        print(f"V2 Reg Date: {v2_res.msisdnRegistrationDate}")
+        print(f"V3 Hashed IMSI: {v3_res.imsi}")
+
+asyncio.run(check_imsi_services())
+`}
+</CodeBlock>
+
+<SectionHeader title="Request Parameters Definition" size="small" />
+
+<ParametersTable 
+parameters={[
+        {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
+        },
+]}
+/>
+
+<SectionHeader title="Response Models Breakdown" size="small" />
+
+### IMSIV1Response
+
+<ParametersTable 
+parameters={[
+        {
+            name: "requestRefID",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Unique query reference ID generated by Safaricom."
+        },
+        {
+            name: "responseCode",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "API return status code ('200' for success)."
+        },
+        {
+            name: "responseDesc",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Status message description (e.g. 'Success')."
+        },
+        {
+            name: "lastSwapDate",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Timestamp of last swap ('DD-MM-YYYY HH:MM'). Default baseline is '01-01-1900 00:00'."
+        },
+        {
+            name: "msisdnRegistrationDate",
+            type: "str",
+            dataType: "String",
+            required: false,
+            description: "Timestamp when subscriber MSISDN was registered with Safaricom."
+        },
+
+        {
+            name: "imsi",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Hashed or encrypted IMSI identifier for the subscriber line."
+        },
+         {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
+        },
+        {
+            name: "is_recently_swapped",
+            type: "bool (property)",
+            dataType: "Boolean",
+            required: false,
+            description: "Evaluates to True if lastSwapDate is strictly greater than '01-01-1900 00:00'."
+        },
+]}
+/>
+
+### IMSIV2Response
+
+<ParametersTable 
+parameters={[
+        {
+            name: "requestRefID",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Unique query reference ID generated by Safaricom."
+        },
+        {
+            name: "responseCode",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "API return status code."
+        },
+        {
+            name: "msisdnRegistrationDate",
+            type: "str",
+            dataType: "String",
+            required: false,
+            description: "Timestamp when subscriber MSISDN was registered with Safaricom."
+        },
+         {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
+        }
+]}
+/>
+
+### IMSIV3Response
+
+<ParametersTable 
+parameters={[
+        {
+            name: "requestRefID",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Unique query reference ID generated by Safaricom."
+        },
+        {
+            name: "imsi",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Hashed or encrypted IMSI identifier for the subscriber line."
+        }
+        ,
+        {
+            name: "responseCode",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "API return status code ('200' for success)."
+        },
+        {
+            name: "responseDesc",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Status message description (e.g. 'Success')."
+        },
+         {
+            name: "customer_number",
+            type: "str",
+            dataType: "String",
+            required: true,
+            description: "Target subscriber phone number (e.g. '0722000000', '254722000000', or '+254722000000'). Automatically normalized."
+        }
+]}
+/>
+
+<Alert type="info" title="Endpoints Summary">
+    <ul>
+        <li><strong>Sandbox Base:</strong> <code>https://sandbox.safaricom.co.ke/imsi/</code></li>
+        <li><strong>Production Base:</strong> <code>https://api.safaricom.co.ke/imsi/</code></li>
+        <li><strong>Paths:</strong> <code>/v1/checkATI</code>, <code>/v2/checkATI</code>, <code>/v3/checkATI</code></li>
+    </ul>
+</Alert>
+
+## Related Documentation
+
+- [Auth & Token Management](/auth) - Managing credentials and OAuth tokens
+- [Getting Credentials](/getting-credentials) - How to set up Daraja portal apps
+- [Production Checklist](/production) - Going live on Safaricom M-Pesa APIs

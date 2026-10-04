@@ -14,6 +14,7 @@ from .express import (
     StkPushService as StkPushService,
     AsyncStkPushService as AsyncStkPushService,
 )
+from .imsi import IMSIService as IMSIService, AsyncIMSIService as AsyncIMSIService
 from .ratiba import (
     RatibaService as RatibaService,
     AsyncRatibaService as AsyncRatibaService,
@@ -22,6 +23,7 @@ from .reversal import (
     ReversalService as ReversalService,
     AsyncReversalService as AsyncReversalService,
 )
+from .swap import SwapService as SwapService, AsyncSwapService as AsyncSwapService
 from .tax import TaxService as TaxService, AsyncTaxService as AsyncTaxService
 from .transaction import (
     TransactionService as TransactionService,
@@ -41,12 +43,16 @@ __all__ = [
     "AsyncC2BService",
     "DynamicQRCodeService",
     "AsyncDynamicQRCodeService",
+    "IMSIService",
+    "AsyncIMSIService",
     "StkPushService",
     "AsyncStkPushService",
     "RatibaService",
     "AsyncRatibaService",
     "ReversalService",
     "AsyncReversalService",
+    "SwapService",
+    "AsyncSwapService",
     "TaxService",
     "AsyncTaxService",
     "TransactionService",

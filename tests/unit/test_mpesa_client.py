@@ -12,9 +12,11 @@ from mpesakit.services import (
     BillService,
     C2BService,
     DynamicQRCodeService,
+    IMSIService,
     StkPushService,
     RatibaService,
     ReversalService,
+    SwapService,
     TaxService,
     TransactionService,
 )
@@ -113,8 +115,16 @@ def test_ratiba_service_instance(client):
     """Test that the ratiba service is an instance of RatibaService."""
     assert isinstance(client.ratiba, RatibaService)
 
+def test_imsi_service_instance(client):
+    """Test that the ratiba service is an instance of RatibaService."""
+    assert isinstance(client.imsi, IMSIService)
 
-# Tests for callback processing methods
+
+def test_swap_service_instance(client):
+    """Test that the swap service is an instance of SwapService."""
+    assert isinstance(client.swap, SwapService)
+
+
 class TestCallbackProcessing:
     """Tests for MpesaClient callback processing methods."""
 

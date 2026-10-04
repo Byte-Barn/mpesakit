@@ -16,12 +16,16 @@ from mpesakit.services import (
     AsyncC2BService,
     DynamicQRCodeService,
     AsyncDynamicQRCodeService,
+    IMSIService,
+    AsyncIMSIService,
     StkPushService,
     AsyncStkPushService,
     RatibaService,
     AsyncRatibaService,
     ReversalService,
     AsyncReversalService,
+    SwapService,
+    AsyncSwapService,
     TaxService,
     AsyncTaxService,
     TransactionService,
@@ -222,6 +226,16 @@ class MpesaClient(MpesaCallbackMixin):
             http_client=self.http_client, token_manager=self.token_manager
         )
 
+        # imsi => M-PESA IMSI services
+        self.imsi = IMSIService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # swap => M-PESA Swap services
+        self.swap = SwapService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
 
 class AsyncMpesaClient(MpesaCallbackMixin):
     """Unified async client for all M-PESA services."""
@@ -297,6 +311,16 @@ class AsyncMpesaClient(MpesaCallbackMixin):
 
         # ratiba => M-PESA Ratiba services
         self.ratiba = AsyncRatibaService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # imsi => M-PESA IMSI services
+        self.imsi = AsyncIMSIService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # swap => M-PESA Swap services
+        self.swap = AsyncSwapService(
             http_client=self.http_client, token_manager=self.token_manager
         )
 
