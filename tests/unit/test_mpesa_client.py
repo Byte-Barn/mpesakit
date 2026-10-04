@@ -16,6 +16,7 @@ from mpesakit.services import (
     StkPushService,
     RatibaService,
     ReversalService,
+    SwapService,
     TaxService,
     TransactionService,
 )
@@ -119,7 +120,11 @@ def test_imsi_service_instance(client):
     assert isinstance(client.imsi, IMSIService)
 
 
-# Tests for callback processing methods
+def test_swap_service_instance(client):
+    """Test that the swap service is an instance of SwapService."""
+    assert isinstance(client.swap, SwapService)
+
+
 class TestCallbackProcessing:
     """Tests for MpesaClient callback processing methods."""
 

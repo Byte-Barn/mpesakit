@@ -8,6 +8,7 @@ from .express import StkPushService, AsyncStkPushService
 from .imsi import IMSIService, AsyncIMSIService
 from .ratiba import RatibaService, AsyncRatibaService
 from .reversal import ReversalService, AsyncReversalService
+from .swap  import SwapService, AsyncSwapService
 from .tax import TaxService, AsyncTaxService
 from .transaction import TransactionService, AsyncTransactionService
 
@@ -32,6 +33,8 @@ __all__ = [
     "AsyncRatibaService",
     "ReversalService",
     "AsyncReversalService",
+    "SwapService",
+    "AsyncSwapService",
     "TaxService",
     "AsyncTaxService",
     "TransactionService",

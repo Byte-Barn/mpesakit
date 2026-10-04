@@ -24,6 +24,8 @@ from mpesakit.services import (
     AsyncRatibaService,
     ReversalService,
     AsyncReversalService,
+    SwapService,
+    AsyncSwapService,
     TaxService,
     AsyncTaxService,
     TransactionService,
@@ -224,10 +226,15 @@ class MpesaClient(MpesaCallbackMixin):
             http_client=self.http_client, token_manager=self.token_manager
         )
 
-        # imsi => M-PESA Imsi services
+        # imsi => M-PESA IMSI services
         self.imsi = IMSIService(
-                    http_client=self.http_client, token_manager=self.token_manager
-                )
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # swap => M-PESA Swap services
+        self.swap = SwapService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
 
 
 class AsyncMpesaClient(MpesaCallbackMixin):
@@ -305,11 +312,15 @@ class AsyncMpesaClient(MpesaCallbackMixin):
             http_client=self.http_client, token_manager=self.token_manager
         )
 
-
-        # imsi => M-PESA Imsi services
+        # imsi => M-PESA IMSI services
         self.imsi = AsyncIMSIService(
-                    http_client=self.http_client, token_manager=self.token_manager
-                )
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # swap => M-PESA Swap services
+        self.swap = AsyncSwapService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
 
     async def __aenter__(self):
         await self.http_client.__aenter__()

@@ -105,8 +105,13 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'swap',
+          label: 'SIM Swap Detection',
+        },
+        {
+          type: 'doc',
           id: 'imsi',
-          label: 'IMSI API ',
+          label: 'IMSI API',
         },
       ],
     },
