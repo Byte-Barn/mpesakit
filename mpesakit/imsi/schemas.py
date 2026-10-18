@@ -2,6 +2,7 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from mpesakit.utils.phone import normalize_phone_number
+from mpesakit.utils.dates import is_daraja_default_date
 
 
 class IMSIRequest(BaseModel):
@@ -50,7 +51,7 @@ class SwapCheckMixin:
         """
         if not self.lastSwapDate:
             return False
-        return not self.lastSwapDate.startswith("01-01-1900")
+        return not is_daraja_default_date(self.lastSwapDate)
 
 
 class NetworkAgeMixin:
@@ -63,7 +64,7 @@ class NetworkAgeMixin:
         """Returns True if default non-registration date '01-01-1900' is returned."""
         if not self.msisdnRegistrationDate:
             return False
-        return self.msisdnRegistrationDate.startswith("01-01-1900")
+        return is_daraja_default_date(self.msisdnRegistrationDate)
 
 
 class BaseIMSISelfResponse(BaseModel, StatusMixin):
