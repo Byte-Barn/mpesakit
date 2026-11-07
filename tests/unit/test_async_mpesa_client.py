@@ -13,6 +13,7 @@ from mpesakit.services import (
     AsyncC2BService,
     AsyncDynamicQRCodeService,
     AsyncIMSIService,
+    AsyncLipaNaBonga,
     AsyncStkPushService,
     AsyncRatibaService,
     AsyncReversalService,
@@ -110,6 +111,11 @@ def test_ratiba_service_instance(client):
 def test_imsi_service_instance(client):
     """Test that the ratiba service is an instance of AsyncRatibaService."""
     assert isinstance(client.imsi, AsyncIMSIService)
+
+
+def test_lipa_na_bonga_service_instance(client):
+    """Test that the lipa_na_bonga service is an instance of lipaNaBonga Service."""
+    assert isinstance(client.bonga, AsyncLipaNaBonga)
 
 
 

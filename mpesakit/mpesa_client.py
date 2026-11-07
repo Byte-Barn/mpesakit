@@ -18,6 +18,8 @@ from mpesakit.services import (
     AsyncDynamicQRCodeService,
     IMSIService,
     AsyncIMSIService,
+    LipaNaBonga,
+    AsyncLipaNaBonga,
     StkPushService,
     AsyncStkPushService,
     RatibaService,
@@ -236,6 +238,11 @@ class MpesaClient(MpesaCallbackMixin):
             http_client=self.http_client, token_manager=self.token_manager
         )
 
+        # bonga => M-PESA Lipa Na Bonga loyalty point services
+        self.bonga = LipaNaBonga(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
 
 class AsyncMpesaClient(MpesaCallbackMixin):
     """Unified async client for all M-PESA services."""
@@ -321,6 +328,11 @@ class AsyncMpesaClient(MpesaCallbackMixin):
 
         # swap => M-PESA Swap services
         self.swap = AsyncSwapService(
+            http_client=self.http_client, token_manager=self.token_manager
+        )
+
+        # bonga => M-PESA Lipa Na Bonga loyalty point services
+        self.bonga = AsyncLipaNaBonga(
             http_client=self.http_client, token_manager=self.token_manager
         )
 

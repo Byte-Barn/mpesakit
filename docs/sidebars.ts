@@ -65,6 +65,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'lipa_na_bonga',
+          label: 'Lipa Na Bonga',
+        },
+        {
+          type: 'doc',
           id: 'b2c',
           label: 'Business to Customer (B2C)',
         },
