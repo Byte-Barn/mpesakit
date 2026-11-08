@@ -8,7 +8,7 @@ from mpesakit.imsi import (
     IMSIV2Response,
     IMSIV3Response,
 )
-from mpesakit.services import AsyncIMSIService,IMSIService
+from mpesakit.services import AsyncIMSIService, IMSIService
 
 
 @pytest.fixture
@@ -25,7 +25,6 @@ def async_imsi_service(mock_async_http_client, mock_async_token_manager):
     )
 
 
-
 def test_imsi_request_msisdn_normalization():
     """Test that IMSIRequest normalizes local and international phone formats."""
     req1 = IMSIRequest(customerNumber="0722000000")
@@ -38,8 +37,6 @@ def test_imsi_request_msisdn_normalization():
     assert req3.customerNumber == "254722000000"
 
 
-
-
 def test_imsi_v1_response_is_recently_swapped():
     """Test is_recently_swapped evaluation on IMSIV1Response."""
     resp_safe = IMSIV1Response(
@@ -49,7 +46,6 @@ def test_imsi_v1_response_is_recently_swapped():
         lastSwapDate="01-01-1900 00:00",
     )
     assert resp_safe.is_recently_swapped is False
-
 
     resp_swapped = IMSIV1Response(
         requestRefID="REF123",
@@ -68,6 +64,7 @@ def test_imsi_v3_response_null_swap_fields():
     )
     assert getattr(resp, "lastSwapDate", None) is None
     assert getattr(resp, "is_recently_swapped", None) is None
+
 
 def test_query_v1_success(imsi_service, mock_http_client):
     """Test that V1 checkATI query completes successfully."""
@@ -127,7 +124,7 @@ def test_query_v3_success(imsi_service, mock_http_client):
     assert isinstance(response, IMSIV3Response)
     assert response.requestRefID == "REF_V3_001"
     assert response.imsi == "abc123hashedimsi"
-    assert getattr(response,"is_recently_swapped",None) is None
+    assert getattr(response, "is_recently_swapped", None) is None
 
     mock_http_client.post.assert_called_once()
     args, _ = mock_http_client.post.call_args
@@ -142,7 +139,6 @@ def test_imsi_query_handles_http_error(imsi_service, mock_http_client):
         imsi_service.query_v1("0722000000")
 
     assert "HTTP 500 Internal Error" in str(excinfo.value)
-
 
 
 @pytest.mark.asyncio
@@ -205,7 +201,7 @@ async def test_async_query_v3_success(async_imsi_service, mock_async_http_client
     assert isinstance(response, IMSIV3Response)
     assert response.requestRefID == "ASYNC_REF_V3"
     assert response.imsi == "xyz987hashedimsi"
-    assert getattr(response,"is_recently_swapped",None) is None
+    assert getattr(response, "is_recently_swapped", None) is None
 
     mock_async_http_client.post.assert_called_once()
     args, _ = mock_async_http_client.post.call_args
@@ -213,7 +209,9 @@ async def test_async_query_v3_success(async_imsi_service, mock_async_http_client
 
 
 @pytest.mark.asyncio
-async def test_async_imsi_query_handles_http_error(async_imsi_service, mock_async_http_client):
+async def test_async_imsi_query_handles_http_error(
+    async_imsi_service, mock_async_http_client
+):
     """Test that async IMSI service handles HTTP errors gracefully."""
     mock_async_http_client.post.side_effect = Exception("Async Connection Timeout")
 

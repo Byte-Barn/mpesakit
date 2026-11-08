@@ -68,7 +68,7 @@ def make_mock_exception(code: str, message: str) -> MpesaApiException:
     mock_error = MagicMock()
     mock_error.error_code = code
     mock_error.error_message = message
-    type(mock_error).__str__ = MagicMock(return_value = f"[{code}] {message}")
+    type(mock_error).__str__ = MagicMock(return_value=f"[{code}] {message}")
     return MpesaApiException(mock_error)
 
 
@@ -90,7 +90,6 @@ def test_swap_response_helper_properties(mock_success_response, mock_swapped_res
     assert response.is_successful is True
     assert response.is_recently_swapped is False
 
-
     swapped_response = SwapResponse(**mock_swapped_response)
     assert swapped_response.is_successful is True
     assert swapped_response.is_recently_swapped is True
@@ -106,6 +105,18 @@ def test_swap_response_failed_status():
     )
     assert failed_response.is_successful is False
     assert failed_response.is_recently_swapped is False
+
+
+def test_swap_response_empty_last_swap_date_not_recently_swapped():
+    """A successful response with an empty lastSwapDate is treated as no swap."""
+    response = SwapResponse(
+        requestRefID="4277-415525-3",
+        responseCode="200",
+        responseDesc="Success",
+        lastSwapDate="",
+    )
+    assert response.is_successful is True
+    assert response.is_recently_swapped is False
 
 
 def test_swap_request_success(

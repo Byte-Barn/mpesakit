@@ -115,6 +115,7 @@ def test_ratiba_service_instance(client):
     """Test that the ratiba service is an instance of RatibaService."""
     assert isinstance(client.ratiba, RatibaService)
 
+
 def test_imsi_service_instance(client):
     """Test that the ratiba service is an instance of RatibaService."""
     assert isinstance(client.imsi, IMSIService)

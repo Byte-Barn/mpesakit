@@ -12,6 +12,7 @@ from .schemas import SwapRequest, SwapResponse
 
 SWAP_ENDPOINT = "/imsi/v2/checkATI"
 
+
 class Swap(BaseModel):
     """Represents the Swap API client for SIM card dating."""
 

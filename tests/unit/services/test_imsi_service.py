@@ -63,7 +63,6 @@ def test_query_v1_facade_filters_kwargs(imsi_service, mock_http_client):
 
     resp = imsi_service.query_v1(
         customer_number="0722000000",
-
     )
 
     assert isinstance(resp, IMSIV1Response)
@@ -99,7 +98,7 @@ def test_query_v3_facade_success(imsi_service, mock_http_client):
     assert isinstance(resp, IMSIV3Response)
     assert resp.requestRefID == "FACADE_V3_123"
     assert resp.imsi == "hashed_imsi_val"
-    assert getattr(resp,"is_recently_swapped",None) is None
+    assert getattr(resp, "is_recently_swapped", None) is None
 
 
 def test_async_imsi_service_initializes_correctly(
@@ -190,4 +189,4 @@ async def test_async_query_v3_facade_success(
     assert isinstance(resp, IMSIV3Response)
     assert resp.requestRefID == "ASYNC_FACADE_V3_123"
     assert resp.imsi == "async_hashed_imsi_val"
-    assert getattr(resp,"is_recently_swapped",None) is None
+    assert getattr(resp, "is_recently_swapped", None) is None

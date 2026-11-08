@@ -34,8 +34,7 @@ def swap_client(mock_http_client, mock_token_manager):
     service.http_client = mock_http_client
     service.token_manager = mock_token_manager
     service._swap = Swap.model_construct(
-        http_client=mock_http_client,
-        token_manager=mock_token_manager
+        http_client=mock_http_client, token_manager=mock_token_manager
     )
     return service
 
@@ -58,7 +57,6 @@ def make_mock_exception(code: str, message: str) -> MpesaApiException:
     mock_error.error_message = message
     type(mock_error).__str__ = lambda self: f"[{code}] {message}"
     return MpesaApiException(mock_error)
-
 
 
 def test_swap_query_success(swap_client, mock_http_client, mock_success_response):
@@ -142,8 +140,7 @@ def async_swap_client(mock_async_http_client, mock_async_token_manager):
     service.http_client = mock_async_http_client
     service.token_manager = mock_async_token_manager
     service._swap = AsyncSwap.model_construct(
-        http_client=mock_async_http_client,
-        token_manager=mock_async_token_manager
+        http_client=mock_async_http_client, token_manager=mock_async_token_manager
     )
     return service
 
