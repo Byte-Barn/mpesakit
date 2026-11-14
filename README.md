@@ -303,6 +303,8 @@ Every API below ships with both a sync and an async client.
 | **Transaction Reversal** | ✅ Ready | Reverse erroneous transactions |
 | **Dynamic QR** | ✅ Ready | Generate QR codes for M-Pesa payments |
 | **Tax Remittance** | ✅ Ready | Submit tax remittances via M-Pesa |
+| **Lipa na Bonga** | ✅ Ready | Initiate payment with bonga points on behalf of a customer |
+
 
 ---
 

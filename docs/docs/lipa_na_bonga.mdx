@@ -1,0 +1,481 @@
+---
+title: Lipa Na Bonga
+description: Programmatically calculate Bonga point values and redeem loyalty points towards PayBill or Buy Goods Till numbers.
+---
+
+import SectionHeader from '@site/docs/components/SectionHeader';
+import CodeBlock from '@site/docs/components/CodeBlock';
+import Alert from '@site/docs/components/Alert';
+import Tabs from '@site/docs/components/Tabs';
+import ParametersTable from '@site/docs/components/ParametersTable';
+
+<SectionHeader
+    subtitle="Manage Lipa Na Bonga flows: calculate the monetary value of Bonga loyalty points and programmatically redeem them towards PayBill or Buy Goods shortcodes."
+    gradient={true}
+    size="large"
+/>
+
+<Alert type="warning" title="Production Feature Activation">
+    NB: Lipa Na Bonga is a specialized loyalty feature. To test or go live in production, your merchant account and shortcode must have Bonga payment capabilities whitelisted and enabled by Safaricom (`apisupport@safaricom.co.ke` or `M-pesabusiness@safaricom.co.ke`).
+</Alert>
+
+<SectionHeader title="User Stories" size="small" />
+
+- As an e-commerce platform owner, I want to offer Bonga points as a seamless checkout payment option so my customers can redeem accumulated loyalty points.
+
+- As an integrations developer, I want a clean client interface to calculate points conversion and trigger redemptions with minimal boilerplate.
+
+- As a billing operations engineer, I want structured header metadata and response codes so I can track transaction statuses and reconcile accounts.
+
+- As a merchant partner, I want a robust, tested SDK and examples so I can integrate loyalty redemptions quickly and safely.
+
+<SectionHeader title="Parameters Definition (Calculate Points)" size="small" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "points",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "Loyalty points accumulated by the Safaricom customer to evaluate."
+    }
+]}
+/>
+
+<SectionHeader title="Parameters Definition (Redeem Points)" size="small" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "msisdn",
+        type: "str | int",
+        dataType: "String/Integer",
+        required: true,
+        description: "Subscriber mobile number (e.g., 254720000000)."
+    },
+    {
+        name: "amount",
+        type: "float | int",
+        dataType: "Float/Integer",
+        required: true,
+        description: "Monetary value of the points in Kenya Shillings (KES)."
+    },
+    {
+        name: "bongaPoints",
+        type: "int",
+        dataType: "Integer",
+        required: true,
+        description: "Exact number of Bonga points to be deducted."
+    },
+    {
+        name: "conversionRate",
+        type: "float",
+        dataType: "Decimal",
+        required: true,
+        description: "The redemption conversion rate (typically 0.2, meaning 1 point = Ksh 0.20)."
+    },
+    {
+        name: "shortCode",
+        type: "str | int",
+        dataType: "String/Integer",
+        required: true,
+        description: "Merchant Paybill or Buy Goods Till number."
+    },
+    {
+        name: "accountNumber",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Account reference name for tracking the payment."
+    }
+]}
+/>
+
+<SectionHeader title="Calculate Points Response Schema" size="small" subtitle="CalculatePointsResponse — returned by client.bonga.calculate_points(...)" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "header.requestRefId",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique ID associated with the request."
+    },
+    {
+        name: "header.responseCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "Response code (e.g., 200  for success)."
+    },
+    {
+        name: "header.responseMessage",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Message associated with the response code."
+    },
+    {
+        name: "header.customerMessage",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Customer-facing message."
+    },
+    {
+        name: "header.timestamp",
+        type: "str",
+        dataType: "Timestamp",
+        required: true,
+        description: "Timestamp of the calculation response."
+    },
+    {
+        name: "body.amount",
+        type: "str | float",
+        dataType: "String/Float",
+        required: true,
+        description: "Equivalent monetary amount in Kenya Shillings."
+    },
+    {
+        name: "body.points",
+        type: "str | int",
+        dataType: "String/Integer",
+        required: true,
+        description: "Points evaluated."
+    },
+    {
+        name: "body.rate",
+        type: "str | float",
+        dataType: "String/Decimal",
+        required: true,
+        description: "Active bonga conversion rate (e.g., 0.2)."
+    }
+]}
+/>
+
+<SectionHeader title="Redeem Points Response Schema" size="small" subtitle="RedeemPointsResponse — returned by client.bonga.redeem_points(...)" />
+
+<ParametersTable
+parameters={[
+    {
+        name: "header.requestRefId",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Unique ID associated with the redemption request."
+    },
+    {
+        name: "header.responseCode",
+        type: "int | str",
+        dataType: "Integer/String",
+        required: true,
+        description: "Response code (6000 indicates success)."
+    },
+    {
+        name: "header.responseMessage",
+        type: "str",
+        dataType: "String",
+        required: true,
+        description: "Status message, e.g. 'Operation Successfully'."
+    },
+    {
+        name: "header.customerMessage",
+        type: "str | null",
+        dataType: "String",
+        required: false,
+        description: "Message sent or displayed to the customer."
+    },
+    {
+        name: "header.timestamp",
+        type: "str",
+        dataType: "Timestamp",
+        required: true,
+        description: "Timestamp of the transaction."
+    },
+    {
+        name: "body",
+        type: "any | null",
+        dataType: "Object",
+        required: false,
+        description: "Additional body response payload if provided."
+    }
+]}
+/>
+
+<SectionHeader
+    title="Overview"
+    subtitle="Lipa Na Bonga enables customers to convert accumulated Bonga loyalty points into payments for goods and services. The integration involves two main steps: calculating the point conversion value and initiating the redemption request."
+    size="small"
+/>
+
+<Alert type="info" title="Implementation Options">
+    - Use the MpesaClient facade for simple and safe integration: it manages authentication, header injection and returns typed Pydantic models.
+    - Use the Direct API (BongaService + TokenManager + HttpClient) if you need full control over request/response handling, middleware, or custom error behaviors.
+    - Both are available as sync and async variants (`MpesaClient`/`AsyncMpesaClient`, `BongaService`/`AsyncBongaService`) — reach for async when performing point calculations or redemptions concurrently across multiple channels.
+</Alert>
+
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="MpesaClient (Recommended)" icon="🚀">
+        <Alert type="info" title="Why use MpesaClient">
+            The facade handles token retrieval and attaches Authorization headers so you can call high-level operations like calculating and redeeming Bonga points with minimal boilerplate.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Sync)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+# Example: calculate points and redeem them using the high-level client
+from mpesakit import MpesaClient
+
+client = MpesaClient(consumer_key="...", consumer_secret="...", environment="sandbox")
+
+# Step 1: Calculate points value
+calc_resp = client.bonga.calculate_points(points=50)
+
+if calc_resp.is_successful:
+    print(f"50 points = KES {calc_resp.body.amount}")
+    
+    # Step 2: Trigger redemption
+    redeem_resp = client.bonga.redeem_points(
+        msisdn="254720776155",
+        amount=calc_resp.body.amount,
+        bonga_points=50,
+        conversion_rate=float(calc_resp.body.rate),
+        short_code="174379",
+        account_number="WebCheckout"
+    )
+
+    if redeem_resp.is_successful:
+        print("Redemption initiated successfully!")
+    else:
+        print("Redemption failed:", redeem_resp.header.customerMessage)
+else:
+    print("Calculation failed:", calc_resp.header.responseMessage)
+`}
+        </CodeBlock>
+
+        <Alert type="info" title="Notes">
+            - The facade returns typed Pydantic models (e.g., CalculatePointsResponse, RedeemPointsResponse) for ergonomic access to headers, bodies, and helpers like is_successful.
+            - Authentication tokens are handled transparently by the client.
+        </Alert>
+
+        <SectionHeader title="Quick Setup (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit import AsyncMpesaClient
+
+async def main():
+    async with AsyncMpesaClient(
+        consumer_key="...", consumer_secret="...", environment="sandbox"
+    ) as client:
+        calc_resp = await client.bonga.calculate_points(points=100)
+
+        if calc_resp.is_successful:
+            redeem_resp = await client.bonga.redeem_points(
+                msisdn="254720776155",
+                amount=calc_resp.body.amount,
+                bonga_points=100,
+                conversion_rate=float(calc_resp.body.rate),
+                short_code="174379",
+                account_number="WebCheckout"
+            )
+
+            if redeem_resp.is_successful:
+                print("Async redemption successful!")
+            else:
+                print("Redemption failed:", redeem_resp.header.customerMessage)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="warning" title="Manual lifecycle (without the context manager)">
+            In a long-lived service (e.g. `AsyncMpesaClient` wired up as a FastAPI dependency), construct it once at startup and call `await client.aclose()` on shutdown instead of opening a new `async with` block per request.
+        </Alert>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Direct API" icon="⚡">
+        <Alert type="warning" title="Advanced Usage">
+            Use the lower-level Bonga service when you must manipulate raw requests/responses or plug custom middleware.
+        </Alert>
+
+        <SectionHeader title="Direct Implementation (Sync)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+# Example: construct and send requests using BongaService directly
+from mpesakit.services.lipa_na_bonga import BongaService
+from mpesakit.bonga import CalculatePointsRequest, RedeemPointsRequest
+from mpesakit.auth import TokenManager
+from mpesakit.http_client import MpesaHttpClient
+
+http_client = MpesaHttpClient(env="sandbox")
+token_manager = TokenManager(consumer_key="...", consumer_secret="...", http_client=http_client)
+bonga_service = BongaService(http_client=http_client, token_manager=token_manager)
+
+# Calculate points
+calc_response = bonga_service.calculate_points(points=40)
+print("Amount:", calc_response.body.amount)
+
+# Redeem points
+redeem_response = bonga_service.redeem_points(
+    msisdn="254720776155",
+    amount=calc_response.body.amount,
+    bonga_points=40,
+    conversion_rate=float(calc_response.body.rate),
+    short_code="174379",
+    account_number="test"
+)
+print(redeem_response.header.responseMessage)
+`}
+        </CodeBlock>
+
+        <SectionHeader title="Direct Implementation (Async)" size="small" />
+
+        <CodeBlock language="python" title="Python">
+{`
+import asyncio
+from mpesakit.services.lipa_na_bonga import AsyncBongaService
+from mpesakit.auth import AsyncTokenManager
+from mpesakit.http_client import MpesaAsyncHttpClient
+
+async def main():
+    async with MpesaAsyncHttpClient(env="sandbox") as http_client:
+        token_manager = AsyncTokenManager(
+            consumer_key="...", consumer_secret="...", http_client=http_client
+        )
+
+        bonga_service = AsyncBongaService(http_client=http_client, token_manager=token_manager)
+
+        calc_response = await bonga_service.calculate_points(points=40)
+        print("Amount:", calc_response.body.amount)
+
+        redeem_response = await bonga_service.redeem_points(
+            msisdn="254720776155",
+            amount=calc_response.body.amount,
+            bonga_points=40,
+            conversion_rate=float(calc_response.body.rate),
+            short_code="174379",
+            account_number="test"
+        )
+        print(redeem_response.header.responseMessage)
+
+asyncio.run(main())
+`}
+        </CodeBlock>
+
+        <Alert type="info" title="Direct API Details">
+            - The Bonga service attaches the Authorization header using the provided TokenManager (sync or async, matching the client you chose).
+            - Responses are fully typed into Pydantic models for safe consumption.
+        </Alert>
+    </Tabs.TabPane>
+</Tabs>
+
+<SectionHeader title="Result Codes" size="small" />
+
+<CodeBlock language="json" title="Common Lipa Na Bonga Result Codes">
+{`
+{
+    "6000": "Success / Operation Successfully",
+    "6001": "Fail",
+    "6004": "Server error",
+    "6005": "Invalid credentials passed",
+    "6006": "Missing parts in the request body",
+    "6007": "CBS unavailable / System busy",
+    "6008": "STK unavailable / System busy",
+    "6009": "Broker unavailable / System busy",
+    "1037": "DS timeout (Customer doesn't have STK applet)",
+    "6011": "Database unavailable",
+    "2001": "Wrong PIN entered",
+    "1031": "STK push timeout (Customer did not enter PIN in time)"
+}
+`}
+</CodeBlock>
+
+<SectionHeader title="Responses & Helpers" size="small" />
+
+<CodeBlock language="json" title="Example Calculate Points Success Response">
+{`
+{
+    "header": {
+        "requestRefId": "55b2b8bd-0be4-4430-b0dc-792efccdc690",
+        "responseCode": 200,
+        "responseMessage": "Success",
+        "customerMessage": "Request executed successfully.",
+        "timestamp": "2025-02-24T12:29:05.484864516"
+    },
+    "body": {
+        "amount": "8",
+        "points": "40",
+        "rate": "0.2"
+    }
+}
+`}
+</CodeBlock>
+
+<Alert type="info" title="Response Handling">
+    - Response objects provide `is_successful` property to easily check transaction validity across both sync and async calls.
+    - Successfully completed redemptions transfer funds to your PayBill or Till number, triggering your registered C2B confirmation webhook.
+</Alert>
+
+<SectionHeader title="Error Handling" size="small" />
+
+<Tabs defaultValue={0}>
+    <Tabs.TabPane label="Sync" icon="🚀">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+    resp = client.bonga.calculate_points(points=50)
+except Exception as exc:
+    # The underlying HTTP client may raise exceptions on network errors; log and retry as appropriate
+    print("Bonga request failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+
+    <Tabs.TabPane label="Async" icon="⚡">
+        <CodeBlock language="python" title="Python">
+{`
+# Handle errors when calling the service
+try:
+    resp = await client.bonga.calculate_points(points=50)
+except Exception as exc:
+    # The underlying async HTTP client may raise exceptions on network errors; log and retry as appropriate
+    print("Bonga request failed:", exc)
+`}
+        </CodeBlock>
+    </Tabs.TabPane>
+</Tabs>
+
+<Alert type="info" title="Notes">
+    - HTTP or network errors raised by the HttpClient bubble up; wrap calls in try/except (sync) or around the awaited call (async) for robust production behavior.
+    - Tests exercise error flows to ensure exceptions propagate when the HTTP client fails, for both client variants.
+</Alert>
+
+<SectionHeader title="Testing & Expected Behaviors" size="small" />
+
+- Calculate Points:
+    - The service posts to `/v1/lipa/na/bonga/calculate-points` with the Authorization header set via TokenManager.
+    - Returns a `CalculatePointsResponse` instance containing the converted amount, points, and rate.
+
+- Redeem Points:
+    - The service posts to `/v1/lipa/na/bonga/redeem-paybill` with redemption details.
+    - Triggers an STK push prompt on the customer's phone for PIN verification.
+    - Returns a `RedeemPointsResponse` instance with status headers.
+
+<SectionHeader title="Next Steps" size="small" />
+
+<Alert type="info" title="What's Next?">
+    - Implement robust C2B confirmation listeners to record successful point-to-cash settlement transfers.
+    - Add observability and retry strategies around calculation and redemption calls to handle transient network issues.
+</Alert>
+
+## Related Documentation
+
+- [📡 Customer-to-Business (C2B) Guide](/c2b) - Learn how settlement webhooks are processed
+- [🏗️ Production Setup](/production) - Go-live checklist, security and monitoring
