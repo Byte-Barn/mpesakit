@@ -10,11 +10,11 @@ from pydantic import BaseModel, Field, ConfigDict
 class BongaResponseHeader(BaseModel):
     """Common header returned across Lipa Na Bonga responses."""
 
-    requestRefId: str = Field(..., description="Unique ID associated with the request.")
-    responseCode: int | str = Field(..., description="Response code (e.g., 6000 for success).")
+    requestRefId: Optional[str] = Field(..., description="Unique ID associated with the request.")
+    responseCode: int | str = Field(..., description="Response code (e.g., 200 for success).")
     responseMessage: str = Field(..., description="Message associated with the response code.")
     customerMessage: Optional[str] = Field(None, description="Customer-facing message.")
-    timestamp: str = Field(..., description="Timestamp of the transaction.")
+    timestamp: Optional[str] = Field(..., description="Timestamp of the transaction.")
 
 
 class CalculatePointsRequest(BaseModel):
@@ -47,8 +47,8 @@ class CalculatePointsResponse(BaseModel):
 
     @property
     def is_successful(self) -> bool:
-        """Return True if responseCode indicates success (e.g., 6000 or 200)."""
-        return str(self.header.responseCode) in ("6000", "200")
+        """Return True if responseCode indicates success (e.g.,  200)."""
+        return str(self.header.responseCode) == "200"
 
 
 class RedeemPointsRequest(BaseModel):

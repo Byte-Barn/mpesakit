@@ -13,7 +13,7 @@ from mpesakit.services import (
     C2BService,
     DynamicQRCodeService,
     IMSIService,
-    LipaNaBonga,
+    BongaService,
     StkPushService,
     RatibaService,
     ReversalService,
@@ -128,7 +128,7 @@ def test_swap_service_instance(client):
 
 def test_lipa_na_bonga_service_instance(client):
     """Test that the lipa_na_bonga service is an instance of lipaNaBonga Service."""
-    assert isinstance(client.bonga, LipaNaBonga)
+    assert isinstance(client.bonga, BongaService)
 
 
 class TestCallbackProcessing:

@@ -18,8 +18,8 @@ from mpesakit.services import (
     AsyncDynamicQRCodeService as AsyncDynamicQRCodeService,
     IMSIService as IMSIService,
     AsyncIMSIService as AsyncIMSIService,
-    LipaNaBonga as LipaNaBonga,
-    AsyncLipaNaBonga as AsyncLipaNaBonga,
+    BongaService as BongaService,
+    AsyncBongaService as AsyncBongaService,
     RatibaService as RatibaService,
     AsyncRatibaService as AsyncRatibaService,
     ReversalService as ReversalService,
@@ -66,7 +66,7 @@ class MpesaClient(MpesaCallbackMixin):
     ratiba: Incomplete
     swap: Incomplete
     imsi: Incomplete
-    lipa_na_bonga: Incomplete
+    bonga: Incomplete
     def __init__(
         self,
         consumer_key: str,
@@ -94,7 +94,7 @@ class AsyncMpesaClient(MpesaCallbackMixin):
     ratiba: Incomplete
     swap: Incomplete
     imsi: Incomplete
-    lipa_na_bonga: Incomplete
+    bonga: Incomplete
     def __init__(
         self,
         consumer_key: str,

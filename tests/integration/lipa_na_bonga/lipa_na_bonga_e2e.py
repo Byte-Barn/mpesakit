@@ -32,28 +32,20 @@ def test_bonga_calculate_points_e2e(bonga_service):
     """End-to-end live test for Lipa Na Bonga calculate-points endpoint."""
     print("🔗 Starting E2E Test: Lipa Na Bonga Calculate Points")
 
-    try:
-        response = bonga_service.calculate_points(points=50)
-        print(f"✅ Calculate Points response: {response}")
+    response = bonga_service.calculate_points(points=50)
+    print(f"✅ Calculate Points response: {response}")
 
-        assert response.header is not None
-        assert response.body is not None
-        assert str(response.body.points) == "50"
-    except Exception as e:
-        # Sandbox API endpoints for niche products like Bonga are occasionally stubbed or 404
-        if "404" in str(e):
-            pytest.xfail(
-                "Lipa Na Bonga calculate-points endpoint returned 404 in Sandbox (environment limitation)."
-            )
-        raise e
+    assert response.header is not None
+    assert response.body is not None
+    assert str(response.body.points) == "50"
+
 
 
 def test_bonga_redeem_points_e2e(bonga_service):
     """End-to-end live test for Lipa Na Bonga redeem-paybill endpoint."""
     print("🔗 Starting E2E Test: Lipa Na Bonga Redeem Paybill")
 
-    try:
-        response = bonga_service.redeem_points(
+    response = bonga_service.redeem_points(
             msisdn=os.getenv("MPESA_RECIPIENT_PHONE", "254722001231"),
             amount=10,
             bonga_points=50,
@@ -61,13 +53,8 @@ def test_bonga_redeem_points_e2e(bonga_service):
             short_code="174379",
             account_number="E2ETestAcc",
         )
-        print(f"✅ Redeem Points response: {response}")
+    print(f"✅ Redeem Points response: {response}")
 
-        assert response.header is not None
-        assert response.header.requestRefId is not None
-    except Exception as e:
-        if "404" in str(e):
-            pytest.xfail(
-                "Lipa Na Bonga redeem-paybill endpoint returned 404 in Sandbox (environment limitation)."
-            )
-        raise e
+    assert response.header is not None
+    assert response.header.requestRefId is not None
+

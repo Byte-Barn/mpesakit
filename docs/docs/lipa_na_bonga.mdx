@@ -108,7 +108,7 @@ parameters={[
         type: "int | str",
         dataType: "Integer/String",
         required: true,
-        description: "Response code (e.g., 200 or 6000 for success)."
+        description: "Response code (e.g., 200  for success)."
     },
     {
         name: "header.responseMessage",
@@ -308,7 +308,7 @@ asyncio.run(main())
         <CodeBlock language="python" title="Python">
 {`
 # Example: construct and send requests using BongaService directly
-from mpesakit.services.bonga_service import BongaService
+from mpesakit.services.lipa_na_bonga import BongaService
 from mpesakit.bonga import CalculatePointsRequest, RedeemPointsRequest
 from mpesakit.auth import TokenManager
 from mpesakit.http_client import MpesaHttpClient
@@ -339,7 +339,7 @@ print(redeem_response.header.responseMessage)
         <CodeBlock language="python" title="Python">
 {`
 import asyncio
-from mpesakit.services.bonga_service import AsyncBongaService
+from mpesakit.services.lipa_na_bonga import AsyncBongaService
 from mpesakit.auth import AsyncTokenManager
 from mpesakit.http_client import MpesaAsyncHttpClient
 
