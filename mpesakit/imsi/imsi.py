@@ -5,6 +5,7 @@ Please note this is a paid API product from Safaricom.
 For further references,consult:
     https://developer.safaricom.co.ke/apis/IMSI
 """
+
 from abc import ABC, abstractmethod
 from typing import Generic, Type, TypeVar
 from pydantic import BaseModel, ConfigDict
@@ -41,18 +42,21 @@ class BaseIMSIVersionStrategy(ABC, Generic[R]):
 
 class IMSIV1Strategy(BaseIMSIVersionStrategy[IMSIV1Response]):
     """Strategy for IMSI V1 Endpoint (/imsi/v1/checkATI)."""
+
     endpoint_path = "/imsi/v1/checkATI"
     response_schema = IMSIV1Response
 
 
 class IMSIV2Strategy(BaseIMSIVersionStrategy[IMSIV2Response]):
     """Strategy for IMSI V2 Endpoint (/imsi/v2/checkATI)."""
+
     endpoint_path = "/imsi/v2/checkATI"
     response_schema = IMSIV2Response
 
 
 class IMSIV3Strategy(BaseIMSIVersionStrategy[IMSIV3Response]):
     """Strategy for IMSI V3 Endpoint (/imsi/v3/checkATI)."""
+
     endpoint_path = "/imsi/v3/checkATI"
     response_schema = IMSIV3Response
 
@@ -86,7 +90,7 @@ class AsyncIMSI(BaseModel, Generic[R]):
 
     http_client: AsyncHttpClient
     token_manager: AsyncTokenManager
-    version_strategy: BaseIMSIVersionStrategy[R] = IMSIV1Strategy() # type: ignore[assignment]
+    version_strategy: BaseIMSIVersionStrategy[R] = IMSIV1Strategy()  # type: ignore[assignment]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

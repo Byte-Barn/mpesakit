@@ -1,0 +1,3 @@
+DEFAULT_DARAJA_DATE: str
+
+def is_daraja_default_date(date_str: str | None) -> bool: ...

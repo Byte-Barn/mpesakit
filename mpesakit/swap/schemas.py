@@ -2,8 +2,10 @@
 
 It includes models for swap requests and  responses.
 """
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from mpesakit.utils.phone import normalize_phone_number
+from mpesakit.utils.dates import is_daraja_default_date
 
 
 class SwapRequest(BaseModel):
@@ -48,4 +50,4 @@ class SwapResponse(BaseModel):
         the API returns a default date of 01-01-1900.
         Please refer to:https://developer.safaricom.co.ke/apis/Swap.
         """
-        return self.is_successful and not self.lastSwapDate.startswith("01-01-1900")
+        return self.is_successful and not is_daraja_default_date(self.lastSwapDate)

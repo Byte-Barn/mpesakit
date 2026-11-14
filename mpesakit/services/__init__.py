@@ -9,7 +9,7 @@ from .imsi import IMSIService, AsyncIMSIService
 from .lipa_na_bonga import BongaService, AsyncBongaService
 from .ratiba import RatibaService, AsyncRatibaService
 from .reversal import ReversalService, AsyncReversalService
-from .swap  import SwapService, AsyncSwapService
+from .swap import SwapService, AsyncSwapService
 from .tax import TaxService, AsyncTaxService
 from .transaction import TransactionService, AsyncTransactionService
 

@@ -62,7 +62,9 @@ def test_imsi_check_ati_v2_e2e(imsi_service):
     assert isinstance(response, IMSIV2Response)
     assert response.requestRefID is not None
     assert response.responseCode in ("200", "0")
-    assert response.msisdnRegistrationDate is None or isinstance(response.msisdnRegistrationDate, str)
+    assert response.msisdnRegistrationDate is None or isinstance(
+        response.msisdnRegistrationDate, str
+    )
 
 
 @pytest.mark.xfail(
@@ -101,7 +103,9 @@ async def test_async_imsi_check_ati_v2_e2e(async_imsi_service):
     assert isinstance(response, IMSIV2Response)
     assert response.requestRefID is not None
     assert response.responseCode in ("200", "0")
-    assert response.msisdnRegistrationDate is None or isinstance(response.msisdnRegistrationDate, str)
+    assert response.msisdnRegistrationDate is None or isinstance(
+        response.msisdnRegistrationDate, str
+    )
 
 
 @pytest.mark.asyncio(loop_scope="session")

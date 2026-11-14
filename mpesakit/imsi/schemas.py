@@ -1,7 +1,9 @@
 """This module defines schemas for Safaricom Daraja IMSI API requests and responses (V1, V2, V3)."""
+
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from mpesakit.utils.phone import normalize_phone_number
+from mpesakit.utils.dates import is_daraja_default_date
 
 
 class IMSIRequest(BaseModel):
@@ -50,7 +52,7 @@ class SwapCheckMixin:
         """
         if not self.lastSwapDate:
             return False
-        return not self.lastSwapDate.startswith("01-01-1900")
+        return not is_daraja_default_date(self.lastSwapDate)
 
 
 class NetworkAgeMixin:
@@ -63,7 +65,7 @@ class NetworkAgeMixin:
         """Returns True if default non-registration date '01-01-1900' is returned."""
         if not self.msisdnRegistrationDate:
             return False
-        return self.msisdnRegistrationDate.startswith("01-01-1900")
+        return is_daraja_default_date(self.msisdnRegistrationDate)
 
 
 class BaseIMSISelfResponse(BaseModel, StatusMixin):
@@ -71,7 +73,9 @@ class BaseIMSISelfResponse(BaseModel, StatusMixin):
 
     requestRefID: str = Field(..., description="Unique transaction reference ID.")
     responseCode: Optional[str] = Field(None, description="API status code e.g. '200'.")
-    responseDesc: Optional[str] = Field(None, description="Response status description.")
+    responseDesc: Optional[str] = Field(
+        None, description="Response status description."
+    )
     customerNumber: Optional[str] = Field(None, description="The requested MSISDN.")
 
 
@@ -91,5 +95,3 @@ class IMSIV3Response(BaseIMSISelfResponse):
     """IMSI V3 response schema (Hashed IMSI)."""
 
     imsi: Optional[str] = Field(None, description="Hashed IMSI string.")
-
-
